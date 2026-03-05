@@ -1,71 +1,66 @@
+// Map State
 const manilaCenter = [14.6060, 120.9870]; 
+let map, heatmapLayer, routingLine;
+let mapTilesLight, mapTilesDark;
+
+// Application State
 let activeFilter = 'all';
 let activeSort = 'relevant';
 let activeDetailId = null;
 let currentTags = [];
+let idCounter = 1;
+
+// Custom Pin State
+let isPickingLocation = false;
+let customPinCoords = null;
+let customPinMarker = null;
+
+// Routing State
 let searchTimeout;
 let startCoords = null;
 let endCoords = null;
 
-// Dense Data Hotspots (Manila Area)
-const manilaHotspots = [
-    { name: 'FEU Tech Area', lat: 14.6042, lng: 120.9880, risk: 95, typePref: 'Environmental/Path Hazards', issue: 'Dimly lit alley near the campus exit. High risk at night.' },
-    { name: 'FEU Main / Morayta', lat: 14.6035, lng: 120.9873, risk: 88, typePref: 'Harassment/Aggression', issue: 'Groups of loiterers catcalling students walking towards España.' },
-    { name: 'UST España Blvd', lat: 14.6096, lng: 120.9894, risk: 92, typePref: 'Accessibility/Obstructions', issue: 'Deep flood water hides potholes. Sidewalks blocked by vendors.' },
-    { name: 'UST Dapitan', lat: 14.6110, lng: 120.9890, risk: 85, typePref: 'Crowd/Atmosphere', issue: 'Extremely dense student crowd, high pickpocket risk during rush hour.' },
-    { name: 'SM San Lazaro Vicinity', lat: 14.6155, lng: 120.9841, risk: 82, typePref: 'Crowd/Atmosphere', issue: 'Jeepney terminal congestion spilling onto the road. Snatching reported.' }
-];
+// Route Dragging State
+let isDragging = false, currentX=0, currentY=0, initialX=0, initialY=0, xOffset = 0, yOffset = 0;
 
-// Other NCR Cities (Less dense for contrast)
-const generalNCR = [
-    { name: 'Quezon City', lat: 14.6488, lng: 121.0509, risk: 50 },
-    { name: 'Makati (CBD)', lat: 14.5547, lng: 121.0244, risk: 20 },
-    { name: 'Taguig (BGC)', lat: 14.5300, lng: 121.0450, risk: 15 },
-    { name: 'Pasay', lat: 14.5378, lng: 121.0014, risk: 60 }
+// High-Density Data Generation
+const hotspots = [
+    { name: 'FEU Tech & Main Area', lat: 14.6040, lng: 120.9875, risk: 90, spread: 0.005, reports: 45 },
+    { name: 'UST España Blvd', lat: 14.6096, lng: 120.9894, risk: 85, spread: 0.007, reports: 40 },
+    { name: 'SM San Lazaro Vicinity', lat: 14.6155, lng: 120.9841, risk: 75, spread: 0.006, reports: 35 },
+    { name: 'LRT Tayuman Station', lat: 14.6168, lng: 120.9825, risk: 80, spread: 0.004, reports: 25 },
+    { name: 'Quezon City (Cubao)', lat: 14.6186, lng: 121.0526, risk: 65, spread: 0.015, reports: 20 },
+    { name: 'Makati (CBD)', lat: 14.5547, lng: 121.0244, risk: 25, spread: 0.010, reports: 10 }
 ];
 
 let mockReports = [];
-let idCounter = 1;
 
-// Generate Massive Cluster Data for Manila
-manilaHotspots.forEach(spot => {
-    let reportCount = spot.risk * 1.5; // Hundreds of data points
-    for(let i=0; i<reportCount; i++) {
-        const isPrimaryIssue = Math.random() > 0.3;
-        const type = isPrimaryIssue ? spot.typePref : ['Harassment/Aggression', 'Crowd/Atmosphere', 'Environmental/Path Hazards', 'Accessibility/Obstructions'][Math.floor(Math.random() * 4)];
+hotspots.forEach(spot => {
+    for(let i=0; i<spot.reports; i++) {
+        const types = ['Harassment/Aggression', 'Crowd/Atmosphere', 'Environmental/Path Hazards', 'Accessibility/Obstructions'];
+        const type = types[Math.floor(Math.random() * types.length)];
+        
+        let issueDesc = `Community report regarding safety at this location.`;
+        if(type === 'Accessibility/Obstructions') issueDesc = "Damaged sidewalks and blocked PWD ramps reported here.";
+        if(type === 'Environmental/Path Hazards') issueDesc = "Poor lighting and potential flooding hazards reported.";
         
         mockReports.push({
             id: idCounter++,
             type: type,
-            title: `Incident near ${spot.name}`,
-            desc: isPrimaryIssue ? spot.issue : `General community safety concern logged in this sector.`,
+            title: `${type.split('/')[0]} near ${spot.name.split(' ')[0]}`,
+            desc: issueDesc,
             cred: Math.floor(Math.random() * 300) + 10,
-            relevance: spot.risk + Math.random() * 20,
-            lat: spot.lat + (Math.random() - 0.5) * 0.007, // Tight radius
-            lng: spot.lng + (Math.random() - 0.5) * 0.007,
-            tags: ['#' + spot.name.split(' ')[0].toLowerCase(), '#ncr_alert'],
+            relevance: spot.risk + Math.random() * 30,
+            lat: spot.lat + (Math.random() - 0.5) * spot.spread,
+            lng: spot.lng + (Math.random() - 0.5) * spot.spread,
+            tags: ['#' + spot.name.split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '')],
             userVote: 0,
-            timestamp: Date.now() - (Math.random() * 10000000000),
-            comments: Math.random() > 0.6 ? [{text: "I experienced this too.", isMine: false}] : [],
+            timestamp: Date.now() - (Math.random() * 10000000000), // Up to 115 days ago
+            comments: Math.random() > 0.6 ? [{text: "Noted, thank you for sharing.", isMine: false}] : [],
             isMine: false
         });
     }
 });
-
-// Generate Sparse Data for rest of NCR
-generalNCR.forEach(city => {
-    let reportCount = city.risk / 2;
-    for(let i=0; i<reportCount; i++) {
-        mockReports.push({
-            id: idCounter++, type: 'Environmental/Path Hazards', title: `Report in ${city.name}`, desc: `Minor community report.`,
-            cred: Math.floor(Math.random() * 50), relevance: city.risk, lat: city.lat + (Math.random() - 0.5) * 0.02, lng: city.lng + (Math.random() - 0.5) * 0.02,
-            tags: [], userVote: 0, timestamp: Date.now() - (Math.random() * 10000000000), comments: [], isMine: false
-        });
-    }
-});
-
-let map, heatmapLayer, routingLine;
-let mapTilesLight, mapTilesDark;
 
 function initMap() {
     map = L.map('map', { zoomControl: false }).setView(manilaCenter, 15);
@@ -80,103 +75,118 @@ function initMap() {
     populateHeatmap();
     renderReports();
     populatePartnerPortal();
-    setupConstrainedDrag();
+    setupDrag();
 }
 
 function populateHeatmap() {
     if(heatmapLayer) map.removeLayer(heatmapLayer);
-    
-    // Intense mapping for Manila
     let heatData = mockReports.map(r => [r.lat, r.lng, r.cred / 80]); 
+    // Density Padding
     mockReports.forEach(r => {
-        if(r.lat > 14.59 && r.lat < 14.62) { // Add padding noise only to Manila area
-            for(let i=0; i<4; i++) {
-                heatData.push([r.lat + (Math.random()-0.5)*0.002, r.lng + (Math.random()-0.5)*0.002, Math.random() * 0.6]);
-            }
+        for(let i=0; i<4; i++) {
+            heatData.push([r.lat + (Math.random()-0.5)*0.0015, r.lng + (Math.random()-0.5)*0.0015, Math.random() * 0.5]);
         }
     });
-
     heatmapLayer = L.heatLayer(heatData, {
-        radius: 20, blur: 15, maxZoom: 18,
+        radius: 26, blur: 22, maxZoom: 18,
         gradient: {0.4: 'blue', 0.6: 'cyan', 0.7: 'lime', 0.8: 'yellow', 1.0: 'red'}
     }).addTo(map);
 }
 
-// Fixed Dragging Logic (Constrained to Map Container)
-function setupConstrainedDrag() {
-    const dragItem = document.getElementById("route-panel");
-    const dragHeader = document.getElementById("route-panel-header");
-    const container = document.getElementById("map-container");
-
-    let isDragging = false, startX, startY, startLeft, startTop;
-
-    const dragStart = (e) => {
-        if (e.target !== dragHeader && !dragHeader.contains(e.target)) return;
-        isDragging = true;
+// --- Custom Map Picker Logic ---
+function enableMapPicker() {
+    closeReportModal();
+    showToast("Click anywhere on the map to drop a pin.", "success");
+    document.getElementById('map').style.cursor = 'crosshair';
+    isPickingLocation = true;
+    
+    // Listen for ONE click on the map
+    map.once('click', function(e) {
+        isPickingLocation = false;
+        document.getElementById('map').style.cursor = '';
+        customPinCoords = [e.latlng.lat, e.latlng.lng];
         
-        // Remove tailwind positioning classes to take full manual control
-        dragItem.classList.remove('md:left-[440px]', 'left-4', 'top-6');
+        if(customPinMarker) map.removeLayer(customPinMarker);
+        customPinMarker = L.marker(customPinCoords).addTo(map);
         
-        if(!dragItem.style.left) dragItem.style.left = dragItem.offsetLeft + 'px';
-        if(!dragItem.style.top) dragItem.style.top = dragItem.offsetTop + 'px';
-
-        startX = e.type === "touchstart" ? e.touches[0].clientX : e.clientX;
-        startY = e.type === "touchstart" ? e.touches[0].clientY : e.clientY;
-        startLeft = parseInt(dragItem.style.left, 10);
-        startTop = parseInt(dragItem.style.top, 10);
-        
-        document.addEventListener(e.type === "touchstart" ? "touchmove" : "mousemove", dragMove, {passive: false});
-        document.addEventListener(e.type === "touchstart" ? "touchend" : "mouseup", dragEnd);
-    };
-
-    const dragMove = (e) => {
-        if (!isDragging) return;
-        e.preventDefault(); // Stop scrolling on touch
-        
-        const currentX = e.type === "touchmove" ? e.touches[0].clientX : e.clientX;
-        const currentY = e.type === "touchmove" ? e.touches[0].clientY : e.clientY;
-
-        let newLeft = startLeft + (currentX - startX);
-        let newTop = startTop + (currentY - startY);
-
-        // Constraint boundaries (don't go off map)
-        newLeft = Math.max(0, Math.min(newLeft, container.clientWidth - dragItem.offsetWidth));
-        newTop = Math.max(0, Math.min(newTop, container.clientHeight - dragItem.offsetHeight));
-
-        dragItem.style.left = newLeft + 'px';
-        dragItem.style.top = newTop + 'px';
-        dragItem.style.transform = 'none'; // Ensure no conflicting CSS transforms
-    };
-
-    const dragEnd = (e) => {
-        isDragging = false;
-        document.removeEventListener("mousemove", dragMove);
-        document.removeEventListener("touchmove", dragMove);
-        document.removeEventListener("mouseup", dragEnd);
-        document.removeEventListener("touchend", dragEnd);
-    };
-
-    dragHeader.addEventListener("mousedown", dragStart);
-    dragHeader.addEventListener("touchstart", dragStart, {passive: false});
+        openReportModal();
+        document.getElementById('loc-privacy').value = 'precise';
+        document.getElementById('pin-status').classList.remove('hidden');
+    });
 }
 
+// --- Drag Logic with Boundary Checks ---
+function setupDrag() {
+    const dragItem = document.getElementById("route-panel");
+    const dragHeader = document.getElementById("route-panel-header");
 
-// UI Toggles & Logic
+    dragHeader.addEventListener("mousedown", dragStart, false);
+    document.addEventListener("mouseup", dragEnd, false);
+    document.addEventListener("mousemove", drag, false);
+
+    function dragStart(e) {
+        initialX = e.clientX - xOffset;
+        initialY = e.clientY - yOffset;
+        if (e.target === dragHeader || dragHeader.contains(e.target)) isDragging = true;
+    }
+
+    function dragEnd(e) { initialX = currentX; initialY = currentY; isDragging = false; }
+
+    function drag(e) {
+        if (isDragging) {
+            e.preventDefault();
+            let testX = e.clientX - initialX;
+            let testY = e.clientY - initialY;
+            
+            // Boundary constraints logic (Approximate based on window size to prevent losing the panel)
+            const mapWidth = window.innerWidth;
+            const mapHeight = window.innerHeight;
+            const panelRect = dragItem.getBoundingClientRect();
+            
+            // Constrain X and Y so the panel header doesn't go off-screen
+            const minX = -panelRect.left + xOffset + 20; // Allow slight overlap but keep visible
+            const maxX = mapWidth - panelRect.right + xOffset - 20;
+            const minY = -panelRect.top + yOffset + 20;
+            const maxY = mapHeight - panelRect.bottom + yOffset - 20;
+
+            currentX = Math.max(minX, Math.min(testX, maxX));
+            currentY = Math.max(minY, Math.min(testY, maxY));
+            
+            xOffset = currentX; yOffset = currentY;
+            dragItem.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+        }
+    }
+}
+
+// --- UI Utilities ---
+function formatDate(timestamp) {
+    const d = new Date(timestamp);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' • ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+}
+
+function showToast(msg, type = 'error') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    const colorClass = type === 'error' ? 'bg-rose-500' : 'bg-emerald-500';
+    toast.className = `${colorClass} text-white px-6 py-3 rounded-lg shadow-xl font-bold text-sm transform transition-all duration-300 translate-y-[-20px] opacity-0 flex items-center gap-2`;
+    toast.innerHTML = type === 'error' ? `<span>⚠️</span> ${msg}` : `<span>✅</span> ${msg}`;
+    container.appendChild(toast);
+    setTimeout(() => { toast.classList.remove('translate-y-[-20px]', 'opacity-0'); }, 10);
+    setTimeout(() => { toast.classList.add('opacity-0'); setTimeout(() => toast.remove(), 300); }, 3000);
+}
+
 function toggleDarkMode() {
     const html = document.documentElement;
     if(html.classList.contains('dark')) {
-        html.classList.remove('dark');
-        map.removeLayer(mapTilesDark); mapTilesLight.addTo(map);
+        html.classList.remove('dark'); map.removeLayer(mapTilesDark); mapTilesLight.addTo(map);
     } else {
-        html.classList.add('dark');
-        map.removeLayer(mapTilesLight); mapTilesDark.addTo(map);
+        html.classList.add('dark'); map.removeLayer(mapTilesLight); mapTilesDark.addTo(map);
     }
 }
 
 function toggleSidebar() {
     document.getElementById('user-sidebar').classList.toggle('-translate-x-full');
     document.getElementById('expand-sidebar-btn').classList.toggle('hidden');
-    // We removed automatic route-panel shifting because it's purely draggable now.
 }
 
 function toggleHeatmap() {
@@ -184,7 +194,7 @@ function toggleHeatmap() {
     else map.removeLayer(heatmapLayer);
 }
 
-// Reports & Filtering
+// --- Report Rendering & Filtering ---
 function setCategoryFilter(cat) {
     activeFilter = cat;
     document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -223,50 +233,40 @@ function filterReports() {
     renderReports(filtered);
 }
 
-// Fix: Voting Propagation
-function voteReport(e, id, change) {
-    e.stopPropagation(); // Stops the modal from opening when clicking the vote button
-    e.preventDefault();
-    const report = mockReports.find(r => r.id === id);
-    if (!report) return;
-    report.cred += change; 
-    renderReports();
-    if(activeDetailId === id) openDetailModal(id);
-}
-
 function renderReports(reportsToRender = null) {
     if(!reportsToRender) { filterReports(); return; } 
     const list = document.getElementById('reports-list');
     list.innerHTML = '';
     
-    // Only render top 50 in UI to prevent DOM lag, prototype trick
-    const toRender = reportsToRender.slice(0, 50);
-
-    toRender.forEach(report => {
+    reportsToRender.forEach(report => {
         let typeColor = 'text-indigo-600 bg-indigo-50 border-indigo-100';
         if(report.type.includes('Harassment')) typeColor = 'text-rose-600 bg-rose-50 border-rose-100';
         if(report.type.includes('Hazards')) typeColor = 'text-amber-600 bg-amber-50 border-amber-100';
-        if(report.type.includes('Accessibility')) typeColor = 'text-purple-600 bg-purple-50 border-purple-100';
+        if(report.type.includes('Accessibility')) typeColor = 'text-purple-600 bg-purple-50 border-purple-100 dark:bg-purple-900/30 dark:text-purple-400 border-purple-800';
 
+        // Bug Fix: Added event.stopPropagation() to all interactive buttons
         const actionBtn = report.isMine 
-            ? `<button onclick="deleteReport(event, ${report.id})" class="text-rose-400 hover:text-rose-600 font-bold text-xs">🗑 Delete</button>`
-            : `<button onclick="openFlagModal(event, ${report.id})" class="text-slate-400 hover:text-rose-500 font-bold text-xs">🚩 Flag</button>`;
+            ? `<button onclick="event.stopPropagation(); deleteReport(${report.id})" class="text-rose-500 hover:text-rose-700 font-bold text-xs bg-rose-50 dark:bg-rose-900/30 px-2 py-1 rounded">🗑 Delete</button>`
+            : `<button onclick="event.stopPropagation(); openFlagModal(${report.id})" class="text-slate-400 hover:text-rose-500 font-bold text-xs">🚩 Flag</button>`;
 
         const tagHTML = report.tags.map(t => `<span class="text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded">${t}</span>`).join('');
 
         list.innerHTML += `
-            <div onclick="openDetailModal(${report.id})" class="bg-white dark:bg-slate-800 p-4 rounded-md shadow-sm border border-slate-200 dark:border-slate-700 hover:border-indigo-300 cursor-pointer relative transition">
+            <div onclick="openDetailModal(${report.id})" class="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 hover:border-indigo-400 cursor-pointer relative group transition-all">
                 <div class="absolute top-4 right-4">${actionBtn}</div>
-                <span class="text-[10px] font-bold ${typeColor} uppercase tracking-wider px-2 py-0.5 rounded border mb-2 inline-block">${report.type.split('/')[0]}</span>
-                <h3 class="font-bold text-slate-800 dark:text-white text-sm mb-1 pr-10">${report.title}</h3>
-                <p class="text-xs text-slate-600 dark:text-slate-300 mb-2 line-clamp-2">${report.desc}</p>
+                <div class="mb-2 flex items-center gap-2">
+                    <span class="text-[10px] font-bold ${typeColor} uppercase tracking-wider px-2 py-1 rounded border inline-block">${report.type.split('/')[0]}</span>
+                    <span class="text-[10px] text-slate-400 font-medium">${formatDate(report.timestamp)}</span>
+                </div>
+                <h3 class="font-bold text-slate-800 dark:text-white text-sm mb-1.5 pr-12">${report.title}</h3>
+                <p class="text-xs text-slate-600 dark:text-slate-300 mb-3 line-clamp-2 leading-relaxed">${report.desc}</p>
                 <div class="flex flex-wrap gap-1.5 mb-3">${tagHTML}</div>
                 <div class="flex justify-between items-center border-t border-slate-100 dark:border-slate-700 pt-3">
                     <span class="text-xs font-bold text-indigo-600 dark:text-indigo-400">💬 ${report.comments.length} Comments</span>
-                    <div class="flex items-center gap-3 bg-slate-50 dark:bg-slate-900 px-2 py-1 rounded border border-slate-200 dark:border-slate-700">
-                        <button onclick="voteReport(event, ${report.id}, 1)" class="font-bold text-base text-slate-400 hover:text-emerald-500">⇧</button>
-                        <span class="font-bold text-sm">${report.cred}</span>
-                        <button onclick="voteReport(event, ${report.id}, -1)" class="font-bold text-base text-slate-400 hover:text-rose-500">⇩</button>
+                    <div class="flex items-center gap-3 bg-slate-50 dark:bg-slate-900 px-2 py-1 rounded-md border border-slate-200 dark:border-slate-700" onclick="event.stopPropagation()">
+                        <button onclick="voteReport(${report.id}, 1)" class="font-bold text-base text-slate-400 hover:text-emerald-500 transition-colors">⇧</button>
+                        <span class="font-bold text-sm text-slate-700 dark:text-slate-200">${report.cred}</span>
+                        <button onclick="voteReport(${report.id}, -1)" class="font-bold text-base text-slate-400 hover:text-rose-500 transition-colors">⇩</button>
                     </div>
                 </div>
             </div>
@@ -274,7 +274,114 @@ function renderReports(reportsToRender = null) {
     });
 }
 
-// AI Tag Suggester & Logic
+// --- Interaction Logic (Bug fixes implemented) ---
+function deleteReport(id) {
+    if(confirm("Are you sure you want to permanently delete this report?")) {
+        mockReports = mockReports.filter(r => r.id !== id);
+        showToast("Report deleted successfully.", "success");
+        populateHeatmap();
+        filterReports();
+    }
+}
+
+function deleteComment(reportId, commentIndex) {
+    if(confirm("Delete your comment?")) {
+        const report = mockReports.find(r => r.id === reportId);
+        report.comments.splice(commentIndex, 1);
+        showToast("Comment deleted.", "success");
+        openDetailModal(reportId);
+        filterReports(); 
+    }
+}
+
+function openFlagModal(id) {
+    document.getElementById('flag-reason').value = '';
+    document.getElementById('flag-modal').classList.remove('hidden');
+}
+function closeFlagModal() { document.getElementById('flag-modal').classList.add('hidden'); }
+function submitFlag() {
+    if(!document.getElementById('flag-reason').value) return showToast("Select a reason.", "error");
+    closeFlagModal(); showToast("Report flagged for review.", "success");
+}
+
+function voteReport(id, change) {
+    const report = mockReports.find(r => r.id === id);
+    if (!report) return;
+    report.cred += change; 
+    filterReports();
+    if(activeDetailId === id) openDetailModal(id);
+}
+
+// --- Modal & Form Logic ---
+function openDetailModal(id) {
+    activeDetailId = id;
+    const report = mockReports.find(r => r.id === id);
+    document.getElementById('detail-content').innerHTML = `
+        <div class="flex justify-between items-start mb-3">
+            <span class="text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 uppercase tracking-wider px-2 py-1 rounded border border-slate-200 dark:border-slate-700">${report.type}</span>
+            <span class="text-xs text-slate-400">${formatDate(report.timestamp)}</span>
+        </div>
+        <h2 class="text-2xl font-bold text-slate-800 dark:text-white mb-3">${report.title}</h2>
+        <p class="text-sm text-slate-600 dark:text-slate-300 mb-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg leading-relaxed">${report.desc}</p>
+    `;
+    
+    const cList = document.getElementById('detail-comments');
+    cList.innerHTML = report.comments.length ? '' : '<p class="text-sm text-slate-400">No comments yet.</p>';
+    report.comments.forEach((c, idx) => {
+        const delBtn = c.isMine ? `<button onclick="deleteComment(${report.id}, ${idx})" class="text-rose-500 hover:text-rose-700 font-bold ml-3 text-xs">Delete</button>` : '';
+        cList.innerHTML += `<div class="bg-slate-50 dark:bg-slate-800 p-3.5 rounded-lg text-sm flex justify-between items-start border border-slate-100 dark:border-slate-700"><p class="text-slate-800 dark:text-slate-200">${c.text}</p>${delBtn}</div>`;
+    });
+    document.getElementById('report-detail-modal').classList.remove('hidden');
+}
+function closeDetailModal() { document.getElementById('report-detail-modal').classList.add('hidden'); }
+
+function submitComment() {
+    const val = document.getElementById('new-comment').value.trim();
+    if(!val) return;
+    const report = mockReports.find(r => r.id === activeDetailId);
+    report.comments.push({ text: val, isMine: true }); 
+    document.getElementById('new-comment').value = '';
+    openDetailModal(activeDetailId);
+    filterReports();
+}
+
+function openReportModal() { document.getElementById('report-modal').classList.remove('hidden'); }
+function closeReportModal() { 
+    document.getElementById('report-modal').classList.add('hidden'); 
+    document.getElementById('pin-status').classList.add('hidden');
+}
+
+function submitReport() {
+    const title = document.getElementById('report-title').value;
+    const cat = document.getElementById('report-category').value;
+    const desc = document.getElementById('report-desc').value;
+    const privacy = document.getElementById('loc-privacy').value;
+    
+    if(!title || !cat || desc.length < 15) return showToast("Please fill all required fields correctly.", "error");
+
+    // Use custom pin if selected, else drop near center
+    let finalLat = manilaCenter[0] + (Math.random() - 0.5) * 0.01;
+    let finalLng = manilaCenter[1] + (Math.random() - 0.5) * 0.01;
+    
+    if (privacy === 'precise' && customPinCoords) {
+        finalLat = customPinCoords[0];
+        finalLng = customPinCoords[1];
+    }
+
+    mockReports.unshift({
+        id: idCounter++, type: cat, title: title, desc: desc, cred: 1, relevance: 100, timestamp: Date.now(),
+        lat: finalLat, lng: finalLng,
+        tags: [...currentTags], comments: [], userVote: 1, isMine: true
+    });
+
+    closeReportModal();
+    populateHeatmap(); 
+    filterReports();
+    currentTags = []; customPinCoords = null;
+    showToast("Report securely submitted.", "success");
+}
+
+// --- Tag Logic ---
 function suggestTags() {
     const title = document.getElementById('report-title').value.toLowerCase();
     const cat = document.getElementById('report-category').value;
@@ -283,20 +390,18 @@ function suggestTags() {
     
     let suggested = [];
     if(cat === 'Harassment/Aggression') suggested.push('#unsafe', '#catcalling');
-    if(cat === 'Crowd/Atmosphere') suggested.push('#crowded', '#pickpocket');
+    if(cat === 'Crowd/Atmosphere') suggested.push('#overcrowded', '#pickpocket');
     if(cat === 'Environmental/Path Hazards') suggested.push('#hazard', '#dark_alley');
-    if(cat === 'Accessibility/Obstructions') suggested.push('#blocked_ramp', '#no_elevator');
+    if(cat === 'Accessibility/Obstructions') suggested.push('#pwd', '#blocked_path');
     
     if(title.includes('feu') || title.includes('tech')) suggested.push('#FEUTech');
     if(title.includes('ust') || title.includes('espana')) suggested.push('#UST');
-    if(title.includes('sm') || title.includes('lazaro')) suggested.push('#SMSanLazaro');
-    if(title.includes('flood')) suggested.push('#flooded');
 
     if(suggested.length === 0) { aiTags.classList.add('hidden'); return; }
     
     aiTags.classList.remove('hidden');
     container.innerHTML = suggested.map(tag => 
-        `<span class="text-xs font-bold bg-white text-indigo-600 border border-indigo-200 px-2 py-1 rounded cursor-pointer hover:bg-indigo-50" onclick="addTag('${tag}')">${tag} +</span>`
+        `<span class="text-[10px] font-bold bg-white text-indigo-600 border border-indigo-200 px-2 py-1 rounded cursor-pointer hover:bg-indigo-50" onclick="addTag('${tag}')">${tag} +</span>`
     ).join('');
 }
 
@@ -312,28 +417,30 @@ function addCustomTag() {
 function addTag(tag) {
     if(!currentTags.includes(tag) && currentTags.length < 5) {
         currentTags.push(tag);
-        document.getElementById('active-tags-container').innerHTML = currentTags.map(t => `<span class="text-xs bg-indigo-600 text-white px-2 py-1 rounded flex items-center gap-1">${t} <button onclick="removeTag('${t}')" class="hover:text-rose-300 font-bold ml-1">×</button></span>`).join('');
+        document.getElementById('active-tags-container').innerHTML = currentTags.map(t => `<span class="text-xs bg-indigo-600 text-white px-2 py-1 rounded flex items-center gap-1">${t} <button onclick="removeTag('${t}')" class="hover:text-rose-300 font-bold ml-1">✕</button></span>`).join('');
     }
 }
-function removeTag(tag) { currentTags = currentTags.filter(t => t !== tag); addTag('refresh'); }
+function removeTag(tag) { currentTags = currentTags.filter(t => t !== tag); addTag('hack'); currentTags.pop(); }
 
-// Routing (Nominatim + Adjusted OSRM Time)
+// --- Routing Engine (Nominatim + OSRM) ---
 function handleSearch(inputEl, resultsId, target) {
     clearTimeout(searchTimeout);
     const query = inputEl.value;
     const resultsUl = document.getElementById(resultsId);
+    
     if(query.length < 3) { resultsUl.classList.add('hidden'); return; }
 
     searchTimeout = setTimeout(async () => {
         try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=4&countrycodes=ph`);
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=5&countrycodes=ph`);
             const data = await res.json();
+            
             resultsUl.innerHTML = '';
             if(data.length === 0) { resultsUl.classList.add('hidden'); return; }
 
             data.forEach(item => {
                 const li = document.createElement('li');
-                li.className = "p-2.5 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer border-b border-slate-100 dark:border-slate-700 dark:text-slate-200 text-slate-700";
+                li.className = "p-2 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer border-b border-slate-100 dark:border-slate-700 dark:text-slate-200 text-slate-700";
                 li.innerText = item.display_name;
                 li.onclick = () => {
                     inputEl.value = item.display_name.split(',')[0];
@@ -350,7 +457,7 @@ function handleSearch(inputEl, resultsId, target) {
 
 async function calculateRealRoute() {
     const btn = document.getElementById('route-btn');
-    if(!startCoords || !endCoords) return alert("Please select Start and Destination from dropdown.");
+    if(!startCoords || !endCoords) return showToast("Select Start and Destination from suggestions.", "error");
 
     btn.innerText = "Finding safe paths..."; btn.disabled = true;
 
@@ -364,10 +471,8 @@ async function calculateRealRoute() {
         const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
         const distKm = (data.routes[0].distance / 1000).toFixed(2);
         
-        // FIX: Manila Foot Traffic Time Multiplier. 
-        // OSRM assumes a brisk, uninterrupted walk. In Manila, overpasses, crowds, and narrow alleys slow you down.
-        // We multiply the raw OSRM duration by 1.35 for a realistic timeframe.
-        const realisticTimeMin = Math.round((data.routes[0].duration / 60) * 1.35);
+        // Fix: OSRM pedestrian speed is optimistic. Multiplier * 1.3 adds realism for Manila traffic/crossings
+        const timeMin = Math.round((data.routes[0].duration * 1.3) / 60);
 
         if(routingLine) map.removeLayer(routingLine);
         routingLine = L.polyline(coords, { color: '#4f46e5', weight: 6, opacity: 0.8 }).addTo(map);
@@ -388,9 +493,9 @@ async function calculateRealRoute() {
         document.getElementById('route-details').classList.remove('hidden');
         document.getElementById('clear-route-btn').classList.remove('hidden');
         document.getElementById('route-dist').innerHTML = `🚶 ${distKm} km`;
-        document.getElementById('route-time').innerHTML = `⏱ ${realisticTimeMin} mins`;
+        document.getElementById('route-time').innerHTML = `⏱ ${timeMin} mins`;
         
-    } catch (e) { alert("Error calculating route."); }
+    } catch (e) { showToast("Error calculating route.", "error"); }
     btn.innerText = "Calculate Route"; btn.disabled = false;
 }
 
@@ -404,47 +509,7 @@ function clearRoute() {
     map.setView(manilaCenter, 15);
 }
 
-// Modals & Partner Portal
-function openReportModal() { document.getElementById('report-modal').classList.remove('hidden'); }
-function closeReportModal() { document.getElementById('report-modal').classList.add('hidden'); }
-function submitReport() {
-    const title = document.getElementById('report-title').value;
-    const cat = document.getElementById('report-category').value;
-    const desc = document.getElementById('report-desc').value;
-    if(!title || !cat || desc.length < 15) return alert("Fill all fields");
-
-    mockReports.unshift({
-        id: idCounter++, type: cat, title: title, desc: desc, cred: 1, relevance: 100, timestamp: Date.now(),
-        lat: manilaCenter[0] + (Math.random() - 0.5) * 0.01,
-        lng: manilaCenter[1] + (Math.random() - 0.5) * 0.01,
-        tags: [...currentTags], comments: [], userVote: 1, isMine: true
-    });
-    document.getElementById('report-modal').classList.add('hidden');
-    populateHeatmap(); renderReports(); currentTags = [];
-}
-
-function openFlagModal(e, id) { e.stopPropagation(); document.getElementById('flag-modal').classList.remove('hidden'); }
-function closeFlagModal() { document.getElementById('flag-modal').classList.add('hidden'); }
-function submitFlag() { closeFlagModal(); alert("Reported to moderators."); }
-
-function openDetailModal(id) {
-    activeDetailId = id;
-    const report = mockReports.find(r => r.id === id);
-    document.getElementById('detail-content').innerHTML = `<span class="text-xs font-bold bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded border">${report.type}</span><h2 class="text-2xl font-bold mt-3 mb-2 dark:text-white">${report.title}</h2><p class="text-sm dark:text-slate-300 bg-slate-50 dark:bg-slate-800 p-4 rounded">${report.desc}</p>`;
-    const cList = document.getElementById('detail-comments');
-    cList.innerHTML = report.comments.length ? '' : '<p class="text-sm text-slate-400">No comments yet.</p>';
-    report.comments.forEach((c) => { cList.innerHTML += `<div class="bg-slate-50 dark:bg-slate-800 p-3 rounded text-sm"><p class="dark:text-white">${c.text}</p></div>`; });
-    document.getElementById('report-detail-modal').classList.remove('hidden');
-}
-function closeDetailModal() { document.getElementById('report-detail-modal').classList.add('hidden'); }
-function submitComment() {
-    const val = document.getElementById('new-comment').value.trim();
-    if(!val) return;
-    mockReports.find(r => r.id === activeDetailId).comments.push({ text: val });
-    document.getElementById('new-comment').value = '';
-    openDetailModal(activeDetailId); renderReports();
-}
-
+// --- Portal ---
 function togglePortal() { document.getElementById('partner-portal').classList.toggle('hidden'); }
 function loginPortal() {
     document.getElementById('portal-login').classList.add('hidden');
@@ -453,20 +518,21 @@ function loginPortal() {
 }
 function logoutPortal() {
     document.getElementById('portal-dashboard').classList.add('hidden');
-    document.getElementById('portal-login').classList.remove('hidden');
     document.getElementById('logout-btn').classList.add('hidden');
+    document.getElementById('portal-login').classList.remove('hidden');
+    showToast("Logged out securely.", "success");
 }
 
 function populatePartnerPortal() {
     const container = document.getElementById('city-stats-container');
     container.innerHTML = '';
-    manilaHotspots.forEach(spot => {
-        const color = spot.risk > 90 ? 'bg-rose-600' : 'bg-amber-500';
+    hotspots.forEach(spot => {
+        const color = spot.risk > 80 ? 'bg-rose-600' : spot.risk > 60 ? 'bg-amber-500' : 'bg-emerald-500';
         container.innerHTML += `
             <div class="mb-4">
                 <div class="flex justify-between text-sm mb-1.5 font-bold">
                     <span class="dark:text-slate-300">${spot.name}</span>
-                    <span class="text-white px-2 py-0.5 rounded text-[10px] uppercase ${color}">Critical Level</span>
+                    <span class="text-white px-2 py-0.5 rounded text-[10px] uppercase ${color}">${spot.risk > 80 ? 'High Alert' : 'Moderate'}</span>
                 </div>
                 <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5">
                     <div class="${color} h-2.5 rounded-full" style="width: ${spot.risk}%"></div>
@@ -474,6 +540,5 @@ function populatePartnerPortal() {
             </div>`;
     });
 }
-function closeEmergencyModal() { document.getElementById('emergency-modal').classList.add('hidden'); }
 
 window.onload = initMap;
