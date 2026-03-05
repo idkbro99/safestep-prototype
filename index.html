@@ -32,7 +32,7 @@
 
     <div class="flex h-[calc(100vh-64px)] relative w-full">
         
-        <div id="user-sidebar" class="w-11/12 sm:w-80 md:w-[420px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md h-full shadow-2xl flex flex-col z-[1500] absolute transition-transform duration-300 ease-in-out transform border-r border-slate-200 dark:border-slate-800">
+        <div id="user-sidebar" class="w-11/12 sm:w-[380px] md:w-[460px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md h-full shadow-2xl flex flex-col z-[1500] absolute transition-transform duration-300 ease-in-out transform border-r border-slate-200 dark:border-slate-800">
             <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900">
                 <h2 class="text-xl font-bold text-slate-800 dark:text-white">Area Reports</h2>
                 <button onclick="toggleSidebar()" class="p-2 bg-slate-100 dark:bg-slate-800 rounded hover:bg-slate-200 transition">
@@ -44,11 +44,11 @@
                 <input type="text" id="search-bar" onkeyup="filterReports()" placeholder="Search keywords, #tags..." class="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-sm focus:ring-1 focus:ring-indigo-500 outline-none mb-3 dark:text-white">
                 
                 <div class="flex flex-wrap gap-2 mb-3" id="category-filters">
-                    <button onclick="setCategoryFilter('all')" class="filter-btn active text-xs uppercase font-bold tracking-wider px-3 py-1.5 rounded bg-indigo-600 text-white">All</button>
-                    <button onclick="setCategoryFilter('Harassment/Aggression')" class="filter-btn text-xs uppercase font-bold tracking-wider px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100">Harassment</button>
-                    <button onclick="setCategoryFilter('Crowd/Atmosphere')" class="filter-btn text-xs uppercase font-bold tracking-wider px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100">Crowds</button>
-                    <button onclick="setCategoryFilter('Environmental/Path Hazards')" class="filter-btn text-xs uppercase font-bold tracking-wider px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100">Hazards</button>
-                    <button onclick="setCategoryFilter('Accessibility/Obstructions')" class="filter-btn text-xs uppercase font-bold tracking-wider px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100">Accessibility</button>
+                    <button onclick="setCategoryFilter('all')" class="filter-btn active text-[11px] uppercase font-bold tracking-wider px-3 py-1.5 rounded bg-indigo-600 text-white">All</button>
+                    <button onclick="setCategoryFilter('Harassment/Aggression')" class="filter-btn text-[11px] uppercase font-bold tracking-wider px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100">Harassment</button>
+                    <button onclick="setCategoryFilter('Crowd/Atmosphere')" class="filter-btn text-[11px] uppercase font-bold tracking-wider px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100">Crowds</button>
+                    <button onclick="setCategoryFilter('Environmental/Path Hazards')" class="filter-btn text-[11px] uppercase font-bold tracking-wider px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100">Hazards</button>
+                    <button onclick="setCategoryFilter('Accessibility/Obstructions')" class="filter-btn text-[11px] uppercase font-bold tracking-wider px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100">Accessibility</button>
                 </div>
 
                 <div class="flex gap-3 items-center" id="sort-filters">
@@ -60,7 +60,7 @@
                 </div>
             </div>
             
-            <div id="reports-list" class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/50 dark:bg-slate-900">
+            <div id="reports-list" class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/50 dark:bg-slate-900 pb-20">
                 </div>
             
             <div class="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
@@ -76,7 +76,7 @@
 
         <div class="flex-1 relative bg-slate-200 dark:bg-slate-800 w-full h-full">
             
-            <div class="absolute top-6 left-6 md:left-[450px] z-[1600] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 w-[calc(100%-3rem)] md:w-80" id="route-panel" style="touch-action: none;">
+            <div class="absolute top-6 left-6 md:left-[490px] z-[1600] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 w-[calc(100%-3rem)] md:w-80" id="route-panel" style="touch-action: none;">
                 <div id="route-panel-header" class="cursor-move bg-slate-100 dark:bg-slate-800 p-3 rounded-t-lg border-b border-slate-200 dark:border-slate-700 flex justify-between items-center select-none">
                     <span class="flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-white">🧭 Route Finder</span>
                     <button onclick="clearRoute()" class="text-xs uppercase tracking-wider text-rose-500 hover:text-rose-600 hidden font-bold" id="clear-route-btn">✕ Clear</button>
@@ -239,15 +239,12 @@
                     <p class="text-xs font-medium text-emerald-500 mt-2 flex items-center gap-1"><span>↓</span> 5 mins faster than yesterday</p>
                 </div>
             </div>
-
             <h2 class="text-2xl font-bold text-slate-800 dark:text-white pt-4 border-t border-slate-200 dark:border-slate-800">NCR Regional Overview</h2>
-            
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div class="bg-white dark:bg-slate-900 p-6 rounded-lg shadow border border-slate-200 dark:border-slate-800">
                     <h3 class="font-bold text-slate-800 dark:text-white mb-6 text-sm uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 pb-2">City-Level Risk Summaries</h3>
                     <div class="space-y-5" id="city-summary-container"></div>
                 </div>
-
                 <div class="bg-white dark:bg-slate-900 p-6 rounded-lg shadow border border-slate-200 dark:border-slate-800">
                     <h3 class="font-bold text-slate-800 dark:text-white mb-6 text-sm uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 pb-2 flex items-center justify-between">
                         <span>Specific High Alert Zones</span>
