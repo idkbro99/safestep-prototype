@@ -42,11 +42,20 @@
 
             <div class="p-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
                 <input type="text" id="search-bar" onkeyup="filterReports()" placeholder="Search tags, locations..." class="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none mb-3 dark:text-white">
+                
                 <div class="flex flex-wrap gap-2 mb-3" id="category-filters">
                     <button onclick="setCategoryFilter('all')" class="filter-btn active text-xs px-3 py-1.5 rounded-full border border-indigo-500 bg-indigo-600 text-white font-medium shadow-sm">All</button>
                     <button onclick="setCategoryFilter('Harassment/Aggression')" class="filter-btn text-xs px-3 py-1.5 rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50">Harassment</button>
                     <button onclick="setCategoryFilter('Crowd/Atmosphere')" class="filter-btn text-xs px-3 py-1.5 rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50">Crowds</button>
                     <button onclick="setCategoryFilter('Environmental/Path Hazards')" class="filter-btn text-xs px-3 py-1.5 rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50">Hazards</button>
+                </div>
+
+                <div class="flex gap-2" id="sort-filters">
+                    <span class="text-xs text-slate-400 font-bold uppercase tracking-wider self-center mr-1">Sort:</span>
+                    <button onclick="setSortFilter('popular')" class="sort-btn active text-xs font-bold text-indigo-600 dark:text-indigo-400 underline decoration-2 underline-offset-4">Most Popular</button>
+                    <button onclick="setSortFilter('newest')" class="sort-btn text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-indigo-600">Newest</button>
+                    <button onclick="setSortFilter('oldest')" class="sort-btn text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-indigo-600">Oldest</button>
+                    <button onclick="setSortFilter('relevant')" class="sort-btn text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-indigo-600">Relevant</button>
                 </div>
             </div>
             
@@ -59,7 +68,7 @@
                 </button>
             </div>
             
-            <button id="expand-sidebar-btn" onclick="toggleSidebar()" class="hidden absolute -right-12 top-1/4 bg-indigo-900 text-white p-3 rounded-r-xl shadow-xl z-[-1]">
+            <button id="expand-sidebar-btn" onclick="toggleSidebar()" class="hidden absolute -right-12 top-[40%] bg-indigo-900 text-white p-3 rounded-r-xl shadow-xl z-[-1]">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
             </button>
         </div>
@@ -89,8 +98,7 @@
                         <span id="route-time">⏱ Time</span>
                     </div>
                     <p class="text-[10px] text-slate-500 uppercase tracking-wider font-bold mb-1">Path Instructions:</p>
-                    <ul id="route-streets" class="text-xs text-slate-600 dark:text-slate-300 max-h-32 overflow-y-auto space-y-1 bg-slate-50 dark:bg-slate-800 p-2 rounded-lg border border-slate-100 dark:border-slate-700">
-                        </ul>
+                    <ul id="route-streets" class="text-xs text-slate-600 dark:text-slate-300 max-h-32 overflow-y-auto space-y-1 bg-slate-50 dark:bg-slate-800 p-2 rounded-lg border border-slate-100 dark:border-slate-700"></ul>
                 </div>
             </div>
             
@@ -124,7 +132,7 @@
     <div id="flag-modal" class="hidden fixed inset-0 bg-slate-900/60 z-[10000] flex justify-center items-center backdrop-blur-sm">
         <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl w-11/12 max-w-sm shadow-2xl border border-slate-200 dark:border-slate-800">
             <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2"><span>🚩</span> Report this post</h3>
-            <p class="text-sm text-slate-600 dark:text-slate-400 mb-4">Why are you reporting this content? Our human moderators will review it shortly.</p>
+            <p class="text-sm text-slate-600 dark:text-slate-400 mb-4">Why are you reporting this content?</p>
             <select id="flag-reason" class="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl mb-4 text-sm outline-none dark:text-white">
                 <option value="">Select a reason...</option>
                 <option value="spam">Spam or misleading</option>
@@ -157,13 +165,28 @@
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Category <span class="text-rose-500">*</span></label>
-                    <select id="report-category" class="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl outline-none dark:text-white">
+                    <select id="report-category" class="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl outline-none dark:text-white" onchange="suggestTags()">
                         <option value="">Select an option...</option>
                         <option value="Harassment/Aggression">Harassment/Aggression</option>
                         <option value="Crowd/Atmosphere">Crowd/Atmosphere</option>
                         <option value="Environmental/Path Hazards">Environmental/Path Hazards</option>
+                        <option value="Accessibility/Obstructions">Accessibility/Obstructions</option>
                     </select>
                 </div>
+
+                <div class="bg-indigo-50/50 dark:bg-slate-800/50 p-4 rounded-xl border border-indigo-100 dark:border-slate-700">
+                    <label class="block text-xs font-bold text-indigo-800 dark:text-indigo-400 uppercase tracking-wider mb-2">Tags & Hashtags</label>
+                    <div id="ai-tags" class="hidden mb-3">
+                        <p class="text-xs text-indigo-600/70 dark:text-indigo-400 mb-1">AI Suggested (Click to add):</p>
+                        <div id="tag-container" class="flex gap-2 flex-wrap"></div>
+                    </div>
+                    <div class="flex gap-2 mb-2">
+                        <input type="text" id="custom-tag-input" placeholder="Type tag..." class="w-full p-2 border border-indigo-200 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none dark:text-white" onkeypress="handleTagKeypress(event)">
+                        <button onclick="addCustomTag()" class="bg-indigo-600 text-white px-4 rounded-lg text-sm hover:bg-indigo-700">Add</button>
+                    </div>
+                    <div id="active-tags-container" class="flex gap-2 flex-wrap min-h-[28px]"></div>
+                </div>
+
                 <div>
                     <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Description <span class="text-rose-500">*</span></label>
                     <textarea id="report-desc" class="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl h-24 outline-none resize-none dark:text-white" placeholder="(Min 15 chars)..."></textarea>
@@ -193,26 +216,71 @@
             <div class="bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-xl w-full max-w-md border border-slate-200 dark:border-slate-800">
                 <div class="text-center mb-8"><span class="text-4xl">🏢</span><h2 class="text-2xl font-bold mt-4 dark:text-white">Agency Login</h2></div>
                 <div class="space-y-4">
-                    <input type="text" id="org-name" placeholder="Organization" class="w-full p-3 bg-slate-50 dark:bg-slate-800 border rounded-xl outline-none dark:text-white" value="LGU Manila">
+                    <input type="text" id="org-name" placeholder="Organization (e.g. LGU Manila)" class="w-full p-3 bg-slate-50 dark:bg-slate-800 border rounded-xl outline-none dark:text-white" value="LGU Manila">
+                    <input type="text" id="emp-id" placeholder="Employee ID" class="w-full p-3 bg-slate-50 dark:bg-slate-800 border rounded-xl outline-none dark:text-white" value="EMP-4092">
                     <input type="password" id="emp-pass" placeholder="Password" class="w-full p-3 bg-slate-50 dark:bg-slate-800 border rounded-xl outline-none dark:text-white" value="password">
-                    <button onclick="loginPortal()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 shadow-md">Login</button>
+                    <button onclick="loginPortal()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 shadow-md">Secure Login</button>
                 </div>
             </div>
         </div>
 
-        <div id="portal-dashboard" class="hidden p-4 md:p-8 max-w-6xl mx-auto space-y-6">
-            <div class="bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
-                <h3 class="font-bold text-slate-800 dark:text-white mb-6 text-lg">NCR City Safety Overview</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-5" id="city-stats-container"></div>
+        <div id="portal-dashboard" class="hidden p-4 md:p-8 max-w-7xl mx-auto space-y-6">
+            
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 border-t-4 border-t-rose-500">
+                    <h3 class="text-slate-500 text-xs font-bold uppercase">Critical Zones (Manila)</h3>
+                    <p class="text-3xl font-extrabold mt-2 dark:text-white">12</p>
+                    <p class="text-xs font-medium text-rose-500 mt-2">↑ 3 new since yesterday</p>
+                </div>
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 border-t-4 border-t-indigo-500">
+                    <h3 class="text-slate-500 text-xs font-bold uppercase">Total Reports (24h)</h3>
+                    <p class="text-3xl font-extrabold mt-2 dark:text-white">148</p>
+                </div>
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 border-t-4 border-t-amber-500">
+                    <h3 class="text-slate-500 text-xs font-bold uppercase">Pending LGU Action</h3>
+                    <p class="text-3xl font-extrabold mt-2 dark:text-white">45</p>
+                </div>
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 border-t-4 border-t-emerald-500">
+                    <h3 class="text-slate-500 text-xs font-bold uppercase">Resolved Incidents</h3>
+                    <p class="text-3xl font-extrabold mt-2 dark:text-white">892</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
+                    <h3 class="font-bold text-slate-800 dark:text-white mb-6">Actionable Insights & Hotspots</h3>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-rose-50 dark:bg-rose-900/20 rounded-lg border border-rose-100 dark:border-rose-800">
+                            <h4 class="font-bold text-rose-700 dark:text-rose-400 text-sm">📍 FEU Tech / Morayta Street</h4>
+                            <p class="text-xs text-slate-600 dark:text-slate-300 mt-1">Spike in 'Environmental Hazards' due to heavy flooding and lack of streetlights near P. Campa.</p>
+                            <button class="mt-2 text-xs bg-rose-600 text-white px-3 py-1 rounded hover:bg-rose-700">Dispatch DPWH</button>
+                        </div>
+                        <div class="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-100 dark:border-amber-800">
+                            <h4 class="font-bold text-amber-700 dark:text-amber-400 text-sm">📍 SM San Lazaro / Tayuman</h4>
+                            <p class="text-xs text-slate-600 dark:text-slate-300 mt-1">High reports of 'Crowd/Atmosphere' issues and pickpocketing during rush hour (5PM-8PM).</p>
+                            <button class="mt-2 text-xs bg-amber-600 text-white px-3 py-1 rounded hover:bg-amber-700">Alert Local PNP</button>
+                        </div>
+                        <div class="p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg border border-indigo-100 dark:border-indigo-800">
+                            <h4 class="font-bold text-indigo-700 dark:text-indigo-400 text-sm">📍 UST / Espana Blvd</h4>
+                            <p class="text-xs text-slate-600 dark:text-slate-300 mt-1">Multiple reports of 'Accessibility/Obstructions'. Vendors blocking main pedestrian overpasses.</p>
+                            <button class="mt-2 text-xs bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700">Notify MMDA</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
+                    <h3 class="font-bold text-slate-800 dark:text-white mb-6">City Safety Index Status</h3>
+                    <div class="space-y-4" id="city-stats-container"></div>
+                </div>
             </div>
         </div>
     </div>
 
     <div id="emergency-modal" class="hidden fixed inset-0 bg-slate-900/80 z-[9999] flex justify-center items-center backdrop-blur-sm">
         <div class="bg-white dark:bg-slate-900 p-8 rounded-2xl text-center max-w-sm w-11/12 shadow-2xl">
-            <div class="bg-blue-100 dark:bg-blue-900/50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"><span class="text-3xl">🛡️</span></div>
+            <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"><span class="text-3xl">🛡️</span></div>
             <h3 class="text-2xl font-extrabold text-slate-800 dark:text-white mb-2">Securely Logged</h3>
-            <button onclick="closeEmergencyModal()" class="w-full mt-4 bg-slate-800 dark:bg-slate-700 text-white py-3 rounded-xl font-bold hover:bg-slate-900 shadow-lg">I am safe, close</button>
+            <button onclick="closeEmergencyModal()" class="w-full mt-4 bg-slate-800 text-white py-3 rounded-xl font-bold hover:bg-slate-900">I am safe, close</button>
         </div>
     </div>
 
