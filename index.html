@@ -14,7 +14,7 @@
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 overflow-hidden font-sans text-slate-800 dark:text-slate-200 transition-colors duration-300">
 
-    <div id="toast-container" class="fixed top-20 left-1/2 transform -translate-x-1/2 z-[9999] flex flex-col gap-2 pointer-events-none"></div>
+    <div id="toast-container" class="fixed top-20 left-1/2 transform -translate-x-1/2 z-[100000] flex flex-col gap-2 pointer-events-none"></div>
 
     <nav class="bg-indigo-900 dark:bg-slate-950 text-white p-3 md:p-4 flex justify-between items-center shadow-sm z-[2000] relative border-b border-indigo-800 dark:border-slate-800">
         <div class="flex items-center gap-3">
@@ -120,9 +120,11 @@
                 </div>
             </div>
 
-            <div class="absolute right-4 top-1/2 transform -translate-y-1/2 z-[1000] bg-white/95 dark:bg-slate-900/95 py-4 px-2 rounded-full shadow-xl border border-slate-200 dark:border-slate-700 flex flex-col items-center gap-3">
-                <span class="text-[9px] font-bold text-slate-500 uppercase tracking-widest rotate-180" style="writing-mode: vertical-rl;">Opacity</span>
-                <input type="range" id="heatmap-opacity" min="0" max="1" step="0.1" value="1" orient="vertical" class="w-2 h-32 appearance-slider-vertical cursor-pointer" oninput="updateOpacity()">
+            <div class="absolute right-4 top-1/2 transform -translate-y-1/2 z-[1000] bg-white/95 dark:bg-slate-900/95 py-5 px-3 rounded-full shadow-xl border border-slate-200 dark:border-slate-700 flex flex-col items-center gap-4">
+                <span class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1">Opacity</span>
+                <div class="relative w-4 h-32">
+                    <input type="range" id="heatmap-opacity" min="0" max="1" step="0.1" value="1" class="absolute top-1/2 left-1/2 w-32 h-1.5 -translate-x-1/2 -translate-y-1/2 -rotate-90 cursor-pointer accent-indigo-600 rounded-full appearance-none bg-slate-200 dark:bg-slate-700" oninput="updateOpacity()">
+                </div>
             </div>
             
         </div>
@@ -216,30 +218,26 @@
             </div>
         </div>
 
-        <div id="portal-dashboard" class="hidden p-6 md:p-8 max-w-6xl mx-auto space-y-6">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="lg:col-span-2 bg-white dark:bg-slate-900 p-6 rounded-lg shadow border border-slate-200 dark:border-slate-800">
-                    <h3 class="font-bold text-slate-800 dark:text-white mb-6 text-sm uppercase tracking-wider">Detailed Area Risk Analysis</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6" id="city-stats-container"></div>
-                </div>
+        <div id="portal-dashboard" class="hidden p-6 md:p-8 max-w-7xl mx-auto space-y-6">
+            <h2 class="text-2xl font-bold text-slate-800 dark:text-white">NCR Regional Overview</h2>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 
                 <div class="bg-white dark:bg-slate-900 p-6 rounded-lg shadow border border-slate-200 dark:border-slate-800">
-                    <h3 class="font-bold text-slate-800 dark:text-white mb-6 text-sm uppercase tracking-wider">Recent Agency Interventions</h3>
-                    <div class="space-y-4">
-                        <div class="p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 rounded">
-                            <p class="text-xs font-bold text-emerald-700 dark:text-emerald-400 mb-1">✅ Resolved: Broken Streetlight</p>
-                            <p class="text-xs text-slate-600 dark:text-slate-400">FEU Tech Alley - Team dispatched, lighting restored.</p>
+                    <h3 class="font-bold text-slate-800 dark:text-white mb-6 text-sm uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 pb-2">City-Level Risk Summaries</h3>
+                    <div class="space-y-5" id="city-summary-container">
                         </div>
-                        <div class="p-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded">
-                            <p class="text-xs font-bold text-indigo-700 dark:text-indigo-400 mb-1">🚓 Deployed: Patrol Unit</p>
-                            <p class="text-xs text-slate-600 dark:text-slate-400">SM San Lazaro terminal - Response to crowding reports.</p>
-                        </div>
-                        <div class="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800 rounded">
-                            <p class="text-xs font-bold text-amber-700 dark:text-amber-400 mb-1">🚧 Investigating: PWD Ramp Blockage</p>
-                            <p class="text-xs text-slate-600 dark:text-slate-400">UST España Blvd - Notifying barangay officials.</p>
-                        </div>
-                    </div>
                 </div>
+
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-lg shadow border border-slate-200 dark:border-slate-800">
+                    <h3 class="font-bold text-slate-800 dark:text-white mb-6 text-sm uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 pb-2 flex items-center justify-between">
+                        <span>Specific High Alert Zones</span>
+                        <span class="text-xs text-rose-500 bg-rose-50 dark:bg-rose-900/30 px-2 py-1 rounded">Requires Immediate Action</span>
+                    </h3>
+                    <div class="space-y-5" id="high-alert-container">
+                        </div>
+                </div>
+
             </div>
         </div>
     </div>
