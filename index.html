@@ -24,7 +24,7 @@
         <div class="flex gap-4 items-center">
             <button onclick="toggleDarkMode()" class="text-xl hover:scale-110 transition-transform" title="Toggle Dark Mode">🌓</button>
             <div class="hidden md:flex gap-2 text-xs font-bold uppercase tracking-wider items-center bg-indigo-800/50 dark:bg-slate-800 px-3 py-1.5 rounded border border-indigo-600 dark:border-slate-700 shadow-inner">
-                <span class="flex items-center gap-1"><div class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></div> AI-Screened</span>
+                <span class="flex items-center gap-1"><div class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></div> AI-Screened & Human Moderated</span>
             </div>
             <button onclick="togglePortal()" class="bg-white dark:bg-indigo-600 text-indigo-900 dark:text-white px-5 py-2 rounded-md text-sm font-bold hover:bg-indigo-50 hover:shadow transition-all">Partner Portal</button>
         </div>
@@ -76,7 +76,7 @@
 
         <div class="flex-1 relative bg-slate-200 dark:bg-slate-800 w-full h-full">
             
-            <div class="absolute top-6 left-6 md:left-[450px] z-[1000] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 w-[calc(100%-3rem)] md:w-80" id="route-panel" style="touch-action: none;">
+            <div class="absolute top-6 left-6 md:left-[450px] z-[1600] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 w-[calc(100%-3rem)] md:w-80" id="route-panel" style="touch-action: none;">
                 <div id="route-panel-header" class="cursor-move bg-slate-100 dark:bg-slate-800 p-3 rounded-t-lg border-b border-slate-200 dark:border-slate-700 flex justify-between items-center select-none">
                     <span class="flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-white">🧭 Route Finder</span>
                     <button onclick="clearRoute()" class="text-xs uppercase tracking-wider text-rose-500 hover:text-rose-600 hidden font-bold" id="clear-route-btn">✕ Clear</button>
@@ -105,14 +105,26 @@
             </div>
             
             <div id="map" class="w-full h-full z-[10]"></div>
-            
-            <div class="absolute bottom-8 right-8 z-[1000] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-4 py-3 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700">
-                <label class="inline-flex items-center cursor-pointer">
-                    <input type="checkbox" id="heatmap-toggle" class="sr-only peer" checked onchange="toggleHeatmap()">
-                    <div class="relative w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600"></div>
-                    <span class="ms-3 text-sm font-bold text-slate-700 dark:text-slate-200">Heatmap Layer</span>
-                </label>
+
+            <div class="absolute bottom-8 right-16 z-[1000] flex flex-col gap-3 items-end">
+                <button onclick="enableRadiusFilter()" id="radius-btn" class="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-xl font-bold text-sm hover:bg-indigo-700 transition flex items-center gap-2 border border-indigo-500">
+                    📍 Focus 5km Area
+                </button>
+                
+                <div class="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-4 py-3 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 flex items-center">
+                    <label class="inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="heatmap-toggle" class="sr-only peer" checked onchange="toggleHeatmap()">
+                        <div class="relative w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600"></div>
+                        <span class="ms-3 text-sm font-bold text-slate-700 dark:text-slate-200">Heatmap Layer</span>
+                    </label>
+                </div>
             </div>
+
+            <div class="absolute right-4 top-1/2 transform -translate-y-1/2 z-[1000] bg-white/95 dark:bg-slate-900/95 py-4 px-2 rounded-full shadow-xl border border-slate-200 dark:border-slate-700 flex flex-col items-center gap-3">
+                <span class="text-[9px] font-bold text-slate-500 uppercase tracking-widest rotate-180" style="writing-mode: vertical-rl;">Opacity</span>
+                <input type="range" id="heatmap-opacity" min="0" max="1" step="0.1" value="1" orient="vertical" class="w-2 h-32 appearance-slider-vertical cursor-pointer" oninput="updateOpacity()">
+            </div>
+            
         </div>
     </div>
 
@@ -182,7 +194,7 @@
             </div>
         </div>
     </div>
-
+    
     <div id="partner-portal" class="hidden fixed inset-0 bg-slate-100 dark:bg-slate-950 z-[9999] overflow-y-auto">
         <div class="bg-indigo-900 dark:bg-slate-900 text-white p-5 flex justify-between items-center shadow border-b border-indigo-800 dark:border-slate-800">
             <h1 class="text-xl font-bold">SafeStep | Partner Dashboard</h1>
