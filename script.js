@@ -10,27 +10,34 @@ let activeDetailId = null;
 let currentTags = [];
 let idCounter = 1;
 
+// Radius Filtering State
+let isRadiusActive = false;
+let radiusCenterCoords = null;
+let radiusCircle = null;
+
 // Custom Pin State
 let isPickingLocation = false;
 let customPinCoords = null;
 let customPinMarker = null;
 
-// Routing State
+// Routing & Dragging State
 let searchTimeout;
-let startCoords = null;
-let endCoords = null;
-
-// Route Dragging State
+let startCoords = null, endCoords = null;
 let isDragging = false, currentX=0, currentY=0, initialX=0, initialY=0, xOffset = 0, yOffset = 0;
 
-// High-Density Data Generation
+// High-Density Data Generation (Greatly Expanded for NCR)
 const hotspots = [
-    { name: 'FEU Tech & Main Area', lat: 14.6040, lng: 120.9875, risk: 90, spread: 0.005, reports: 45 },
+    { name: 'FEU Tech & Main', lat: 14.6040, lng: 120.9875, risk: 90, spread: 0.005, reports: 45 },
     { name: 'UST España Blvd', lat: 14.6096, lng: 120.9894, risk: 85, spread: 0.007, reports: 40 },
-    { name: 'SM San Lazaro Vicinity', lat: 14.6155, lng: 120.9841, risk: 75, spread: 0.006, reports: 35 },
+    { name: 'SM San Lazaro', lat: 14.6155, lng: 120.9841, risk: 75, spread: 0.006, reports: 35 },
     { name: 'LRT Tayuman Station', lat: 14.6168, lng: 120.9825, risk: 80, spread: 0.004, reports: 25 },
     { name: 'Quezon City (Cubao)', lat: 14.6186, lng: 121.0526, risk: 65, spread: 0.015, reports: 20 },
-    { name: 'Makati (CBD)', lat: 14.5547, lng: 121.0244, risk: 25, spread: 0.010, reports: 10 }
+    { name: 'Makati (CBD)', lat: 14.5547, lng: 121.0244, risk: 25, spread: 0.010, reports: 10 },
+    { name: 'Caloocan (Monumento)', lat: 14.6565, lng: 120.9830, risk: 70, spread: 0.012, reports: 20 },
+    { name: 'Pasig (Ortigas)', lat: 14.5800, lng: 121.0600, risk: 40, spread: 0.015, reports: 15 },
+    { name: 'Taguig (BGC)', lat: 14.5300, lng: 121.0450, risk: 15, spread: 0.010, reports: 8 },
+    { name: 'Pasay (Taft Ave)', lat: 14.5378, lng: 120.9980, risk: 85, spread: 0.010, reports: 30 },
+    { name: 'Mandaluyong (Shaw)', lat: 14.5794, lng: 121.0359, risk: 45, spread: 0.012, reports: 15 }
 ];
 
 let mockReports = [];
@@ -45,17 +52,11 @@ hotspots.forEach(spot => {
         if(type === 'Environmental/Path Hazards') issueDesc = "Poor lighting and potential flooding hazards reported.";
         
         mockReports.push({
-            id: idCounter++,
-            type: type,
-            title: `${type.split('/')[0]} near ${spot.name.split(' ')[0]}`,
-            desc: issueDesc,
-            cred: Math.floor(Math.random() * 300) + 10,
-            relevance: spot.risk + Math.random() * 30,
-            lat: spot.lat + (Math.random() - 0.5) * spot.spread,
-            lng: spot.lng + (Math.random() - 0.5) * spot.spread,
+            id: idCounter++, type: type, title: `${type.split('/')[0]} near ${spot.name.split(' ')[0]}`, desc: issueDesc,
+            cred: Math.floor(Math.random() * 300) + 10, relevance: spot.risk + Math.random() * 30,
+            lat: spot.lat + (Math.random() - 0.5) * spot.spread, lng: spot.lng + (Math.random() - 0.5) * spot.spread,
             tags: ['#' + spot.name.split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '')],
-            userVote: 0,
-            timestamp: Date.now() - (Math.random() * 10000000000), // Up to 115 days ago
+            userVote: 0, timestamp: Date.now() - (Math.random() * 10000000000), 
             comments: Math.random() > 0.6 ? [{text: "Noted, thank you for sharing.", isMine: false}] : [],
             isMine: false
         });
@@ -63,7 +64,7 @@ hotspots.forEach(spot => {
 });
 
 function initMap() {
-    map = L.map('map', { zoomControl: false }).setView(manilaCenter, 15);
+    map = L.map('map', { zoomControl: false }).setView(manilaCenter, 14);
     L.control.zoom({ position: 'topright' }).addTo(map);
 
     mapTilesLight = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 19 });
@@ -78,19 +79,93 @@ function initMap() {
     setupDrag();
 }
 
+// Haversine Formula for 5km calculation
+function getDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371; // km
+    const dLat = (lat2-lat1)*Math.PI/180;
+    const dLon = (lon2-lon1)*Math.PI/180;
+    const a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
 function populateHeatmap() {
     if(heatmapLayer) map.removeLayer(heatmapLayer);
-    let heatData = mockReports.map(r => [r.lat, r.lng, r.cred / 80]); 
+    
+    let filteredData = mockReports;
+    
+    // Apply 5km filter if active
+    if(isRadiusActive && radiusCenterCoords) {
+        filteredData = mockReports.filter(r => getDistance(radiusCenterCoords[0], radiusCenterCoords[1], r.lat, r.lng) <= 5);
+    }
+
+    let heatData = filteredData.map(r => [r.lat, r.lng, r.cred / 80]); 
     // Density Padding
-    mockReports.forEach(r => {
+    filteredData.forEach(r => {
         for(let i=0; i<4; i++) {
             heatData.push([r.lat + (Math.random()-0.5)*0.0015, r.lng + (Math.random()-0.5)*0.0015, Math.random() * 0.5]);
         }
     });
+    
     heatmapLayer = L.heatLayer(heatData, {
         radius: 26, blur: 22, maxZoom: 18,
         gradient: {0.4: 'blue', 0.6: 'cyan', 0.7: 'lime', 0.8: 'yellow', 1.0: 'red'}
-    }).addTo(map);
+    });
+    
+    if(document.getElementById('heatmap-toggle').checked) {
+        heatmapLayer.addTo(map);
+        updateOpacity(); // Apply current slider value
+    }
+}
+
+// --- 5km Focus Tool ---
+function enableRadiusFilter() {
+    const btn = document.getElementById('radius-btn');
+    if(isRadiusActive) {
+        // Turn off
+        isRadiusActive = false;
+        if(radiusCircle) map.removeLayer(radiusCircle);
+        btn.innerHTML = "📍 Focus 5km Area";
+        btn.classList.replace('bg-rose-600', 'bg-indigo-600');
+        populateHeatmap();
+        showToast("Showing all NCR data.", "success");
+    } else {
+        // Turn on
+        showToast("Click any location on the map to set 5km focus area.", "success");
+        document.getElementById('map').style.cursor = 'crosshair';
+        
+        map.once('click', function(e) {
+            document.getElementById('map').style.cursor = '';
+            radiusCenterCoords = [e.latlng.lat, e.latlng.lng];
+            isRadiusActive = true;
+            
+            if(radiusCircle) map.removeLayer(radiusCircle);
+            radiusCircle = L.circle(radiusCenterCoords, {radius: 5000, color: '#4f46e5', fillOpacity: 0.1, weight: 2}).addTo(map);
+            
+            btn.innerHTML = "✕ Clear 5km Focus";
+            btn.classList.replace('bg-indigo-600', 'bg-rose-600');
+            populateHeatmap();
+        });
+    }
+}
+
+// --- Adjustable Opacity Slider ---
+function updateOpacity() {
+    const val = document.getElementById('heatmap-opacity').value;
+    const canvases = document.querySelectorAll('.leaflet-heatmap-layer');
+    canvases.forEach(c => {
+        c.style.opacity = val;
+        c.style.transition = "opacity 0.2s ease-in-out";
+    });
+}
+
+// --- AI Moderation Check ---
+function aiContentCheck(text) {
+    const badWords = ['gago', 'puta', 'bobo', 'shit', 'fuck', 'spam', 'asshole'];
+    const lower = text.toLowerCase();
+    if(badWords.some(bw => lower.includes(bw))) return "Inappropriate language detected. Kept clean for community safety.";
+    if(/(.)\1{4,}/.test(text)) return "Gibberish or repetitive spam detected.";
+    if(text.length > 25 && !/\s/.test(text)) return "Invalid text format (missing spaces).";
+    return null;
 }
 
 // --- Custom Map Picker Logic ---
@@ -100,7 +175,6 @@ function enableMapPicker() {
     document.getElementById('map').style.cursor = 'crosshair';
     isPickingLocation = true;
     
-    // Listen for ONE click on the map
     map.once('click', function(e) {
         isPickingLocation = false;
         document.getElementById('map').style.cursor = '';
@@ -125,8 +199,7 @@ function setupDrag() {
     document.addEventListener("mousemove", drag, false);
 
     function dragStart(e) {
-        initialX = e.clientX - xOffset;
-        initialY = e.clientY - yOffset;
+        initialX = e.clientX - xOffset; initialY = e.clientY - yOffset;
         if (e.target === dragHeader || dragHeader.contains(e.target)) isDragging = true;
     }
 
@@ -138,16 +211,15 @@ function setupDrag() {
             let testX = e.clientX - initialX;
             let testY = e.clientY - initialY;
             
-            // Boundary constraints logic (Approximate based on window size to prevent losing the panel)
             const mapWidth = window.innerWidth;
             const mapHeight = window.innerHeight;
             const panelRect = dragItem.getBoundingClientRect();
             
-            // Constrain X and Y so the panel header doesn't go off-screen
-            const minX = -panelRect.left + xOffset + 20; // Allow slight overlap but keep visible
-            const maxX = mapWidth - panelRect.right + xOffset - 20;
-            const minY = -panelRect.top + yOffset + 20;
-            const maxY = mapHeight - panelRect.bottom + yOffset - 20;
+            // Constrain tightly to screen boundaries. Top boundary is 64px to avoid going under header.
+            const minX = -panelRect.left + xOffset + 10; 
+            const maxX = mapWidth - panelRect.right + xOffset - 10;
+            const minY = -panelRect.top + yOffset + 64; // Respect Header
+            const maxY = mapHeight - panelRect.bottom + yOffset - 10;
 
             currentX = Math.max(minX, Math.min(testX, maxX));
             currentY = Math.max(minY, Math.min(testY, maxY));
@@ -182,6 +254,7 @@ function toggleDarkMode() {
     } else {
         html.classList.add('dark'); map.removeLayer(mapTilesLight); mapTilesDark.addTo(map);
     }
+    updateOpacity();
 }
 
 function toggleSidebar() {
@@ -190,7 +263,7 @@ function toggleSidebar() {
 }
 
 function toggleHeatmap() {
-    if(document.getElementById('heatmap-toggle').checked) map.addLayer(heatmapLayer);
+    if(document.getElementById('heatmap-toggle').checked) { map.addLayer(heatmapLayer); updateOpacity(); }
     else map.removeLayer(heatmapLayer);
 }
 
@@ -222,7 +295,9 @@ function filterReports() {
     let filtered = mockReports.filter(report => {
         const matchCat = activeFilter === 'all' || report.type === activeFilter;
         const matchSearch = report.title.toLowerCase().includes(search) || report.desc.toLowerCase().includes(search);
-        return matchCat && matchSearch;
+        // If 5km radius is active, also filter list view
+        const matchRadius = (!isRadiusActive || !radiusCenterCoords) ? true : (getDistance(radiusCenterCoords[0], radiusCenterCoords[1], report.lat, report.lng) <= 5);
+        return matchCat && matchSearch && matchRadius;
     });
 
     if(activeSort === 'relevant') filtered.sort((a,b) => b.relevance - a.relevance);
@@ -244,7 +319,6 @@ function renderReports(reportsToRender = null) {
         if(report.type.includes('Hazards')) typeColor = 'text-amber-600 bg-amber-50 border-amber-100';
         if(report.type.includes('Accessibility')) typeColor = 'text-purple-600 bg-purple-50 border-purple-100 dark:bg-purple-900/30 dark:text-purple-400 border-purple-800';
 
-        // Bug Fix: Added event.stopPropagation() to all interactive buttons
         const actionBtn = report.isMine 
             ? `<button onclick="event.stopPropagation(); deleteReport(${report.id})" class="text-rose-500 hover:text-rose-700 font-bold text-xs bg-rose-50 dark:bg-rose-900/30 px-2 py-1 rounded">🗑 Delete</button>`
             : `<button onclick="event.stopPropagation(); openFlagModal(${report.id})" class="text-slate-400 hover:text-rose-500 font-bold text-xs">🚩 Flag</button>`;
@@ -274,7 +348,7 @@ function renderReports(reportsToRender = null) {
     });
 }
 
-// --- Interaction Logic (Bug fixes implemented) ---
+// --- Interaction Logic ---
 function deleteReport(id) {
     if(confirm("Are you sure you want to permanently delete this report?")) {
         mockReports = mockReports.filter(r => r.id !== id);
@@ -301,7 +375,7 @@ function openFlagModal(id) {
 function closeFlagModal() { document.getElementById('flag-modal').classList.add('hidden'); }
 function submitFlag() {
     if(!document.getElementById('flag-reason').value) return showToast("Select a reason.", "error");
-    closeFlagModal(); showToast("Report flagged for review.", "success");
+    closeFlagModal(); showToast("Report flagged for human review.", "success");
 }
 
 function voteReport(id, change) {
@@ -338,6 +412,11 @@ function closeDetailModal() { document.getElementById('report-detail-modal').cla
 function submitComment() {
     const val = document.getElementById('new-comment').value.trim();
     if(!val) return;
+    
+    // AI Content Check for Comments
+    const aiError = aiContentCheck(val);
+    if(aiError) return showToast(`AI Flag: ${aiError}`, "error");
+
     const report = mockReports.find(r => r.id === activeDetailId);
     report.comments.push({ text: val, isMine: true }); 
     document.getElementById('new-comment').value = '';
@@ -358,6 +437,10 @@ function submitReport() {
     const privacy = document.getElementById('loc-privacy').value;
     
     if(!title || !cat || desc.length < 15) return showToast("Please fill all required fields correctly.", "error");
+
+    // AI Content Check for Reports
+    const aiError = aiContentCheck(desc) || aiContentCheck(title);
+    if(aiError) return showToast(`AI Flag: ${aiError}`, "error");
 
     // Use custom pin if selected, else drop near center
     let finalLat = manilaCenter[0] + (Math.random() - 0.5) * 0.01;
@@ -471,8 +554,8 @@ async function calculateRealRoute() {
         const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
         const distKm = (data.routes[0].distance / 1000).toFixed(2);
         
-        // Fix: OSRM pedestrian speed is optimistic. Multiplier * 1.3 adds realism for Manila traffic/crossings
-        const timeMin = Math.round((data.routes[0].duration * 1.3) / 60);
+        // Accurate walking formula: Manila average urban pace is 3.5 km/h. Distance / Speed * 60 = Minutes.
+        const timeMin = Math.round((distKm / 3.5) * 60);
 
         if(routingLine) map.removeLayer(routingLine);
         routingLine = L.polyline(coords, { color: '#4f46e5', weight: 6, opacity: 0.8 }).addTo(map);
