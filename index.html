@@ -4,381 +4,194 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SafeStep | Urban Safety Navigator</title>
-    
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
-    
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <style>
-        body { font-family: 'Inter', sans-serif; overflow: hidden; }
-        #map { height: calc(100vh - 64px); width: 100%; z-index: 1; }
-        .sidebar { height: calc(100vh - 64px); overflow-y: auto; z-index: 10; }
-        .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
-        .hidden { display: none !important; }
-        
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #888; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #555; }
-    </style>
+    <link rel="stylesheet" href="style.css">
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=visualization,places"></script>
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-100 overflow-hidden font-sans">
 
-    <nav class="bg-indigo-900 text-white h-16 flex items-center justify-between px-6 shadow-lg relative z-20">
+    <nav class="bg-blue-900 text-white p-4 flex justify-between items-center shadow-lg z-50 relative">
         <div class="flex items-center gap-2">
-            <i class="fa-solid fa-shield-halved text-2xl text-blue-400"></i>
-            <h1 class="text-xl font-bold tracking-wider">SafeStep</h1>
-            <span class="ml-4 text-xs bg-indigo-700 px-2 py-1 rounded text-indigo-200 border border-indigo-500">
-                <i class="fa-solid fa-robot mr-1"></i> AI Oversight Active
-            </span>
+            <h1 class="text-2xl font-bold tracking-wider">SafeStep</h1>
+            <span class="text-xs bg-blue-700 px-2 py-1 rounded-full">NCR Coverage</span>
         </div>
-        <div class="flex gap-4">
-            <button onclick="switchTab('user')" id="btn-user" class="px-4 py-2 bg-indigo-700 rounded-md font-semibold transition hover:bg-indigo-600">User Window</button>
-            <button onclick="switchTab('partner')" id="btn-partner" class="px-4 py-2 bg-transparent rounded-md font-semibold transition hover:bg-indigo-600">Partner Portal</button>
+        <div class="flex gap-4 items-center">
+            <div class="hidden md:flex gap-2 text-xs items-center bg-blue-800 px-3 py-1 rounded border border-blue-600">
+                <span>🛡️ AI-Screened</span>
+                <span>|</span>
+                <span>👁️ Human Monitored</span>
+            </div>
+            <button onclick="togglePortal()" class="bg-white text-blue-900 px-4 py-2 rounded font-semibold hover:bg-gray-200 transition">Partner Portal</button>
         </div>
     </nav>
 
-    <main id="view-user" class="flex w-full relative">
+    <div class="flex h-[calc(100vh-64px)] relative">
         
-        <aside class="w-96 glass-panel shadow-2xl sidebar flex flex-col absolute left-0 top-0 border-r border-gray-200">
-            
-            <div class="p-4 border-b border-gray-200 bg-blue-50">
-                <h2 class="font-bold text-gray-800 mb-2"><i class="fa-solid fa-route text-blue-600 mr-2"></i>Safest Route Calculator</h2>
-                <div class="space-y-2">
-                    <input type="text" placeholder="Start Point (e.g., FEU Tech)" class="w-full text-sm p-2 border rounded">
-                    <input type="text" placeholder="Destination (e.g., LRT Recto)" class="w-full text-sm p-2 border rounded">
-                    <button onclick="calculateRoute()" class="w-full bg-blue-600 text-white py-2 rounded text-sm font-bold hover:bg-blue-700 transition">Find Safe Route</button>
+        <div id="user-sidebar" class="w-full md:w-1/3 bg-white h-full shadow-xl flex flex-col z-10 absolute md:relative transition-transform duration-300 transform -translate-x-full md:translate-x-0">
+            <div class="p-4 border-b bg-gray-50">
+                <h2 class="text-xl font-bold text-gray-800 mb-2">Reports near you (5km)</h2>
+                <div class="flex gap-2 mb-2">
+                    <input type="text" placeholder="Search tags, hashtags..." class="w-full p-2 border rounded focus:outline-blue-500">
+                </div>
+                <div class="flex gap-2 text-sm overflow-x-auto pb-1">
+                    <button class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full whitespace-nowrap">Most Recent</button>
+                    <button class="bg-gray-200 text-gray-700 px-3 py-1 rounded-full whitespace-nowrap">High Cred Score</button>
+                    <button class="bg-gray-200 text-gray-700 px-3 py-1 rounded-full whitespace-nowrap">Resolved</button>
                 </div>
             </div>
+            <div id="reports-list" class="flex-1 overflow-y-auto p-4 space-y-4">
+                </div>
+            
+            <div class="p-4 border-t bg-gray-50">
+                <button onclick="openReportModal()" class="w-full bg-red-600 text-white font-bold py-3 rounded shadow hover:bg-red-700 transition">
+                    + Report an Incident / Hazard
+                </button>
+            </div>
+            
+            <button onclick="toggleSidebar()" class="md:hidden absolute -right-10 top-1/2 bg-white p-2 rounded-r shadow-lg border-y border-r border-gray-300">
+                ▶
+            </button>
+        </div>
 
-            <div class="p-4 flex-1 flex flex-col">
-                <div class="flex justify-between items-center mb-3">
-                    <h2 class="font-bold text-gray-800">Reports <span class="text-xs text-gray-500 font-normal">(5km Radius)</span></h2>
-                    <select class="text-xs border rounded p-1">
-                        <option>Most Recent</option>
-                        <option>Highest Cred Score</option>
+        <div class="flex-1 relative">
+            <div class="absolute top-4 left-4 z-10 bg-white p-3 rounded shadow-lg w-80">
+                <h3 class="font-bold text-sm text-gray-700 mb-2">Find Safest Route</h3>
+                <input type="text" id="route-start" placeholder="Starting point (e.g. FEU Tech)" class="w-full p-2 border rounded mb-2 text-sm">
+                <input type="text" id="route-end" placeholder="Destination" class="w-full p-2 border rounded mb-2 text-sm">
+                <button class="w-full bg-blue-600 text-white py-1 rounded text-sm hover:bg-blue-700">Calculate Route</button>
+            </div>
+            
+            <div id="map" class="w-full h-full"></div>
+            <div class="absolute bottom-6 right-6 z-10 bg-white p-2 rounded shadow flex items-center gap-2">
+                <input type="checkbox" id="heatmap-toggle" checked onchange="toggleHeatmap()">
+                <label for="heatmap-toggle" class="text-sm font-bold text-gray-700">Safety Consensus Heatmap</label>
+            </div>
+        </div>
+    </div>
+
+    <div id="report-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 z-[100] flex justify-center items-center backdrop-blur-sm">
+        <div class="bg-white p-6 rounded-lg w-11/12 md:w-1/2 max-h-[90vh] overflow-y-auto">
+            <h2 class="text-2xl font-bold text-red-600 mb-4">Submit a Report</h2>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700">Location Privacy</label>
+                    <select id="loc-privacy" class="w-full p-2 border rounded mt-1">
+                        <option value="approx">Approximate (50m radius) - Recommended</option>
+                        <option value="precise">Precise Pin</option>
                     </select>
                 </div>
                 
-                <div class="mb-4 space-y-2">
-                    <div class="relative">
-                        <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400 text-sm"></i>
-                        <input type="text" placeholder="Search hashtags..." class="w-full pl-8 pr-3 py-2 text-sm border rounded-full bg-gray-50">
-                    </div>
-                    <div class="flex gap-1 overflow-x-auto pb-1 text-xs">
-                        <span class="bg-red-100 text-red-700 px-2 py-1 rounded-full whitespace-nowrap cursor-pointer hover:bg-red-200">#Harassment</span>
-                        <span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full whitespace-nowrap cursor-pointer hover:bg-yellow-200">#Hazards</span>
-                        <span class="bg-purple-100 text-purple-700 px-2 py-1 rounded-full whitespace-nowrap cursor-pointer hover:bg-purple-200">#Crowd</span>
-                    </div>
-                </div>
-
-                <div id="reports-container" class="space-y-4 flex-1 overflow-y-auto pr-2">
-                    </div>
-            </div>
-        </aside>
-
-        <div id="map" class="flex-1"></div>
-
-        <button onclick="openReportModal()" class="absolute bottom-8 right-8 bg-red-600 text-white rounded-full w-16 h-16 shadow-[0_0_15px_rgba(220,38,38,0.5)] flex justify-center items-center text-2xl hover:bg-red-700 hover:scale-105 transition z-20">
-            <i class="fa-solid fa-bullhorn"></i>
-        </button>
-
-        <div class="absolute bottom-8 left-[400px] glass-panel p-3 rounded-lg shadow-lg z-20 border border-gray-200 text-xs">
-            <p class="font-bold mb-1">AI-Weighted Heatmap</p>
-            <div class="flex items-center gap-2 mb-1"><div class="w-3 h-3 rounded-full bg-red-600"></div> High Risk</div>
-            <div class="flex items-center gap-2 mb-1"><div class="w-3 h-3 rounded-full bg-yellow-400"></div> Medium Risk</div>
-            <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-green-400"></div> Low Risk</div>
-        </div>
-    </main>
-
-    <main id="view-partner" class="hidden w-full h-[calc(100vh-64px)] overflow-y-auto p-8 bg-gray-50">
-        <div class="max-w-6xl mx-auto space-y-6">
-            <div class="flex justify-between items-end">
                 <div>
-                    <h2 class="text-3xl font-bold text-gray-800">LGU & Partner Dashboard</h2>
-                    <p class="text-gray-500">NCR Safety Data Summary & Analytics</p>
-                </div>
-                <button class="bg-indigo-600 text-white px-4 py-2 rounded shadow hover:bg-indigo-700">Export PDF Report</button>
-            </div>
-
-            <div class="grid grid-cols-4 gap-4">
-                <div class="bg-white p-4 rounded-lg shadow border-l-4 border-blue-500">
-                    <p class="text-sm text-gray-500">Total Reports (Manila)</p>
-                    <p class="text-2xl font-bold">1,284 <span class="text-sm text-green-500">↑ 12%</span></p>
-                </div>
-                <div class="bg-white p-4 rounded-lg shadow border-l-4 border-red-500">
-                    <p class="text-sm text-gray-500">Top Hazard Category</p>
-                    <p class="text-xl font-bold">Path Hazards</p>
-                </div>
-                <div class="bg-white p-4 rounded-lg shadow border-l-4 border-yellow-500">
-                    <p class="text-sm text-gray-500">Pending Resolutions</p>
-                    <p class="text-2xl font-bold">342</p>
-                </div>
-                <div class="bg-white p-4 rounded-lg shadow border-l-4 border-indigo-500">
-                    <p class="text-sm text-gray-500">Community Cred Score</p>
-                    <p class="text-2xl font-bold">88.5/100</p>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-6">
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <h3 class="font-bold text-gray-700 mb-4">Safety Comparison (NCR Cities)</h3>
-                    <canvas id="cityChart"></canvas>
-                </div>
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <h3 class="font-bold text-gray-700 mb-4">Report Categories Breakdown</h3>
-                    <canvas id="categoryChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <div id="report-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center backdrop-blur-sm">
-        <div class="bg-white w-full max-w-lg rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div class="bg-red-600 text-white px-6 py-4 flex justify-between items-center">
-                <h3 class="font-bold text-lg"><i class="fa-solid fa-triangle-exclamation mr-2"></i> File a Safety Report</h3>
-                <button onclick="closeReportModal()" class="text-white hover:text-red-200"><i class="fa-solid fa-xmark text-xl"></i></button>
-            </div>
-            
-            <div class="p-6 overflow-y-auto space-y-4">
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">Location Precision (For your safety)</label>
-                    <div class="flex gap-4">
-                        <label class="flex items-center text-sm"><input type="radio" name="loc" checked class="mr-1"> Approximate (50m radius)</label>
-                        <label class="flex items-center text-sm"><input type="radio" name="loc" class="mr-1"> Precise Pin</label>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">Category</label>
-                    <select id="report-category" class="w-full border p-2 rounded text-sm bg-gray-50">
-                        <option>Harassment/aggression (Direct)</option>
-                        <option>Crowd/atmosphere (Indirect)</option>
-                        <option>Environmental/path hazards</option>
-                        <option>Accessibility/obstructions</option>
+                    <label class="block text-sm font-bold text-gray-700">Category</label>
+                    <select id="report-category" class="w-full p-2 border rounded mt-1" onchange="suggestTags()">
+                        <option value="">Select an option...</option>
+                        <option value="harassment">Harassment/Aggression</option>
+                        <option value="crowd">Crowd/Atmosphere</option>
+                        <option value="environmental">Environmental/Path Hazards</option>
+                        <option value="accessibility">Accessibility/Obstructions</option>
                     </select>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">Description (Min. 15 characters)</label>
-                    <textarea id="report-desc" rows="3" class="w-full border p-2 rounded text-sm bg-gray-50" placeholder="Tell us about the problem..."></textarea>
-                    <p id="desc-error" class="text-red-500 text-xs mt-1 hidden">Description must be at least 15 characters and free of offensive language.</p>
+                <div id="ai-tags" class="hidden">
+                    <label class="block text-xs text-gray-500 mb-1">AI Suggested Tags (Click to add):</label>
+                    <div id="tag-container" class="flex gap-2 flex-wrap"></div>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">Evidence (Optional)</label>
-                    <div class="border-2 border-dashed border-gray-300 rounded p-4 text-center cursor-pointer hover:bg-gray-50">
-                        <i class="fa-solid fa-cloud-arrow-up text-gray-400 text-xl mb-1"></i>
-                        <p class="text-xs text-gray-500">Click to upload photo or video</p>
-                    </div>
+                    <label class="block text-sm font-bold text-gray-700">Description (Min 15 chars)</label>
+                    <textarea id="report-desc" class="w-full p-2 border rounded mt-1 h-24" placeholder="Tell us about the problem in detail..."></textarea>
+                    <p id="char-count" class="text-xs text-gray-500 text-right">0/15 min</p>
                 </div>
 
                 <div>
-                    <p class="text-xs text-indigo-600 font-semibold mb-1"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i>AI Suggested Tags:</p>
-                    <div class="flex gap-2">
-                        <span class="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded cursor-pointer">+ #DarkAlley</span>
-                        <span class="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded cursor-pointer">+ #RequiresMaintenance</span>
-                    </div>
+                    <label class="block text-sm font-bold text-gray-700">Media (Optional)</label>
+                    <input type="file" class="w-full p-2 border rounded mt-1 text-sm">
                 </div>
 
-                <div class="bg-orange-50 p-3 rounded border border-orange-200 mt-4">
+                <div class="bg-yellow-50 p-3 rounded border border-yellow-200 text-sm">
                     <label class="flex items-start gap-2 cursor-pointer">
                         <input type="checkbox" id="safety-confirm" class="mt-1">
-                        <span class="text-xs text-orange-800 font-medium">I confirm that I am currently in a safe location to make this report, or I accept the risks to post instantly.</span>
+                        <span>I confirm that I am currently in a safe location to make this report, or I accept the risks to post instantly.</span>
                     </label>
                 </div>
-            </div>
 
-            <div class="border-t p-4 bg-gray-50 flex justify-end">
-                <button onclick="submitReport()" class="bg-red-600 text-white px-6 py-2 rounded font-bold hover:bg-red-700 transition w-full shadow-lg">Submit Report Anonymously</button>
+                <div class="flex justify-end gap-3 mt-4">
+                    <button onclick="closeReportModal()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Cancel</button>
+                    <button onclick="submitReport()" class="bg-red-600 text-white px-6 py-2 rounded font-bold hover:bg-red-700">Post Report</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <div id="safety-popup" class="hidden fixed inset-0 z-[60] flex justify-center items-center">
-        <div class="bg-white p-6 rounded-lg shadow-2xl text-center max-w-sm border-t-4 border-indigo-600">
-            <i class="fa-solid fa-heart-circle-check text-4xl text-green-500 mb-3"></i>
-            <h3 class="font-bold text-lg mb-2">Report Submitted</h3>
-            <p class="text-sm text-gray-600 mb-4">We hope you are safe. If you are in immediate danger, please contact authorities.</p>
-            <div class="space-y-2 mb-4 text-left bg-gray-50 p-3 rounded text-sm">
-                <p><strong>PNP Emergency:</strong> 911</p>
-                <p><strong>Manila Police Dist:</strong> (02) 8523-3378</p>
-                <p><strong>FEU Security:</strong> (02) 8281-8888</p>
+    <div id="emergency-modal" class="hidden fixed inset-0 bg-black bg-opacity-80 z-[200] flex justify-center items-center">
+        <div class="bg-white p-8 rounded-lg text-center max-w-sm w-11/12">
+            <h2 class="text-3xl mb-2">🛡️</h2>
+            <h3 class="text-xl font-bold mb-4">We hope you are safe.</h3>
+            <p class="text-gray-600 mb-6 text-sm">Your report has been securely logged. If you need immediate assistance, please contact local authorities.</p>
+            <div class="space-y-2 mb-6 text-left bg-gray-100 p-4 rounded">
+                <p class="font-bold text-sm">NCR Emergency Numbers:</p>
+                <p class="text-sm">National Emergency: <span class="text-red-600 font-bold">911</span></p>
+                <p class="text-sm">PNP Manila: <span class="font-bold">117</span></p>
+                <p class="text-sm">Red Cross: <span class="font-bold">143</span></p>
             </div>
-            <button onclick="document.getElementById('safety-popup').classList.add('hidden')" class="bg-gray-800 text-white px-4 py-2 rounded text-sm w-full">Close</button>
+            <button onclick="closeEmergencyModal()" class="w-full bg-blue-900 text-white py-2 rounded font-bold">I am safe, close this</button>
         </div>
     </div>
 
-    <script>
-        // --- 1. MOCK DATABASE & DATA ---
-        // Coordinates focused around FEU Tech, Manila (14.6042° N, 120.9892° E)
-        const sampleReports = [
-            { id: 1, type: "Harassment/aggression", desc: "Group of men catcalling students walking towards Morayta overpass. Very uncomfortable.", lat: 14.6035, lng: 120.9880, cred: 85, time: "10 mins ago", tags: ["#Catcalling", "#Morayta"] },
-            { id: 2, type: "Environmental/path hazards", desc: "Streetlights are completely broken in this alley connecting P. Campa to España. It's too dark.", lat: 14.6050, lng: 120.9895, cred: 112, time: "1 hour ago", tags: ["#DarkAlley", "#PCampa"] },
-            { id: 3, type: "Accessibility/obstructions", desc: "Sidewalk is entirely blocked by illegal vendors and parked motorcycles. PWD ramp is inaccessible.", lat: 14.6028, lng: 120.9900, cred: 45, time: "3 hours ago", tags: ["#BlockedPath", "#Lerma"] },
-            { id: 4, type: "Crowd/atmosphere", desc: "Rowdy and intoxicated group loitering outside the convenience store near the gate.", lat: 14.6045, lng: 120.9875, cred: 70, time: "Yesterday", tags: ["#Loiterers", "#Intoxicated"] }
-        ];
-
-        // Heatmap points (Lat, Lng, Intensity)
-        const heatmapData = [
-            [14.6035, 120.9880, 0.8], [14.6036, 120.9881, 0.9], [14.6034, 120.9879, 0.7], // Hotspot 1 (Morayta)
-            [14.6050, 120.9895, 0.6], [14.6051, 120.9894, 0.5], // Hotspot 2 (P. Campa)
-            [14.6028, 120.9900, 0.4], // Hotspot 3
-            [14.6010, 120.9850, 0.8], [14.6012, 120.9855, 0.9] // Quiapo Area hotspot
-        ];
-
-        // --- 2. INITIALIZE MAP (LEAFLET) ---
-        // Using CartoDB Positron for a clean, Google-Maps-like aesthetic
-        const map = L.map('map', { zoomControl: false }).setView([14.6042, 120.9892], 16);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
-        }).addTo(map);
+    <div id="partner-portal" class="hidden fixed inset-0 bg-gray-100 z-[150] overflow-y-auto">
+        <div class="bg-blue-900 text-white p-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold">SafeStep | Partner Portal</h1>
+            <button onclick="togglePortal()" class="text-white hover:text-gray-300 font-bold text-xl">✕</button>
+        </div>
         
-        // Move zoom control to bottom right
-        L.control.zoom({ position: 'bottomright' }).addTo(map);
+        <div id="portal-login" class="flex justify-center items-center h-[80vh]">
+            <div class="bg-white p-8 rounded-lg shadow-lg w-96">
+                <h2 class="text-xl font-bold mb-6 text-center text-gray-800">Agency Login</h2>
+                <input type="text" id="org-name" placeholder="Organization (e.g. LGU Manila)" class="w-full p-2 border rounded mb-4" value="LGU Manila">
+                <input type="text" id="emp-id" placeholder="Employee ID" class="w-full p-2 border rounded mb-4" value="EMP-12345">
+                <input type="password" id="emp-pass" placeholder="Password" class="w-full p-2 border rounded mb-6" value="password">
+                <button onclick="loginPortal()" class="w-full bg-blue-900 text-white py-2 rounded font-bold">Login</button>
+            </div>
+        </div>
 
-        // Add Heatmap layer (simulating AI consensus overlay)
-        const heat = L.heatLayer(heatmapData, {
-            radius: 25,
-            blur: 15,
-            maxZoom: 17,
-            gradient: { 0.4: 'green', 0.6: 'yellow', 1.0: 'red' }
-        }).addTo(map);
-
-        // Add pins for reports
-        sampleReports.forEach(report => {
-            const marker = L.marker([report.lat, report.lng]).addTo(map);
-            marker.bindPopup(`<b>${report.type}</b><br>${report.desc}<br><small>Cred Score: ${report.cred}</small>`);
-        });
-
-        // --- 3. UI RENDERING & LOGIC ---
-        function renderReports() {
-            const container = document.getElementById('reports-container');
-            container.innerHTML = sampleReports.map(report => `
-                <div class="bg-white border border-gray-100 rounded-lg p-3 shadow-sm hover:shadow-md transition">
-                    <div class="flex justify-between items-start mb-2">
-                        <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">${report.type}</span>
-                        <div class="flex items-center gap-2 text-gray-400">
-                            <span class="text-xs">${report.time}</span>
-                            <i class="fa-solid fa-ellipsis-vertical cursor-pointer hover:text-gray-700"></i>
-                        </div>
+        <div id="portal-dashboard" class="hidden p-8 max-w-6xl mx-auto space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded shadow border-t-4 border-red-500">
+                    <h3 class="text-gray-500 text-sm font-bold">High Risk Areas (NCR)</h3>
+                    <p class="text-3xl font-bold mt-2 text-gray-800">14</p>
+                    <p class="text-xs text-green-500 mt-2">↓ 2% from last week</p>
+                </div>
+                <div class="bg-white p-6 rounded shadow border-t-4 border-blue-500">
+                    <h3 class="text-gray-500 text-sm font-bold">Active Reports (24h)</h3>
+                    <p class="text-3xl font-bold mt-2 text-gray-800">342</p>
+                </div>
+                <div class="bg-white p-6 rounded shadow border-t-4 border-green-500">
+                    <h3 class="text-gray-500 text-sm font-bold">Resolved via Agency</h3>
+                    <p class="text-3xl font-bold mt-2 text-gray-800">89</p>
+                </div>
+            </div>
+            
+            <div class="bg-white p-6 rounded shadow">
+                <h3 class="font-bold text-gray-800 mb-4">City Safety Comparison Index (Simulated Data)</h3>
+                <div class="space-y-3">
+                    <div>
+                        <div class="flex justify-between text-sm mb-1"><span>Manila (Sampaloc/FEU area)</span><span class="text-red-500 font-bold">High Alert</span></div>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5"><div class="bg-red-500 h-2.5 rounded-full" style="width: 85%"></div></div>
                     </div>
-                    <p class="text-sm text-gray-800 mb-3">${report.desc}</p>
-                    <div class="flex justify-between items-center">
-                        <div class="flex gap-1">
-                            ${report.tags.map(t => `<span class="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">${t}</span>`).join('')}
-                        </div>
-                        <div class="flex items-center gap-2 text-sm bg-gray-50 px-2 py-1 rounded border">
-                            <button class="text-green-600 hover:text-green-800"><i class="fa-solid fa-arrow-up"></i></button>
-                            <span class="font-bold text-gray-700">${report.cred}</span>
-                            <button class="text-red-600 hover:text-red-800"><i class="fa-solid fa-arrow-down"></i></button>
-                        </div>
+                    <div>
+                        <div class="flex justify-between text-sm mb-1"><span>Quezon City</span><span class="text-yellow-600 font-bold">Moderate</span></div>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5"><div class="bg-yellow-400 h-2.5 rounded-full" style="width: 60%"></div></div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-sm mb-1"><span>Makati</span><span class="text-green-600 font-bold">Safe</span></div>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5"><div class="bg-green-500 h-2.5 rounded-full" style="width: 25%"></div></div>
                     </div>
                 </div>
-            `).join('');
-        }
-        renderReports();
+            </div>
+        </div>
+    </div>
 
-        // Navigation Tabs
-        function switchTab(tab) {
-            if (tab === 'user') {
-                document.getElementById('view-user').classList.remove('hidden');
-                document.getElementById('view-partner').classList.add('hidden');
-                document.getElementById('btn-user').classList.add('bg-indigo-700');
-                document.getElementById('btn-partner').classList.remove('bg-indigo-700');
-                map.invalidateSize(); // Fix map rendering when unhidden
-            } else {
-                document.getElementById('view-user').classList.add('hidden');
-                document.getElementById('view-partner').classList.remove('hidden');
-                document.getElementById('btn-partner').classList.add('bg-indigo-700');
-                document.getElementById('btn-user').classList.remove('bg-indigo-700');
-                renderCharts(); // Render Partner charts
-            }
-        }
-
-        // --- 4. FORM VALIDATION & SUBMISSION ---
-        function openReportModal() { document.getElementById('report-modal').classList.remove('hidden'); }
-        function closeReportModal() { document.getElementById('report-modal').classList.add('hidden'); }
-
-        function submitReport() {
-            const desc = document.getElementById('report-desc').value;
-            const errorMsg = document.getElementById('desc-error');
-            const safetyConfirm = document.getElementById('safety-confirm').checked;
-
-            // Decency filter (Regex for bad words)
-            const badWords = /(stupid|idiot|bitch|fuck|shit|slur)/i;
-            
-            if (desc.length < 15 || badWords.test(desc)) {
-                errorMsg.classList.remove('hidden');
-                return;
-            } else {
-                errorMsg.classList.add('hidden');
-            }
-
-            if (!safetyConfirm) {
-                alert("Please confirm your safety before posting to prevent retaliatory risks.");
-                return;
-            }
-
-            // Simulate successful submission
-            closeReportModal();
-            document.getElementById('report-desc').value = ""; // Reset
-            document.getElementById('safety-popup').classList.remove('hidden');
-            
-            // In a real app, this would append to sampleReports and re-render.
-        }
-
-        // --- 5. PARTNER PORTAL CHARTS (Chart.js) ---
-        let chartsRendered = false;
-        function renderCharts() {
-            if (chartsRendered) return;
-            
-            const ctxCity = document.getElementById('cityChart').getContext('2d');
-            new Chart(ctxCity, {
-                type: 'bar',
-                data: {
-                    labels: ['Manila (FEU Area)', 'Quezon City', 'Makati', 'Taguig'],
-                    datasets: [{
-                        label: 'Total Reports this Month',
-                        data: [1284, 945, 412, 350],
-                        backgroundColor: ['#ef4444', '#3b82f6', '#10b981', '#f59e0b']
-                    }]
-                }
-            });
-
-            const ctxCat = document.getElementById('categoryChart').getContext('2d');
-            new Chart(ctxCat, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Harassment', 'Crowd', 'Hazards', 'Obstructions'],
-                    datasets: [{
-                        data: [35, 20, 30, 15],
-                        backgroundColor: ['#ef4444', '#f59e0b', '#8b5cf6', '#64748b']
-                    }]
-                }
-            });
-            chartsRendered = true;
-        }
-
-        // Simulate safe route logic
-        function calculateRoute() {
-            alert("Calculating Safest Route avoiding red heatmap zones...");
-            // Simulated visual path for presentation purposes
-            const latlngs = [
-                [14.6042, 120.9892], // Start
-                [14.6030, 120.9870], // Waypoint avoiding hotspot
-                [14.6010, 120.9820]  // End
-            ];
-            L.polyline(latlngs, {color: '#3b82f6', weight: 5, dashArray: '10, 10'}).addTo(map);
-            map.fitBounds(L.polyline(latlngs).getBounds());
-        }
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
