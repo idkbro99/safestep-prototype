@@ -1,0 +1,28 @@
+/* Custom Scrollbar for the report list */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: #f1f1f1; 
+}
+::-webkit-scrollbar-thumb {
+    background: #888; 
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #555; 
+}
+
+/* Ensure map takes full height */
+#map {
+    height: 100%;
+    width: 100%;
+}
+
+.report-card-menu {
+    display: none;
+}
+.report-card:hover .report-card-menu {
+    display: block;
+}
