@@ -1,26 +1,21 @@
-// Map State
 const manilaCenter = [14.6060, 120.9870]; 
 let map, heatmapLayer, routingLine;
 let mapTilesLight, mapTilesDark;
 
-// Application State
 let activeFilter = 'all';
 let activeSort = 'relevant';
 let activeDetailId = null;
 let currentTags = [];
 let idCounter = 1;
 
-// Radius Filtering State
 let isRadiusActive = false;
 let radiusCenterCoords = null;
 let radiusCircle = null;
 
-// Custom Pin State
 let isPickingLocation = false;
 let customPinCoords = null;
 let customPinMarker = null;
 
-// Routing & Dragging State
 let searchTimeout;
 let startCoords = null, endCoords = null;
 let isDragging = false, currentX=0, currentY=0, initialX=0, initialY=0, xOffset = 0, yOffset = 0;
@@ -57,6 +52,7 @@ hotspots.forEach(spot => {
             id: idCounter++, type: type, title: `${type.split('/')[0]} near ${spot.name.split(' ')[0]}`, desc: issueDesc,
             cred: Math.floor(Math.random() * 300) + 10, relevance: spot.risk + Math.random() * 30,
             lat: spot.lat + (Math.random() - 0.5) * spot.spread, lng: spot.lng + (Math.random() - 0.5) * spot.spread,
+            address: `${spot.name} Area, Metro Manila`, privacy: 'approx',
             tags: ['#' + spot.name.split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '')],
             userVote: 0, timestamp: Date.now() - (Math.random() * 10000000000), 
             comments: Math.random() > 0.6 ? [{text: "Noted, thank you for sharing.", isMine: false}] : [],
@@ -81,7 +77,6 @@ function initMap() {
     setupDrag();
 }
 
-// Haversine
 function getDistance(lat1, lon1, lat2, lon2) {
     const R = 6371; 
     const dLat = (lat2-lat1)*Math.PI/180;
@@ -90,7 +85,6 @@ function getDistance(lat1, lon1, lat2, lon2) {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
-// --- Reverse Geocoding Helper ---
 async function getAddressFromCoords(lat, lng) {
     try {
         const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
@@ -105,9 +99,8 @@ function populateHeatmap() {
     if(heatmapLayer) map.removeLayer(heatmapLayer);
     
     let filteredData = mockReports;
-    // ADJUSTED TO 1KM
     if(isRadiusActive && radiusCenterCoords) {
-        filteredData = mockReports.filter(r => getDistance(radiusCenterCoords[0], radiusCenterCoords[1], r.lat, r.lng) <= 1.0);
+        filteredData = mockReports.filter(r => getDistance(radiusCenterCoords[0], radiusCenterCoords[1], r.lat, r.lng) <= 1.0); // 1KM Focus
     }
 
     let heatData = filteredData.map(r => [r.lat, r.lng, r.cred / 80]); 
@@ -135,7 +128,7 @@ function enableRadiusFilter() {
     if(isRadiusActive) {
         isRadiusActive = false;
         if(radiusCircle) map.removeLayer(radiusCircle);
-        btn.innerHTML = "📍 Focus 1km Area"; // UPDATED TO 1KM
+        btn.innerHTML = "📍 Focus 1km Area";
         btn.classList.replace('bg-rose-600', 'bg-indigo-600');
         infoBox.classList.add('hidden');
         populateHeatmap();
@@ -150,13 +143,11 @@ function enableRadiusFilter() {
             isRadiusActive = true;
             
             if(radiusCircle) map.removeLayer(radiusCircle);
-            // 1000 meters = 1km radius
             radiusCircle = L.circle(radiusCenterCoords, {radius: 1000, color: '#4f46e5', fillOpacity: 0.1, weight: 2}).addTo(map);
             
-            btn.innerHTML = "✕ Clear 1km Focus"; // UPDATED TO 1KM
+            btn.innerHTML = "✕ Clear 1km Focus"; 
             btn.classList.replace('bg-indigo-600', 'bg-rose-600');
 
-            // Fetch and show address
             infoBox.innerHTML = `📍 <i>Fetching location...</i>`;
             infoBox.classList.remove('hidden');
             const address = await getAddressFromCoords(radiusCenterCoords[0], radiusCenterCoords[1]);
@@ -173,7 +164,9 @@ function updateOpacity() {
     canvases.forEach(c => c.style.opacity = val);
 }
 
+// AI Content Checker Logic
 function aiContentCheck(text) {
+    if(!text) return "Input cannot be empty.";
     const badWords = ['gago', 'puta', 'bobo', 'shit', 'fuck', 'spam', 'asshole'];
     const lower = text.toLowerCase();
     if(badWords.some(bw => lower.includes(bw))) return "Inappropriate language detected. Kept clean for community safety.";
@@ -204,7 +197,7 @@ function enableMapPicker() {
         pinStatus.innerHTML = `📍 <i>Fetching precise address...</i>`;
         
         const address = await getAddressFromCoords(customPinCoords[0], customPinCoords[1]);
-        pinStatus.innerHTML = `📍 <b>Pinned Location:</b> ${address}<br><span class="text-[10px] text-slate-500 font-normal">Coordinates: ${customPinCoords[0].toFixed(5)}, ${customPinCoords[1].toFixed(5)}</span>`;
+        pinStatus.innerHTML = `📍 <b>Pinned Location:</b> ${address}<br><span class="text-[10px] text-slate-500 font-normal">Lat: ${customPinCoords[0].toFixed(5)}, Lng: ${customPinCoords[1].toFixed(5)}</span>`;
     });
 }
 
@@ -260,7 +253,7 @@ function showToast(msg, type = 'error') {
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
     const colorClass = type === 'error' ? 'bg-rose-500' : 'bg-emerald-500';
-    toast.className = `${colorClass} text-white px-6 py-3 rounded-lg shadow-xl font-bold text-sm transform transition-all duration-300 translate-y-[-20px] opacity-0 flex items-center gap-2 z-[100000]`;
+    toast.className = `${colorClass} text-white px-6 py-3 rounded-lg shadow-2xl font-bold text-sm transform transition-all duration-300 translate-y-[-20px] opacity-0 flex items-center gap-2 z-[100000]`;
     toast.innerHTML = type === 'error' ? `<span>⚠️</span> ${msg}` : `<span>✅</span> ${msg}`;
     container.appendChild(toast);
     setTimeout(() => { toast.classList.remove('translate-y-[-20px]', 'opacity-0'); }, 10);
@@ -315,7 +308,7 @@ function filterReports() {
     let filtered = mockReports.filter(report => {
         const matchCat = activeFilter === 'all' || report.type === activeFilter;
         const matchSearch = report.title.toLowerCase().includes(search) || report.desc.toLowerCase().includes(search);
-        const matchRadius = (!isRadiusActive || !radiusCenterCoords) ? true : (getDistance(radiusCenterCoords[0], radiusCenterCoords[1], report.lat, report.lng) <= 1.0); // 1KM FIX
+        const matchRadius = (!isRadiusActive || !radiusCenterCoords) ? true : (getDistance(radiusCenterCoords[0], radiusCenterCoords[1], report.lat, report.lng) <= 1.0); 
         return matchCat && matchSearch && matchRadius;
     });
 
@@ -338,14 +331,18 @@ function renderReports(reportsToRender = null) {
         if(report.type.includes('Hazards')) typeColor = 'text-amber-600 bg-amber-50 border-amber-100';
         if(report.type.includes('Accessibility')) typeColor = 'text-purple-600 bg-purple-50 border-purple-100 dark:bg-purple-900/30 dark:text-purple-400 border-purple-800';
 
+        // USER EDIT & DELETE CAPABILITY
         const actionBtn = report.isMine 
-            ? `<button onclick="event.stopPropagation(); deleteReport(${report.id})" class="text-rose-500 hover:text-rose-700 font-bold text-xs bg-rose-50 dark:bg-rose-900/30 px-2 py-1 rounded">🗑 Delete</button>`
+            ? `<div class="flex gap-2">
+                 <button onclick="event.stopPropagation(); editReportDesc(event, ${report.id})" class="text-indigo-500 hover:text-indigo-700 font-bold text-xs bg-indigo-50 dark:bg-indigo-900/30 px-2 py-1 rounded">✏️ Edit</button>
+                 <button onclick="event.stopPropagation(); deleteReport(${report.id})" class="text-rose-500 hover:text-rose-700 font-bold text-xs bg-rose-50 dark:bg-rose-900/30 px-2 py-1 rounded">🗑 Delete</button>
+               </div>`
             : `<button onclick="event.stopPropagation(); openFlagModal(${report.id})" class="text-slate-400 hover:text-rose-500 font-bold text-xs">🚩 Flag</button>`;
 
         const tagHTML = report.tags.map(t => `<span class="text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded">${t}</span>`).join('');
-
         const upBtnStyle = report.userVote === 1 ? "text-emerald-500 scale-125" : "text-slate-400 hover:text-emerald-500";
         const downBtnStyle = report.userVote === -1 ? "text-rose-500 scale-125" : "text-slate-400 hover:text-rose-500";
+        const privStyle = report.privacy === 'precise' ? 'text-rose-500' : 'text-indigo-500';
 
         list.innerHTML += `
             <div onclick="openDetailModal(${report.id})" class="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 hover:border-indigo-400 cursor-pointer relative group transition-all">
@@ -354,7 +351,16 @@ function renderReports(reportsToRender = null) {
                     <span class="text-[10px] font-bold ${typeColor} uppercase tracking-wider px-2 py-1 rounded border inline-block">${report.type.split('/')[0]}</span>
                     <span class="text-[10px] text-slate-400 font-medium">${formatDate(report.timestamp)}</span>
                 </div>
-                <h3 class="font-bold text-slate-800 dark:text-white text-sm mb-1.5 pr-12">${report.title}</h3>
+                <h3 class="font-bold text-slate-800 dark:text-white text-sm mb-2 pr-20">${report.title}</h3>
+                
+                <div class="mb-3 p-2 bg-slate-50 dark:bg-slate-900 rounded border border-slate-100 dark:border-slate-700 text-[10px] text-slate-500 dark:text-slate-400">
+                    <p class="font-bold flex justify-between">
+                        <span class="line-clamp-1 mr-2 text-slate-700 dark:text-slate-300">📍 ${report.address}</span>
+                        <span class="uppercase tracking-wider ${privStyle}">${report.privacy === 'precise' ? 'Precise Pin' : 'Area Report'}</span>
+                    </p>
+                    <p class="mt-0.5">Coords: ${report.lat.toFixed(5)}, ${report.lng.toFixed(5)}</p>
+                </div>
+
                 <p class="text-xs text-slate-600 dark:text-slate-300 mb-3 line-clamp-2 leading-relaxed">${report.desc}</p>
                 <div class="flex flex-wrap gap-1.5 mb-3">${tagHTML}</div>
                 <div class="flex justify-between items-center border-t border-slate-100 dark:border-slate-700 pt-3">
@@ -368,6 +374,42 @@ function renderReports(reportsToRender = null) {
             </div>
         `;
     });
+}
+
+function editReportDesc(e, id) {
+    const report = mockReports.find(r => r.id === id);
+    const newDesc = prompt("Update your report description:", report.desc);
+    
+    if(newDesc !== null) {
+        const trimmed = newDesc.trim();
+        if(trimmed.length < 15) return showToast("Description must be at least 15 characters.", "error");
+        
+        const aiError = aiContentCheck(trimmed);
+        if(aiError) return showToast(`AI Flag: ${aiError}`, "error");
+        
+        report.desc = trimmed;
+        showToast("Report description successfully updated.", "success");
+        filterReports();
+        if(activeDetailId === id) openDetailModal(id);
+    }
+}
+
+function editComment(reportId, commentIndex) {
+    const report = mockReports.find(r => r.id === reportId);
+    const newText = prompt("Edit your comment:", report.comments[commentIndex].text);
+    
+    if(newText !== null) {
+        const trimmed = newText.trim();
+        if(trimmed === '') return showToast("Comment cannot be empty.", "error");
+        
+        const aiError = aiContentCheck(trimmed);
+        if(aiError) return showToast(`AI Flag: ${aiError}`, "error");
+
+        report.comments[commentIndex].text = trimmed;
+        showToast("Comment successfully updated.", "success");
+        openDetailModal(reportId);
+        filterReports(); 
+    }
 }
 
 function deleteReport(id) {
@@ -417,24 +459,38 @@ function voteReport(id, change) {
     if(activeDetailId === id) openDetailModal(id);
 }
 
-// FIXED: Overlapping Close Button padding (pr-10)
 function openDetailModal(id) {
     activeDetailId = id;
     const report = mockReports.find(r => r.id === id);
+    const privStyle = report.privacy === 'precise' ? 'text-rose-500' : 'text-indigo-500';
+
     document.getElementById('detail-content').innerHTML = `
-        <div class="flex justify-between items-start mb-3 pr-10">
+        <div class="flex justify-between items-start mb-3 pr-8">
             <span class="text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 uppercase tracking-wider px-2 py-1 rounded border border-slate-200 dark:border-slate-700">${report.type}</span>
             <span class="text-xs text-slate-400 font-medium">${formatDate(report.timestamp)}</span>
         </div>
-        <h2 class="text-2xl font-bold text-slate-800 dark:text-white mb-3 pr-4">${report.title}</h2>
-        <p class="text-sm text-slate-600 dark:text-slate-300 mb-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg leading-relaxed border border-slate-100 dark:border-slate-700/50">${report.desc}</p>
+        <h2 class="text-2xl font-bold text-slate-800 dark:text-white mb-4 pr-4">${report.title}</h2>
+        
+        <div class="mb-4 p-3 bg-slate-50 dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+            <p class="font-bold flex justify-between items-center mb-1 border-b border-slate-200 dark:border-slate-700 pb-1">
+                <span class="text-slate-800 dark:text-slate-200">📍 ${report.address}</span>
+                <span class="uppercase tracking-wider ${privStyle}">${report.privacy === 'precise' ? 'Precise Pin' : 'Area Report'}</span>
+            </p>
+            <p>Coordinates: ${report.lat.toFixed(5)}, ${report.lng.toFixed(5)}</p>
+        </div>
+
+        <p class="text-sm text-slate-700 dark:text-slate-300 mb-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg leading-relaxed border border-slate-100 dark:border-slate-700/50">${report.desc}</p>
     `;
     
     const cList = document.getElementById('detail-comments');
     cList.innerHTML = report.comments.length ? '' : '<p class="text-sm text-slate-400">No comments yet.</p>';
     report.comments.forEach((c, idx) => {
-        const delBtn = c.isMine ? `<button onclick="deleteComment(${report.id}, ${idx})" class="text-rose-500 hover:text-rose-700 font-bold ml-3 text-xs">Delete</button>` : '';
-        cList.innerHTML += `<div class="bg-slate-50 dark:bg-slate-800 p-3.5 rounded-lg text-sm flex justify-between items-start border border-slate-100 dark:border-slate-700"><p class="text-slate-800 dark:text-slate-200">${c.text}</p>${delBtn}</div>`;
+        const actionBtns = c.isMine ? `
+            <div class="flex gap-2">
+                <button onclick="editComment(${report.id}, ${idx})" class="text-indigo-500 hover:text-indigo-700 font-bold text-xs">Edit</button>
+                <button onclick="deleteComment(${report.id}, ${idx})" class="text-rose-500 hover:text-rose-700 font-bold text-xs">Delete</button>
+            </div>` : '';
+        cList.innerHTML += `<div class="bg-slate-50 dark:bg-slate-800 p-3.5 rounded-lg text-sm flex justify-between items-start border border-slate-100 dark:border-slate-700"><p class="text-slate-800 dark:text-slate-200 pr-4">${c.text}</p>${actionBtns}</div>`;
     });
     document.getElementById('report-detail-modal').classList.remove('hidden');
 }
@@ -454,22 +510,33 @@ function submitComment() {
     filterReports();
 }
 
-function openReportModal() { document.getElementById('report-modal').classList.remove('hidden'); }
+function openReportModal() { 
+    document.getElementById('report-modal').classList.remove('hidden'); 
+}
+
 function closeReportModal() { 
     document.getElementById('report-modal').classList.add('hidden'); 
     document.getElementById('pin-status').classList.add('hidden');
+    // CLEAN UP PIN IF USER CANCELS
+    if(customPinMarker) {
+        map.removeLayer(customPinMarker);
+        customPinMarker = null;
+        customPinCoords = null;
+    }
 }
 
-function submitReport() {
-    const title = document.getElementById('report-title').value;
+async function submitReport() {
+    const title = document.getElementById('report-title').value.trim();
     const cat = document.getElementById('report-category').value;
-    const desc = document.getElementById('report-desc').value;
+    const desc = document.getElementById('report-desc').value.trim();
     const privacy = document.getElementById('loc-privacy').value;
     
-    if(!title || !cat || desc.length < 15) return showToast("Please fill all required fields correctly.", "error");
+    if(!title || !cat) return showToast("Please fill all required fields.", "error");
+    if(desc.length < 15) return showToast("Description must be at least 15 characters.", "error");
 
+    // Proper AI Content Check via JS
     const aiError = aiContentCheck(desc) || aiContentCheck(title);
-    if(aiError) return showToast(`AI Flag: ${aiError}`, "error");
+    if(aiError) return showToast(`AI Warning: ${aiError}`, "error");
 
     let finalLat = manilaCenter[0] + (Math.random() - 0.5) * 0.01;
     let finalLng = manilaCenter[1] + (Math.random() - 0.5) * 0.01;
@@ -479,16 +546,21 @@ function submitReport() {
         finalLng = customPinCoords[1];
     }
 
+    const address = await getAddressFromCoords(finalLat, finalLng);
+
     mockReports.unshift({
         id: idCounter++, type: cat, title: title, desc: desc, cred: 1, relevance: 100, timestamp: Date.now(),
-        lat: finalLat, lng: finalLng,
+        lat: finalLat, lng: finalLng, address: address, privacy: privacy,
         tags: [...currentTags], comments: [], userVote: 1, isMine: true
     });
 
+    // Reset Form & Modals
+    document.getElementById('report-title').value = '';
+    document.getElementById('report-desc').value = '';
     closeReportModal();
     populateHeatmap(); 
     filterReports();
-    currentTags = []; customPinCoords = null;
+    currentTags = []; 
     document.getElementById('emergency-modal').classList.remove('hidden');
 }
 
@@ -583,7 +655,6 @@ async function calculateRealRoute() {
 
         const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
         const distKm = (data.routes[0].distance / 1000).toFixed(2);
-        
         const timeMin = Math.round((distKm / 3.5) * 60);
 
         if(routingLine) map.removeLayer(routingLine);
@@ -626,7 +697,7 @@ function loginPortal() {
     document.getElementById('portal-login').classList.add('hidden');
     document.getElementById('portal-dashboard').classList.remove('hidden');
     document.getElementById('logout-btn').classList.remove('hidden');
-    document.getElementById('export-btn').classList.remove('hidden'); // Show Export
+    document.getElementById('export-btn').classList.remove('hidden');
 }
 function logoutPortal() {
     document.getElementById('portal-dashboard').classList.add('hidden');
@@ -667,12 +738,15 @@ function populatePartnerPortal() {
     const highRiskSpots = hotspots.filter(s => s.risk > 65).sort((a,b) => b.risk - a.risk);
     highRiskSpots.forEach(spot => {
         alertContainer.innerHTML += `
-            <div class="bg-rose-50 dark:bg-rose-900/10 p-4 rounded-lg border border-rose-100 dark:border-rose-900/50">
-                <div class="flex justify-between items-center mb-1">
-                    <h4 class="font-bold text-rose-700 dark:text-rose-400">${spot.name}</h4>
-                    <span class="text-xs bg-rose-600 text-white px-2 py-0.5 rounded font-bold">Risk: ${spot.risk}</span>
+            <div class="bg-rose-50 dark:bg-rose-900/10 p-4 rounded-lg border border-rose-100 dark:border-rose-900/50 flex justify-between items-center">
+                <div>
+                    <h4 class="font-bold text-rose-700 dark:text-rose-400 mb-1">${spot.name}</h4>
+                    <p class="text-xs text-rose-600/80 dark:text-rose-300/80">${spot.reports} active incidents.</p>
                 </div>
-                <p class="text-xs text-rose-600/80 dark:text-rose-300/80">${spot.reports} recent incidents reported.</p>
+                <div class="flex flex-col items-end gap-2">
+                    <span class="text-xs bg-rose-600 text-white px-2 py-0.5 rounded font-bold">Risk: ${spot.risk}</span>
+                    <button class="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline">View Map</button>
+                </div>
             </div>`;
     });
 }
