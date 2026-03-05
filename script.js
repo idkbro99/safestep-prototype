@@ -20,6 +20,9 @@ let searchTimeout;
 let startCoords = null, endCoords = null;
 let isDragging = false, currentX=0, currentY=0, initialX=0, initialY=0, xOffset = 0, yOffset = 0;
 
+// Track which report's 3-dot menu is currently open
+let openMenuId = null;
+
 const citySummaries = [
     { name: 'City of Manila', risk: 82 }, { name: 'Quezon City', risk: 65 },
     { name: 'Caloocan City', risk: 70 }, { name: 'Makati City', risk: 25 },
@@ -58,6 +61,15 @@ hotspots.forEach(spot => {
             comments: Math.random() > 0.6 ? [{text: "Noted, thank you for sharing.", isMine: false}] : [],
             isMine: false
         });
+    }
+});
+
+// Close open 3-dot menus when clicking anywhere else
+document.addEventListener('click', () => {
+    if(openMenuId) {
+        const menu = document.getElementById(`menu-${openMenuId}`);
+        if(menu) menu.classList.add('hidden');
+        openMenuId = null;
     }
 });
 
@@ -100,7 +112,7 @@ function populateHeatmap() {
     
     let filteredData = mockReports;
     if(isRadiusActive && radiusCenterCoords) {
-        filteredData = mockReports.filter(r => getDistance(radiusCenterCoords[0], radiusCenterCoords[1], r.lat, r.lng) <= 1.0); // 1KM Focus
+        filteredData = mockReports.filter(r => getDistance(radiusCenterCoords[0], radiusCenterCoords[1], r.lat, r.lng) <= 1.0);
     }
 
     let heatData = filteredData.map(r => [r.lat, r.lng, r.cred / 80]); 
@@ -164,7 +176,6 @@ function updateOpacity() {
     canvases.forEach(c => c.style.opacity = val);
 }
 
-// AI Content Checker Logic
 function aiContentCheck(text) {
     if(!text) return "Input cannot be empty.";
     const badWords = ['gago', 'puta', 'bobo', 'shit', 'fuck', 'spam', 'asshole'];
@@ -253,7 +264,7 @@ function showToast(msg, type = 'error') {
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
     const colorClass = type === 'error' ? 'bg-rose-500' : 'bg-emerald-500';
-    toast.className = `${colorClass} text-white px-6 py-3 rounded-lg shadow-2xl font-bold text-sm transform transition-all duration-300 translate-y-[-20px] opacity-0 flex items-center gap-2 z-[100000]`;
+    toast.className = `${colorClass} text-white px-6 py-3 rounded-lg shadow-2xl font-bold text-sm transform transition-all duration-300 translate-y-[-20px] opacity-0 flex items-center gap-2`;
     toast.innerHTML = type === 'error' ? `<span>⚠️</span> ${msg}` : `<span>✅</span> ${msg}`;
     container.appendChild(toast);
     setTimeout(() => { toast.classList.remove('translate-y-[-20px]', 'opacity-0'); }, 10);
@@ -303,6 +314,18 @@ function setSortFilter(sortType) {
     filterReports();
 }
 
+// Handler for the 3-dot dropdown menu
+function toggleReportMenu(e, id) {
+    e.stopPropagation();
+    if(openMenuId && openMenuId !== id) {
+        const existing = document.getElementById(`menu-${openMenuId}`);
+        if(existing) existing.classList.add('hidden');
+    }
+    const menu = document.getElementById(`menu-${id}`);
+    menu.classList.toggle('hidden');
+    openMenuId = menu.classList.contains('hidden') ? null : id;
+}
+
 function filterReports() {
     const search = document.getElementById('search-bar').value.toLowerCase();
     let filtered = mockReports.filter(report => {
@@ -324,6 +347,17 @@ function renderReports(reportsToRender = null) {
     if(!reportsToRender) { filterReports(); return; } 
     const list = document.getElementById('reports-list');
     list.innerHTML = '';
+
+    // NEW: Empty State Subtlety
+    if(reportsToRender.length === 0) {
+        list.innerHTML = `
+            <div class="flex flex-col items-center justify-center py-12 text-center opacity-80">
+                <span class="text-4xl mb-3">📭</span>
+                <p class="text-sm text-slate-500 dark:text-slate-400 font-bold">No matching reports found.</p>
+                <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">Try adjusting your search, filters, or clearing the map radius.</p>
+            </div>`;
+        return;
+    }
     
     reportsToRender.forEach(report => {
         let typeColor = 'text-indigo-600 bg-indigo-50 border-indigo-100';
@@ -331,13 +365,20 @@ function renderReports(reportsToRender = null) {
         if(report.type.includes('Hazards')) typeColor = 'text-amber-600 bg-amber-50 border-amber-100';
         if(report.type.includes('Accessibility')) typeColor = 'text-purple-600 bg-purple-50 border-purple-100 dark:bg-purple-900/30 dark:text-purple-400 border-purple-800';
 
-        // USER EDIT & DELETE CAPABILITY
+        // COMPACT 3-DOT MENU LOGIC
         const actionBtn = report.isMine 
-            ? `<div class="flex gap-2">
-                 <button onclick="event.stopPropagation(); editReportDesc(event, ${report.id})" class="text-indigo-500 hover:text-indigo-700 font-bold text-xs bg-indigo-50 dark:bg-indigo-900/30 px-2 py-1 rounded">✏️ Edit</button>
-                 <button onclick="event.stopPropagation(); deleteReport(${report.id})" class="text-rose-500 hover:text-rose-700 font-bold text-xs bg-rose-50 dark:bg-rose-900/30 px-2 py-1 rounded">🗑 Delete</button>
-               </div>`
-            : `<button onclick="event.stopPropagation(); openFlagModal(${report.id})" class="text-slate-400 hover:text-rose-500 font-bold text-xs">🚩 Flag</button>`;
+            ? `
+            <div class="relative inline-block text-left" onclick="event.stopPropagation()">
+                <button onclick="toggleReportMenu(event, ${report.id})" class="text-slate-400 hover:text-slate-600 dark:hover:text-white font-bold px-2 py-0.5 text-lg leading-none rounded focus:outline-none transition-colors">⁝</button>
+                <div id="menu-${report.id}" class="hidden absolute right-0 mt-1 w-28 rounded-md shadow-lg bg-white dark:bg-slate-800 ring-1 ring-black ring-opacity-5 border border-slate-200 dark:border-slate-700 z-50">
+                    <div class="py-1">
+                        <button onclick="event.stopPropagation(); editReportDesc(event, ${report.id})" class="text-left w-full block px-4 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold">✏️ Edit</button>
+                        <button onclick="event.stopPropagation(); deleteReport(${report.id})" class="text-left w-full block px-4 py-2 text-xs text-rose-600 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold">🗑 Delete</button>
+                    </div>
+                </div>
+            </div>
+            `
+            : `<button onclick="event.stopPropagation(); openFlagModal(${report.id})" class="text-slate-400 hover:text-rose-500 font-bold text-xs bg-slate-50 dark:bg-slate-800 px-2 py-1 rounded">🚩 Flag</button>`;
 
         const tagHTML = report.tags.map(t => `<span class="text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded">${t}</span>`).join('');
         const upBtnStyle = report.userVote === 1 ? "text-emerald-500 scale-125" : "text-slate-400 hover:text-emerald-500";
@@ -346,17 +387,18 @@ function renderReports(reportsToRender = null) {
 
         list.innerHTML += `
             <div onclick="openDetailModal(${report.id})" class="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 hover:border-indigo-400 cursor-pointer relative group transition-all">
-                <div class="absolute top-4 right-4">${actionBtn}</div>
-                <div class="mb-2 flex items-center gap-2">
+                <div class="absolute top-3 right-3 z-20">${actionBtn}</div>
+                
+                <div class="mb-2 flex items-center gap-2 pr-6">
                     <span class="text-[10px] font-bold ${typeColor} uppercase tracking-wider px-2 py-1 rounded border inline-block">${report.type.split('/')[0]}</span>
                     <span class="text-[10px] text-slate-400 font-medium">${formatDate(report.timestamp)}</span>
                 </div>
-                <h3 class="font-bold text-slate-800 dark:text-white text-sm mb-2 pr-20">${report.title}</h3>
+                <h3 class="font-bold text-slate-800 dark:text-white text-sm mb-2 pr-6">${report.title}</h3>
                 
                 <div class="mb-3 p-2 bg-slate-50 dark:bg-slate-900 rounded border border-slate-100 dark:border-slate-700 text-[10px] text-slate-500 dark:text-slate-400">
                     <p class="font-bold flex justify-between">
                         <span class="line-clamp-1 mr-2 text-slate-700 dark:text-slate-300">📍 ${report.address}</span>
-                        <span class="uppercase tracking-wider ${privStyle}">${report.privacy === 'precise' ? 'Precise Pin' : 'Area Report'}</span>
+                        <span class="uppercase tracking-wider whitespace-nowrap ${privStyle}">${report.privacy === 'precise' ? 'Precise Pin' : 'Area Report'}</span>
                     </p>
                     <p class="mt-0.5">Coords: ${report.lat.toFixed(5)}, ${report.lng.toFixed(5)}</p>
                 </div>
@@ -465,7 +507,7 @@ function openDetailModal(id) {
     const privStyle = report.privacy === 'precise' ? 'text-rose-500' : 'text-indigo-500';
 
     document.getElementById('detail-content').innerHTML = `
-        <div class="flex justify-between items-start mb-3 pr-8">
+        <div class="flex justify-between items-start mb-3 pr-10">
             <span class="text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 uppercase tracking-wider px-2 py-1 rounded border border-slate-200 dark:border-slate-700">${report.type}</span>
             <span class="text-xs text-slate-400 font-medium">${formatDate(report.timestamp)}</span>
         </div>
@@ -534,9 +576,8 @@ async function submitReport() {
     if(!title || !cat) return showToast("Please fill all required fields.", "error");
     if(desc.length < 15) return showToast("Description must be at least 15 characters.", "error");
 
-    // Proper AI Content Check via JS
     const aiError = aiContentCheck(desc) || aiContentCheck(title);
-    if(aiError) return showToast(`AI Warning: ${aiError}`, "error");
+    if(aiError) return showToast(`AI Flag: ${aiError}`, "error");
 
     let finalLat = manilaCenter[0] + (Math.random() - 0.5) * 0.01;
     let finalLng = manilaCenter[1] + (Math.random() - 0.5) * 0.01;
@@ -554,13 +595,22 @@ async function submitReport() {
         tags: [...currentTags], comments: [], userVote: 1, isMine: true
     });
 
-    // Reset Form & Modals
     document.getElementById('report-title').value = '';
     document.getElementById('report-desc').value = '';
+    document.getElementById('custom-tag-input').value = '';
+    
     closeReportModal();
     populateHeatmap(); 
     filterReports();
     currentTags = []; 
+    
+    // REMOVE PIN AFTER SUBMIT
+    if(customPinMarker) {
+        map.removeLayer(customPinMarker);
+        customPinMarker = null;
+        customPinCoords = null;
+    }
+    
     document.getElementById('emergency-modal').classList.remove('hidden');
 }
 
