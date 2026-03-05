@@ -25,19 +25,26 @@ let searchTimeout;
 let startCoords = null, endCoords = null;
 let isDragging = false, currentX=0, currentY=0, initialX=0, initialY=0, xOffset = 0, yOffset = 0;
 
-// High-Density Data Generation (Greatly Expanded for NCR)
+// SPLIT DATA: Broad City Risk Summaries
+const citySummaries = [
+    { name: 'City of Manila', risk: 82 },
+    { name: 'Quezon City', risk: 65 },
+    { name: 'Caloocan City', risk: 70 },
+    { name: 'Makati City', risk: 25 },
+    { name: 'Taguig City', risk: 18 },
+    { name: 'Pasay City', risk: 85 }
+];
+
+// SPLIT DATA: Specific High-Density Zones
 const hotspots = [
     { name: 'FEU Tech & Main', lat: 14.6040, lng: 120.9875, risk: 90, spread: 0.005, reports: 45 },
     { name: 'UST España Blvd', lat: 14.6096, lng: 120.9894, risk: 85, spread: 0.007, reports: 40 },
-    { name: 'SM San Lazaro', lat: 14.6155, lng: 120.9841, risk: 75, spread: 0.006, reports: 35 },
-    { name: 'LRT Tayuman Station', lat: 14.6168, lng: 120.9825, risk: 80, spread: 0.004, reports: 25 },
-    { name: 'Quezon City (Cubao)', lat: 14.6186, lng: 121.0526, risk: 65, spread: 0.015, reports: 20 },
-    { name: 'Makati (CBD)', lat: 14.5547, lng: 121.0244, risk: 25, spread: 0.010, reports: 10 },
-    { name: 'Caloocan (Monumento)', lat: 14.6565, lng: 120.9830, risk: 70, spread: 0.012, reports: 20 },
-    { name: 'Pasig (Ortigas)', lat: 14.5800, lng: 121.0600, risk: 40, spread: 0.015, reports: 15 },
-    { name: 'Taguig (BGC)', lat: 14.5300, lng: 121.0450, risk: 15, spread: 0.010, reports: 8 },
-    { name: 'Pasay (Taft Ave)', lat: 14.5378, lng: 120.9980, risk: 85, spread: 0.010, reports: 30 },
-    { name: 'Mandaluyong (Shaw)', lat: 14.5794, lng: 121.0359, risk: 45, spread: 0.012, reports: 15 }
+    { name: 'SM San Lazaro', lat: 14.6155, lng: 120.9841, risk: 78, spread: 0.006, reports: 35 },
+    { name: 'LRT Tayuman Station', lat: 14.6168, lng: 120.9825, risk: 82, spread: 0.004, reports: 25 },
+    { name: 'Araneta Center Cubao', lat: 14.6186, lng: 121.0526, risk: 68, spread: 0.015, reports: 20 },
+    { name: 'Makati Poblacion', lat: 14.5630, lng: 121.0310, risk: 45, spread: 0.008, reports: 12 },
+    { name: 'Monumento Circle', lat: 14.6565, lng: 120.9830, risk: 75, spread: 0.012, reports: 20 },
+    { name: 'Taft Ave (DLSU area)', lat: 14.5650, lng: 120.9930, risk: 70, spread: 0.010, reports: 30 }
 ];
 
 let mockReports = [];
@@ -47,9 +54,9 @@ hotspots.forEach(spot => {
         const types = ['Harassment/Aggression', 'Crowd/Atmosphere', 'Environmental/Path Hazards', 'Accessibility/Obstructions'];
         const type = types[Math.floor(Math.random() * types.length)];
         
-        let issueDesc = `Community report regarding safety at this location.`;
-        if(type === 'Accessibility/Obstructions') issueDesc = "Damaged sidewalks and blocked PWD ramps reported here.";
-        if(type === 'Environmental/Path Hazards') issueDesc = "Poor lighting and potential flooding hazards reported.";
+        let issueDesc = `Community report regarding safety at this location. Needs local barangay attention.`;
+        if(type === 'Accessibility/Obstructions') issueDesc = "Damaged sidewalks and blocked PWD ramps reported here. Very difficult for wheelchairs.";
+        if(type === 'Environmental/Path Hazards') issueDesc = "Poor lighting and potential flooding hazards reported. Avoid walking alone at night.";
         
         mockReports.push({
             id: idCounter++, type: type, title: `${type.split('/')[0]} near ${spot.name.split(' ')[0]}`, desc: issueDesc,
@@ -79,9 +86,8 @@ function initMap() {
     setupDrag();
 }
 
-// Haversine Formula for 5km calculation
 function getDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371; // km
+    const R = 6371; 
     const dLat = (lat2-lat1)*Math.PI/180;
     const dLon = (lon2-lon1)*Math.PI/180;
     const a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
@@ -92,14 +98,11 @@ function populateHeatmap() {
     if(heatmapLayer) map.removeLayer(heatmapLayer);
     
     let filteredData = mockReports;
-    
-    // Apply 5km filter if active
     if(isRadiusActive && radiusCenterCoords) {
         filteredData = mockReports.filter(r => getDistance(radiusCenterCoords[0], radiusCenterCoords[1], r.lat, r.lng) <= 5);
     }
 
     let heatData = filteredData.map(r => [r.lat, r.lng, r.cred / 80]); 
-    // Density Padding
     filteredData.forEach(r => {
         for(let i=0; i<4; i++) {
             heatData.push([r.lat + (Math.random()-0.5)*0.0015, r.lng + (Math.random()-0.5)*0.0015, Math.random() * 0.5]);
@@ -113,15 +116,13 @@ function populateHeatmap() {
     
     if(document.getElementById('heatmap-toggle').checked) {
         heatmapLayer.addTo(map);
-        updateOpacity(); // Apply current slider value
+        updateOpacity(); 
     }
 }
 
-// --- 5km Focus Tool ---
 function enableRadiusFilter() {
     const btn = document.getElementById('radius-btn');
     if(isRadiusActive) {
-        // Turn off
         isRadiusActive = false;
         if(radiusCircle) map.removeLayer(radiusCircle);
         btn.innerHTML = "📍 Focus 5km Area";
@@ -129,7 +130,6 @@ function enableRadiusFilter() {
         populateHeatmap();
         showToast("Showing all NCR data.", "success");
     } else {
-        // Turn on
         showToast("Click any location on the map to set 5km focus area.", "success");
         document.getElementById('map').style.cursor = 'crosshair';
         
@@ -148,17 +148,15 @@ function enableRadiusFilter() {
     }
 }
 
-// --- Adjustable Opacity Slider ---
 function updateOpacity() {
     const val = document.getElementById('heatmap-opacity').value;
     const canvases = document.querySelectorAll('.leaflet-heatmap-layer');
     canvases.forEach(c => {
         c.style.opacity = val;
-        c.style.transition = "opacity 0.2s ease-in-out";
     });
 }
 
-// --- AI Moderation Check ---
+// AI Checker
 function aiContentCheck(text) {
     const badWords = ['gago', 'puta', 'bobo', 'shit', 'fuck', 'spam', 'asshole'];
     const lower = text.toLowerCase();
@@ -168,7 +166,6 @@ function aiContentCheck(text) {
     return null;
 }
 
-// --- Custom Map Picker Logic ---
 function enableMapPicker() {
     closeReportModal();
     showToast("Click anywhere on the map to drop a pin.", "success");
@@ -189,7 +186,7 @@ function enableMapPicker() {
     });
 }
 
-// --- Drag Logic with Boundary Checks ---
+// --- FIXED DRAG BOUNDARIES ---
 function setupDrag() {
     const dragItem = document.getElementById("route-panel");
     const dragHeader = document.getElementById("route-panel-header");
@@ -215,10 +212,14 @@ function setupDrag() {
             const mapHeight = window.innerHeight;
             const panelRect = dragItem.getBoundingClientRect();
             
-            // Constrain tightly to screen boundaries. Top boundary is 64px to avoid going under header.
-            const minX = -panelRect.left + xOffset + 10; 
+            // Check if sidebar is open to prevent dragging underneath it
+            const sidebar = document.getElementById('user-sidebar');
+            const isSidebarOpen = !sidebar.classList.contains('-translate-x-full');
+            const sidebarWidth = (isSidebarOpen && mapWidth >= 768) ? sidebar.offsetWidth : 0;
+            
+            const minX = -panelRect.left + xOffset + sidebarWidth + 10; 
             const maxX = mapWidth - panelRect.right + xOffset - 10;
-            const minY = -panelRect.top + yOffset + 64; // Respect Header
+            const minY = -panelRect.top + yOffset + 64; 
             const maxY = mapHeight - panelRect.bottom + yOffset - 10;
 
             currentX = Math.max(minX, Math.min(testX, maxX));
@@ -230,7 +231,6 @@ function setupDrag() {
     }
 }
 
-// --- UI Utilities ---
 function formatDate(timestamp) {
     const d = new Date(timestamp);
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' • ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
@@ -244,7 +244,7 @@ function showToast(msg, type = 'error') {
     toast.innerHTML = type === 'error' ? `<span>⚠️</span> ${msg}` : `<span>✅</span> ${msg}`;
     container.appendChild(toast);
     setTimeout(() => { toast.classList.remove('translate-y-[-20px]', 'opacity-0'); }, 10);
-    setTimeout(() => { toast.classList.add('opacity-0'); setTimeout(() => toast.remove(), 300); }, 3000);
+    setTimeout(() => { toast.classList.add('opacity-0'); setTimeout(() => toast.remove(), 300); }, 4000);
 }
 
 function toggleDarkMode() {
@@ -254,12 +254,14 @@ function toggleDarkMode() {
     } else {
         html.classList.add('dark'); map.removeLayer(mapTilesLight); mapTilesDark.addTo(map);
     }
-    updateOpacity();
+    setTimeout(updateOpacity, 100);
 }
 
 function toggleSidebar() {
     document.getElementById('user-sidebar').classList.toggle('-translate-x-full');
     document.getElementById('expand-sidebar-btn').classList.toggle('hidden');
+    // Force route panel boundary recalculation if they move the sidebar
+    setupDrag();
 }
 
 function toggleHeatmap() {
@@ -267,7 +269,6 @@ function toggleHeatmap() {
     else map.removeLayer(heatmapLayer);
 }
 
-// --- Report Rendering & Filtering ---
 function setCategoryFilter(cat) {
     activeFilter = cat;
     document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -295,7 +296,6 @@ function filterReports() {
     let filtered = mockReports.filter(report => {
         const matchCat = activeFilter === 'all' || report.type === activeFilter;
         const matchSearch = report.title.toLowerCase().includes(search) || report.desc.toLowerCase().includes(search);
-        // If 5km radius is active, also filter list view
         const matchRadius = (!isRadiusActive || !radiusCenterCoords) ? true : (getDistance(radiusCenterCoords[0], radiusCenterCoords[1], report.lat, report.lng) <= 5);
         return matchCat && matchSearch && matchRadius;
     });
@@ -325,6 +325,10 @@ function renderReports(reportsToRender = null) {
 
         const tagHTML = report.tags.map(t => `<span class="text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded">${t}</span>`).join('');
 
+        // Dynamic Voting Styles
+        const upBtnStyle = report.userVote === 1 ? "text-emerald-500 scale-125" : "text-slate-400 hover:text-emerald-500";
+        const downBtnStyle = report.userVote === -1 ? "text-rose-500 scale-125" : "text-slate-400 hover:text-rose-500";
+
         list.innerHTML += `
             <div onclick="openDetailModal(${report.id})" class="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 hover:border-indigo-400 cursor-pointer relative group transition-all">
                 <div class="absolute top-4 right-4">${actionBtn}</div>
@@ -338,9 +342,9 @@ function renderReports(reportsToRender = null) {
                 <div class="flex justify-between items-center border-t border-slate-100 dark:border-slate-700 pt-3">
                     <span class="text-xs font-bold text-indigo-600 dark:text-indigo-400">💬 ${report.comments.length} Comments</span>
                     <div class="flex items-center gap-3 bg-slate-50 dark:bg-slate-900 px-2 py-1 rounded-md border border-slate-200 dark:border-slate-700" onclick="event.stopPropagation()">
-                        <button onclick="voteReport(${report.id}, 1)" class="font-bold text-base text-slate-400 hover:text-emerald-500 transition-colors">⇧</button>
-                        <span class="font-bold text-sm text-slate-700 dark:text-slate-200">${report.cred}</span>
-                        <button onclick="voteReport(${report.id}, -1)" class="font-bold text-base text-slate-400 hover:text-rose-500 transition-colors">⇩</button>
+                        <button onclick="voteReport(${report.id}, 1)" class="font-bold text-base transition-all ${upBtnStyle}">⇧</button>
+                        <span class="font-bold text-sm text-slate-700 dark:text-slate-200 w-6 text-center">${report.cred}</span>
+                        <button onclick="voteReport(${report.id}, -1)" class="font-bold text-base transition-all ${downBtnStyle}">⇩</button>
                     </div>
                 </div>
             </div>
@@ -348,7 +352,6 @@ function renderReports(reportsToRender = null) {
     });
 }
 
-// --- Interaction Logic ---
 function deleteReport(id) {
     if(confirm("Are you sure you want to permanently delete this report?")) {
         mockReports = mockReports.filter(r => r.id !== id);
@@ -378,15 +381,25 @@ function submitFlag() {
     closeFlagModal(); showToast("Report flagged for human review.", "success");
 }
 
+// --- FIXED VOTING LOGIC ---
 function voteReport(id, change) {
     const report = mockReports.find(r => r.id === id);
     if (!report) return;
-    report.cred += change; 
+
+    if (change === 1) { // Upvote clicked
+        if (report.userVote === 1) { report.cred--; report.userVote = 0; } // Undo upvote
+        else if (report.userVote === -1) { report.cred += 2; report.userVote = 1; } // Switch from down to up
+        else { report.cred++; report.userVote = 1; } // New upvote
+    } else if (change === -1) { // Downvote clicked
+        if (report.userVote === -1) { report.cred++; report.userVote = 0; } // Undo downvote
+        else if (report.userVote === 1) { report.cred -= 2; report.userVote = -1; } // Switch from up to down
+        else { report.cred--; report.userVote = -1; } // New downvote
+    }
+    
     filterReports();
     if(activeDetailId === id) openDetailModal(id);
 }
 
-// --- Modal & Form Logic ---
 function openDetailModal(id) {
     activeDetailId = id;
     const report = mockReports.find(r => r.id === id);
@@ -413,7 +426,6 @@ function submitComment() {
     const val = document.getElementById('new-comment').value.trim();
     if(!val) return;
     
-    // AI Content Check for Comments
     const aiError = aiContentCheck(val);
     if(aiError) return showToast(`AI Flag: ${aiError}`, "error");
 
@@ -438,11 +450,9 @@ function submitReport() {
     
     if(!title || !cat || desc.length < 15) return showToast("Please fill all required fields correctly.", "error");
 
-    // AI Content Check for Reports
     const aiError = aiContentCheck(desc) || aiContentCheck(title);
     if(aiError) return showToast(`AI Flag: ${aiError}`, "error");
 
-    // Use custom pin if selected, else drop near center
     let finalLat = manilaCenter[0] + (Math.random() - 0.5) * 0.01;
     let finalLng = manilaCenter[1] + (Math.random() - 0.5) * 0.01;
     
@@ -464,7 +474,6 @@ function submitReport() {
     showToast("Report securely submitted.", "success");
 }
 
-// --- Tag Logic ---
 function suggestTags() {
     const title = document.getElementById('report-title').value.toLowerCase();
     const cat = document.getElementById('report-category').value;
@@ -505,7 +514,6 @@ function addTag(tag) {
 }
 function removeTag(tag) { currentTags = currentTags.filter(t => t !== tag); addTag('hack'); currentTags.pop(); }
 
-// --- Routing Engine (Nominatim + OSRM) ---
 function handleSearch(inputEl, resultsId, target) {
     clearTimeout(searchTimeout);
     const query = inputEl.value;
@@ -554,7 +562,6 @@ async function calculateRealRoute() {
         const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
         const distKm = (data.routes[0].distance / 1000).toFixed(2);
         
-        // Accurate walking formula: Manila average urban pace is 3.5 km/h. Distance / Speed * 60 = Minutes.
         const timeMin = Math.round((distKm / 3.5) * 60);
 
         if(routingLine) map.removeLayer(routingLine);
@@ -589,10 +596,9 @@ function clearRoute() {
     document.getElementById('route-start').value = '';
     document.getElementById('route-end').value = '';
     startCoords = null; endCoords = null;
-    map.setView(manilaCenter, 15);
+    map.setView(manilaCenter, 14);
 }
 
-// --- Portal ---
 function togglePortal() { document.getElementById('partner-portal').classList.toggle('hidden'); }
 function loginPortal() {
     document.getElementById('portal-login').classList.add('hidden');
@@ -606,20 +612,38 @@ function logoutPortal() {
     showToast("Logged out securely.", "success");
 }
 
+// --- SPLIT PARTNER PORTAL DATA ---
 function populatePartnerPortal() {
-    const container = document.getElementById('city-stats-container');
-    container.innerHTML = '';
-    hotspots.forEach(spot => {
-        const color = spot.risk > 80 ? 'bg-rose-600' : spot.risk > 60 ? 'bg-amber-500' : 'bg-emerald-500';
-        container.innerHTML += `
-            <div class="mb-4">
+    const sumContainer = document.getElementById('city-summary-container');
+    const alertContainer = document.getElementById('high-alert-container');
+    
+    sumContainer.innerHTML = '';
+    alertContainer.innerHTML = '';
+
+    citySummaries.forEach(city => {
+        const color = city.risk > 70 ? 'bg-rose-600' : city.risk > 40 ? 'bg-amber-500' : 'bg-emerald-500';
+        sumContainer.innerHTML += `
+            <div>
                 <div class="flex justify-between text-sm mb-1.5 font-bold">
-                    <span class="dark:text-slate-300">${spot.name}</span>
-                    <span class="text-white px-2 py-0.5 rounded text-[10px] uppercase ${color}">${spot.risk > 80 ? 'High Alert' : 'Moderate'}</span>
+                    <span class="dark:text-slate-300">${city.name}</span>
+                    <span class="text-slate-500 dark:text-slate-400 text-xs">${city.risk}/100</span>
                 </div>
                 <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5">
-                    <div class="${color} h-2.5 rounded-full" style="width: ${spot.risk}%"></div>
+                    <div class="${color} h-2.5 rounded-full" style="width: ${city.risk}%"></div>
                 </div>
+            </div>`;
+    });
+
+    // Only show spots over 65 risk in the high alert section
+    const highRiskSpots = hotspots.filter(s => s.risk > 65).sort((a,b) => b.risk - a.risk);
+    highRiskSpots.forEach(spot => {
+        alertContainer.innerHTML += `
+            <div class="bg-rose-50 dark:bg-rose-900/10 p-4 rounded-lg border border-rose-100 dark:border-rose-900/50">
+                <div class="flex justify-between items-center mb-1">
+                    <h4 class="font-bold text-rose-700 dark:text-rose-400">${spot.name}</h4>
+                    <span class="text-xs bg-rose-600 text-white px-2 py-0.5 rounded font-bold">Risk: ${spot.risk}</span>
+                </div>
+                <p class="text-xs text-rose-600/80 dark:text-rose-300/80">${spot.reports} recent incidents reported.</p>
             </div>`;
     });
 }
