@@ -1,100 +1,112 @@
-// Data: Heavily populated around FEU Tech (Sampaloc, Manila)
-const feuCoords = { lat: 14.6042, lng: 120.9880 };
+// Initial Data near FEU Tech / Manila
+const feuCoords = [14.6042, 120.9880]; // Leaflet uses [lat, lng]
+let currentTags = []; // Stores tags for new reports
 
 const mockReports = [
-    { type: 'Environmental/Path Hazards', title: 'Broken Streetlight & Dim Alley', desc: 'The alley behind the building is pitch black at night. Makes it feel very unsafe to walk through after late classes.', cred: 145, lat: 14.6045, lng: 120.9882, user: 'Anonymous' },
-    { type: 'Harassment/Aggression', title: 'Group of men catcalling', desc: 'Near the corner of Morayta and Espana. A group of men frequently loiter here and catcall students passing by.', cred: 98, lat: 14.6050, lng: 120.9890, user: 'Anonymous' },
-    { type: 'Accessibility/Obstructions', title: 'Blocked PWD Ramp', desc: 'Sidewalk vendors have completely blocked the wheelchair ramp, forcing people onto the busy street.', cred: 70, lat: 14.6035, lng: 120.9875, user: 'Anonymous' },
-    { type: 'Crowd/Atmosphere', title: 'Overcrowded / Pickpocket risk', desc: 'Overpass is extremely crowded during rush hour. Someone tried to open my backpack.', cred: 112, lat: 14.6028, lng: 120.9885, user: 'Anonymous' },
-    { type: 'Environmental/Path Hazards', title: 'Deep open manhole', desc: 'Cover is completely missing on P. Campa street. Very dangerous especially when flooded.', cred: 210, lat: 14.6048, lng: 120.9868, user: 'Anonymous' },
-    { type: 'Harassment/Aggression', title: 'Suspicious individual stalking', desc: 'Noticed someone following me from the LRT station towards Gastambide.', cred: 85, lat: 14.6020, lng: 120.9895, user: 'Anonymous' },
+    { type: 'Environmental/Path Hazards', title: 'Broken Streetlight & Dim Alley', desc: 'The alley behind the building is pitch black at night. Makes it feel very unsafe.', cred: 145, lat: 14.6045, lng: 120.9882, tags: ['#no_lights', '#blindspot'] },
+    { type: 'Harassment/Aggression', title: 'Group of men catcalling', desc: 'Near the corner of Morayta and Espana. A group frequently loiters here.', cred: 98, lat: 14.6050, lng: 120.9890, tags: ['#catcalling', '#unsafe_vibe'] },
+    { type: 'Accessibility/Obstructions', title: 'Blocked PWD Ramp', desc: 'Sidewalk vendors have completely blocked the wheelchair ramp.', cred: 70, lat: 14.6035, lng: 120.9875, tags: ['#blocked_ramp'] },
+    { type: 'Crowd/Atmosphere', title: 'Overcrowded / Pickpocket risk', desc: 'Overpass is extremely crowded during rush hour. High risk area.', cred: 112, lat: 14.6028, lng: 120.9885, tags: ['#overcrowded', '#pickpocket_risk'] },
+    { type: 'Environmental/Path Hazards', title: 'Deep open manhole', desc: 'Cover is completely missing on P. Campa street. Very dangerous.', cred: 210, lat: 14.6048, lng: 120.9868, tags: ['#hazard'] },
 ];
 
-let map, heatmap;
+let map, heatmapLayer, routingLine;
 
+// Initialize Leaflet Map
 function initMap() {
-    // Fallback if Google Maps API key is missing
-    if(typeof google === 'undefined') {
-        document.getElementById('map').innerHTML = "<div class='p-10 text-center text-gray-500'>Google Maps failed to load. Please check your API key. (For the presentation, ensure internet connection and a valid key)</div>";
-        renderReports();
-        return;
+    // 1. Create the map instance
+    map = L.map('map', {
+        zoomControl: false // Move zoom control for cleaner UI
+    }).setView(feuCoords, 16);
+    
+    L.control.zoom({ position: 'topright' }).addTo(map);
+
+    // 2. Add OpenStreetMap Base Layer (Free)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap contributors & CARTO',
+        maxZoom: 19
+    }).addTo(map);
+
+    // 3. Generate Heatmap Data (Including random padding points for density)
+    let heatData = mockReports.map(r => [r.lat, r.lng, r.cred / 50]); // intensity based on cred
+    
+    // Add extra random points around FEU to make heatmap look populated
+    for(let i=0; i<80; i++) {
+        heatData.push([
+            feuCoords[0] + (Math.random() - 0.5) * 0.008,
+            feuCoords[1] + (Math.random() - 0.5) * 0.008,
+            Math.random() * 0.8
+        ]);
     }
 
-    map = new google.maps.Map(document.getElementById("map"), {
-        zoom: 16,
-        center: feuCoords,
-        mapTypeId: 'roadmap',
-        styles: [ // Custom dark-ish style to make heatmap pop
-            { elementType: "geometry", stylers: [{ color: "#f5f5f5" }] },
-            { elementType: "labels.icon", stylers: [{ visibility: "off" }] },
-            { elementType: "labels.text.fill", stylers: [{ color: "#616161" }] },
-            { elementType: "labels.text.stroke", stylers: [{ color: "#f5f5f5" }] },
-            { featureType: "road", elementType: "geometry", stylers: [{ color: "#ffffff" }] },
-        ]
-    });
+    // 4. Initialize Heatmap Plugin
+    heatmapLayer = L.heatLayer(heatData, {
+        radius: 25,
+        blur: 20,
+        maxZoom: 17,
+        gradient: {0.4: 'blue', 0.6: 'cyan', 0.7: 'lime', 0.8: 'yellow', 1.0: 'red'}
+    }).addTo(map);
 
-    const heatmapData = mockReports.map(r => ({
-        location: new google.maps.LatLng(r.lat, r.lng),
-        weight: r.cred / 10 // Weight by upvotes
-    }));
-
-    // Add extra random points around FEU to make the heatmap look "heavily populated"
-    for(let i=0; i<50; i++) {
-        heatmapData.push({
-            location: new google.maps.LatLng(
-                feuCoords.lat + (Math.random() - 0.5) * 0.005,
-                feuCoords.lng + (Math.random() - 0.5) * 0.005
-            ),
-            weight: Math.random() * 5
-        });
-    }
-
-    heatmap = new google.maps.visualization.HeatmapLayer({
-        data: heatmapData,
-        radius: 30,
-        gradient: [
-            'rgba(0, 255, 255, 0)', 'rgba(0, 255, 255, 1)', 'rgba(0, 191, 255, 1)',
-            'rgba(0, 127, 255, 1)', 'rgba(0, 63, 255, 1)', 'rgba(0, 0, 255, 1)',
-            'rgba(0, 0, 223, 1)', 'rgba(0, 0, 191, 1)', 'rgba(0, 0, 159, 1)',
-            'rgba(0, 0, 127, 1)', 'rgba(63, 0, 91, 1)', 'rgba(127, 0, 63, 1)',
-            'rgba(191, 0, 31, 1)', 'rgba(255, 0, 0, 1)'
-        ]
-    });
-    heatmap.setMap(map);
-
-    // Render left panel
     renderReports();
 }
 
 function toggleHeatmap() {
-    heatmap.setMap(heatmap.getMap() ? null : map);
+    const isChecked = document.getElementById('heatmap-toggle').checked;
+    if(isChecked) {
+        map.addLayer(heatmapLayer);
+    } else {
+        map.removeLayer(heatmapLayer);
+    }
 }
 
-function renderReports() {
+// Render & Filter Logic
+function filterReports() {
+    const category = document.getElementById('filter-category').value;
+    const search = document.getElementById('search-bar').value.toLowerCase();
+    
+    const filtered = mockReports.filter(report => {
+        const matchCategory = category === 'all' || report.type === category;
+        const matchSearch = report.title.toLowerCase().includes(search) || 
+                            report.desc.toLowerCase().includes(search) || 
+                            report.tags.some(t => t.toLowerCase().includes(search));
+        return matchCategory && matchSearch;
+    });
+    
+    renderReports(filtered);
+}
+
+function renderReports(reportsToRender = mockReports) {
     const list = document.getElementById('reports-list');
     list.innerHTML = '';
     
-    mockReports.sort((a,b) => b.cred - a.cred).forEach(report => {
-        let typeColor = 'text-gray-600';
-        if(report.type.includes('Harassment')) typeColor = 'text-red-600';
-        if(report.type.includes('Hazards')) typeColor = 'text-orange-600';
+    if(reportsToRender.length === 0) {
+        list.innerHTML = '<p class="text-sm text-slate-500 text-center py-4">No reports found.</p>';
+        return;
+    }
+
+    // Sort by cred score descending
+    reportsToRender.sort((a,b) => b.cred - a.cred).forEach(report => {
+        let typeColor = 'text-indigo-600 bg-indigo-50 border-indigo-100';
+        if(report.type.includes('Harassment')) typeColor = 'text-rose-600 bg-rose-50 border-rose-100';
+        if(report.type.includes('Hazards')) typeColor = 'text-amber-600 bg-amber-50 border-amber-100';
+
+        const tagHTML = report.tags.map(t => `<span class="text-[10px] font-medium text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-md">${t}</span>`).join('');
 
         list.innerHTML += `
-            <div class="bg-white p-4 rounded-lg shadow border border-gray-100 relative report-card group">
-                <div class="flex justify-between items-start">
-                    <p class="text-xs font-bold ${typeColor} uppercase tracking-wider mb-1">${report.type}</p>
-                    <button class="text-gray-400 hover:text-gray-800 font-bold px-2 report-card-menu">⁝</button>
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow group">
+                <div class="flex justify-between items-start mb-2">
+                    <span class="text-[10px] font-bold ${typeColor} uppercase tracking-wider px-2 py-1 rounded-md border">${report.type.split('/')[0]}</span>
                 </div>
-                <h3 class="font-bold text-gray-800 text-sm mb-1">${report.title}</h3>
-                <p class="text-sm text-gray-600 mb-3">${report.desc}</p>
-                <div class="flex justify-between items-center border-t pt-2">
-                    <div class="text-xs text-gray-400 flex items-center gap-1">
-                        <span>🛡️ Cred Score</span>
-                    </div>
-                    <div class="flex items-center gap-2 bg-gray-50 px-2 py-1 rounded">
-                        <button class="text-green-600 hover:scale-110 transition font-bold">⇧</button>
-                        <span class="font-bold text-sm text-gray-700">${report.cred}</span>
-                        <button class="text-red-600 hover:scale-110 transition font-bold">⇩</button>
+                <h3 class="font-bold text-slate-800 text-sm mb-1">${report.title}</h3>
+                <p class="text-xs text-slate-600 mb-3 leading-relaxed">${report.desc}</p>
+                <div class="flex flex-wrap gap-1 mb-3">${tagHTML}</div>
+                
+                <div class="flex justify-between items-center border-t border-slate-50 pt-3">
+                    <span class="text-[11px] font-semibold text-slate-400">🛡️ Cred Score</span>
+                    <div class="flex items-center gap-2 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">
+                        <button class="text-green-500 hover:text-green-600 transition font-bold">⇧</button>
+                        <span class="font-bold text-sm text-slate-700 w-6 text-center">${report.cred}</span>
+                        <button class="text-rose-500 hover:text-rose-600 transition font-bold">⇩</button>
                     </div>
                 </div>
             </div>
@@ -102,42 +114,83 @@ function renderReports() {
     });
 }
 
-// UI Toggles
+// Safest Route Mock Simulator
+function calculateRoute() {
+    const start = document.getElementById('route-start').value;
+    const end = document.getElementById('route-end').value;
+    const btn = document.getElementById('route-btn');
+
+    if(!start || !end) {
+        alert("Please enter both starting point and destination.");
+        return;
+    }
+
+    btn.innerText = "Calculating...";
+    btn.classList.add('animate-pulse');
+
+    // Simulate network delay
+    setTimeout(() => {
+        btn.innerText = "Calculate Route";
+        btn.classList.remove('animate-pulse');
+
+        // Clear existing route if any
+        if(routingLine) map.removeLayer(routingLine);
+
+        // Create a fake zigzag route to simulate pathfinding around danger zones
+        const offsetLat = (Math.random() - 0.5) * 0.01;
+        const offsetLng = (Math.random() - 0.5) * 0.01;
+        
+        const routeCoords = [
+            feuCoords,
+            [feuCoords[0] + offsetLat/2, feuCoords[1] + offsetLng],
+            [feuCoords[0] + offsetLat, feuCoords[1] + offsetLng * 1.5],
+            [feuCoords[0] + offsetLat*2, feuCoords[1] + offsetLng*2] // Fake destination
+        ];
+
+        routingLine = L.polyline(routeCoords, {
+            color: '#4f46e5', // Indigo
+            weight: 5,
+            opacity: 0.8,
+            dashArray: '10, 10',
+            lineJoin: 'round'
+        }).addTo(map);
+
+        // Zoom map to fit the new route
+        map.fitBounds(routingLine.getBounds(), { padding: [50, 50] });
+
+    }, 1500);
+}
+
+
+// --- Modal & UI Toggles ---
 function toggleSidebar() {
     const sidebar = document.getElementById('user-sidebar');
     sidebar.classList.toggle('-translate-x-full');
 }
 
 function openReportModal() {
-    document.getElementById('report-modal').classList.remove('hidden');
+    const modal = document.getElementById('report-modal');
+    modal.classList.remove('hidden');
+    // Slight delay to allow display:block to apply before animating opacity
+    setTimeout(() => { modal.classList.add('show'); }, 10);
+    currentTags = [];
+    updateTagDisplay();
 }
 
 function closeReportModal() {
-    document.getElementById('report-modal').classList.add('hidden');
+    const modal = document.getElementById('report-modal');
+    modal.classList.remove('show');
+    setTimeout(() => { modal.classList.add('hidden'); }, 300); // Wait for transition
+    
+    // Reset Form
+    document.getElementById('report-title').value = '';
     document.getElementById('report-desc').value = '';
+    document.getElementById('report-category').value = '';
     document.getElementById('safety-confirm').checked = false;
+    document.getElementById('ai-tags').classList.add('hidden');
 }
 
-function closeEmergencyModal() {
-    document.getElementById('emergency-modal').classList.add('hidden');
-}
-
-function togglePortal() {
-    const portal = document.getElementById('partner-portal');
-    portal.classList.toggle('hidden');
-}
-
-function loginPortal() {
-    document.getElementById('portal-login').classList.add('hidden');
-    document.getElementById('portal-dashboard').classList.remove('hidden');
-}
-
-// Form Logic
-const descInput = document.getElementById('report-desc');
-descInput.addEventListener('input', (e) => {
-    document.getElementById('char-count').innerText = `${e.target.value.length}/15 min`;
-});
-
+// --- Tag Management ---
 function suggestTags() {
     const cat = document.getElementById('report-category').value;
     const aiTags = document.getElementById('ai-tags');
@@ -148,89 +201,104 @@ function suggestTags() {
     aiTags.classList.remove('hidden');
     container.innerHTML = '';
     
-    const tags = {
-        harassment: ['#catcalling', '#stalking', '#unsafe_vibe'],
-        crowd: ['#overcrowded', '#pickpocket_risk', '#loiterers'],
-        environmental: ['#no_lights', '#flooded', '#blindspot'],
-        accessibility: ['#blocked_ramp', '#broken_elevator']
+    const predefinedTags = {
+        'Harassment/Aggression': ['#catcalling', '#stalking', '#unsafe_vibe'],
+        'Crowd/Atmosphere': ['#overcrowded', '#pickpocket_risk', '#loiterers'],
+        'Environmental/Path Hazards': ['#no_lights', '#flooded', '#blindspot'],
+        'Accessibility/Obstructions': ['#blocked_ramp', '#broken_elevator']
     };
     
-    tags[cat].forEach(tag => {
-        container.innerHTML += `<span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded cursor-pointer hover:bg-blue-200 border border-blue-200" onclick="addTagToDesc('${tag}')">${tag} +</span>`;
+    predefinedTags[cat].forEach(tag => {
+        container.innerHTML += `<span class="text-[11px] font-medium bg-white text-indigo-600 border border-indigo-200 px-2 py-1 rounded-md cursor-pointer hover:bg-indigo-50 transition" onclick="addTag('${tag}')">${tag} +</span>`;
     });
 }
 
-function addTagToDesc(tag) {
-    descInput.value += ` ${tag}`;
+function handleTagKeypress(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault(); // Prevent form submission if any
+        addCustomTag();
+    }
 }
 
-// Submit Logic with Validations
+function addCustomTag() {
+    const input = document.getElementById('custom-tag-input');
+    let val = input.value.trim().replace(/\s+/g, '_'); // Replace spaces with underscores
+    
+    if(val) {
+        if(!val.startsWith('#')) val = '#' + val;
+        addTag(val.toLowerCase());
+        input.value = '';
+    }
+}
+
+function addTag(tag) {
+    if(!currentTags.includes(tag) && currentTags.length < 5) {
+        currentTags.push(tag);
+        updateTagDisplay();
+    }
+}
+
+function removeTag(tag) {
+    currentTags = currentTags.filter(t => t !== tag);
+    updateTagDisplay();
+}
+
+function updateTagDisplay() {
+    const container = document.getElementById('active-tags-container');
+    container.innerHTML = currentTags.map(t => `
+        <span class="text-xs bg-indigo-600 text-white px-2 py-1 rounded-md flex items-center gap-1">
+            ${t} <button onclick="removeTag('${t}')" class="hover:text-rose-300 font-bold ml-1">×</button>
+        </span>
+    `).join('');
+}
+
+
+// --- Form Logic ---
+document.getElementById('report-desc').addEventListener('input', (e) => {
+    const count = e.target.value.length;
+    const counter = document.getElementById('char-count');
+    counter.innerText = `${count}/15 min`;
+    counter.className = count >= 15 ? "text-xs mt-1 text-right font-medium text-green-500" : "text-xs mt-1 text-right font-medium text-slate-400";
+});
+
 function submitReport() {
+    const title = document.getElementById('report-title').value;
     const desc = document.getElementById('report-desc').value;
     const cat = document.getElementById('report-category').value;
     const safe = document.getElementById('safety-confirm').checked;
     
-    // 1. Min 15 Characters
-    if(desc.length < 15) {
-        alert("Description must be at least 15 characters to avoid vague reports.");
-        return;
-    }
-    
-    // 2. Category selection
-    if(!cat) {
-        alert("Please select a category.");
-        return;
-    }
+    if(!title) { alert("Please enter a subject/title."); return; }
+    if(desc.length < 15) { alert("Description must be at least 15 characters."); return; }
+    if(!cat) { alert("Please select a category."); return; }
+    if(!safe) { alert("Please confirm you are safe to post this report."); return; }
 
-    // 3. Confirm Safety
-    if(!safe) {
-        alert("Please confirm you are safe to post this report.");
-        return;
-    }
-
-    // 4. Decency/Profanity Check (Simulated)
-    const slurs = ['slur1', 'swearword', 'idiot']; // Keep clean for code
-    const lowerDesc = desc.toLowerCase();
-    if(slurs.some(slur => lowerDesc.includes(slur))) {
-        alert("Our AI system detected inappropriate language. Please keep reports objective and clean.");
-        return;
-    }
-
-    // 5. Max 3 reports per day limit (Simulated via LocalStorage)
-    let reportsToday = parseInt(localStorage.getItem('reportsToday') || 0);
-    let lastReportDate = localStorage.getItem('lastReportDate');
-    let today = new Date().toDateString();
-
-    if(lastReportDate !== today) {
-        reportsToday = 0; // Reset if it's a new day
-    }
-
-    if(reportsToday >= 3) {
-        alert("To avoid spam, you can only make 3 reports per day. Thank you for keeping the community safe!");
-        return;
-    }
-
-    // Success! Update local storage
-    localStorage.setItem('reportsToday', reportsToday + 1);
-    localStorage.setItem('lastReportDate', today);
-
-    // Mock adding to list
-    mockReports.push({
-        type: cat.toUpperCase(),
-        title: 'New User Report',
+    // Add to mock data
+    mockReports.unshift({ // Add to beginning of array
+        type: cat,
+        title: title,
         desc: desc,
-        cred: 1, // Start at 1
-        lat: feuCoords.lat,
-        lng: feuCoords.lng,
-        user: 'Anonymous'
+        cred: 1,
+        lat: feuCoords[0] + (Math.random() - 0.5) * 0.002, // Drop pin near center
+        lng: feuCoords[1] + (Math.random() - 0.5) * 0.002,
+        tags: [...currentTags]
     });
 
     closeReportModal();
-    renderReports();
+    
+    // Re-initialize map heatmap data to show new point
+    initMap(); // Quick and dirty refresh for prototype purposes
     
     // Show Emergency popup
-    document.getElementById('emergency-modal').classList.remove('hidden');
+    const eModal = document.getElementById('emergency-modal');
+    eModal.classList.remove('hidden');
+    setTimeout(() => { eModal.classList.add('show'); }, 10);
 }
 
-// Call init on load (If API key fails, this handles it gracefully)
+function closeEmergencyModal() {
+    const eModal = document.getElementById('emergency-modal');
+    eModal.classList.remove('show');
+    setTimeout(() => { eModal.classList.add('hidden'); }, 300);
+}
+
+// Initialize on load
 window.onload = initMap;
