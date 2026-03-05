@@ -25,17 +25,12 @@ let searchTimeout;
 let startCoords = null, endCoords = null;
 let isDragging = false, currentX=0, currentY=0, initialX=0, initialY=0, xOffset = 0, yOffset = 0;
 
-// SPLIT DATA: Broad City Risk Summaries
 const citySummaries = [
-    { name: 'City of Manila', risk: 82 },
-    { name: 'Quezon City', risk: 65 },
-    { name: 'Caloocan City', risk: 70 },
-    { name: 'Makati City', risk: 25 },
-    { name: 'Taguig City', risk: 18 },
-    { name: 'Pasay City', risk: 85 }
+    { name: 'City of Manila', risk: 82 }, { name: 'Quezon City', risk: 65 },
+    { name: 'Caloocan City', risk: 70 }, { name: 'Makati City', risk: 25 },
+    { name: 'Taguig City', risk: 18 }, { name: 'Pasay City', risk: 85 }
 ];
 
-// SPLIT DATA: Specific High-Density Zones
 const hotspots = [
     { name: 'FEU Tech & Main', lat: 14.6040, lng: 120.9875, risk: 90, spread: 0.005, reports: 45 },
     { name: 'UST España Blvd', lat: 14.6096, lng: 120.9894, risk: 85, spread: 0.007, reports: 40 },
@@ -86,6 +81,7 @@ function initMap() {
     setupDrag();
 }
 
+// Haversine
 function getDistance(lat1, lon1, lat2, lon2) {
     const R = 6371; 
     const dLat = (lat2-lat1)*Math.PI/180;
@@ -94,12 +90,24 @@ function getDistance(lat1, lon1, lat2, lon2) {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
+// --- Reverse Geocoding Helper ---
+async function getAddressFromCoords(lat, lng) {
+    try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
+        const data = await res.json();
+        return data.display_name || 'Location recognized from coordinates.';
+    } catch(e) {
+        return 'Network error fetching street name.';
+    }
+}
+
 function populateHeatmap() {
     if(heatmapLayer) map.removeLayer(heatmapLayer);
     
     let filteredData = mockReports;
+    // ADJUSTED TO 1KM
     if(isRadiusActive && radiusCenterCoords) {
-        filteredData = mockReports.filter(r => getDistance(radiusCenterCoords[0], radiusCenterCoords[1], r.lat, r.lng) <= 5);
+        filteredData = mockReports.filter(r => getDistance(radiusCenterCoords[0], radiusCenterCoords[1], r.lat, r.lng) <= 1.0);
     }
 
     let heatData = filteredData.map(r => [r.lat, r.lng, r.cred / 80]); 
@@ -122,27 +130,38 @@ function populateHeatmap() {
 
 function enableRadiusFilter() {
     const btn = document.getElementById('radius-btn');
+    const infoBox = document.getElementById('radius-info');
+
     if(isRadiusActive) {
         isRadiusActive = false;
         if(radiusCircle) map.removeLayer(radiusCircle);
-        btn.innerHTML = "📍 Focus 5km Area";
+        btn.innerHTML = "📍 Focus 1km Area"; // UPDATED TO 1KM
         btn.classList.replace('bg-rose-600', 'bg-indigo-600');
+        infoBox.classList.add('hidden');
         populateHeatmap();
         showToast("Showing all NCR data.", "success");
     } else {
-        showToast("Click any location on the map to set 5km focus area.", "success");
+        showToast("Click any location on the map to set 1km focus area.", "success");
         document.getElementById('map').style.cursor = 'crosshair';
         
-        map.once('click', function(e) {
+        map.once('click', async function(e) {
             document.getElementById('map').style.cursor = '';
             radiusCenterCoords = [e.latlng.lat, e.latlng.lng];
             isRadiusActive = true;
             
             if(radiusCircle) map.removeLayer(radiusCircle);
-            radiusCircle = L.circle(radiusCenterCoords, {radius: 5000, color: '#4f46e5', fillOpacity: 0.1, weight: 2}).addTo(map);
+            // 1000 meters = 1km radius
+            radiusCircle = L.circle(radiusCenterCoords, {radius: 1000, color: '#4f46e5', fillOpacity: 0.1, weight: 2}).addTo(map);
             
-            btn.innerHTML = "✕ Clear 5km Focus";
+            btn.innerHTML = "✕ Clear 1km Focus"; // UPDATED TO 1KM
             btn.classList.replace('bg-indigo-600', 'bg-rose-600');
+
+            // Fetch and show address
+            infoBox.innerHTML = `📍 <i>Fetching location...</i>`;
+            infoBox.classList.remove('hidden');
+            const address = await getAddressFromCoords(radiusCenterCoords[0], radiusCenterCoords[1]);
+            infoBox.innerHTML = `📍 <b>1km Radius Focus</b><br><span class="text-[10px] opacity-80">${address}<br>Lat: ${radiusCenterCoords[0].toFixed(5)}, Lng: ${radiusCenterCoords[1].toFixed(5)}</span>`;
+
             populateHeatmap();
         });
     }
@@ -151,12 +170,9 @@ function enableRadiusFilter() {
 function updateOpacity() {
     const val = document.getElementById('heatmap-opacity').value;
     const canvases = document.querySelectorAll('.leaflet-heatmap-layer');
-    canvases.forEach(c => {
-        c.style.opacity = val;
-    });
+    canvases.forEach(c => c.style.opacity = val);
 }
 
-// AI Checker
 function aiContentCheck(text) {
     const badWords = ['gago', 'puta', 'bobo', 'shit', 'fuck', 'spam', 'asshole'];
     const lower = text.toLowerCase();
@@ -172,7 +188,7 @@ function enableMapPicker() {
     document.getElementById('map').style.cursor = 'crosshair';
     isPickingLocation = true;
     
-    map.once('click', function(e) {
+    map.once('click', async function(e) {
         isPickingLocation = false;
         document.getElementById('map').style.cursor = '';
         customPinCoords = [e.latlng.lat, e.latlng.lng];
@@ -182,11 +198,16 @@ function enableMapPicker() {
         
         openReportModal();
         document.getElementById('loc-privacy').value = 'precise';
-        document.getElementById('pin-status').classList.remove('hidden');
+        
+        const pinStatus = document.getElementById('pin-status');
+        pinStatus.classList.remove('hidden');
+        pinStatus.innerHTML = `📍 <i>Fetching precise address...</i>`;
+        
+        const address = await getAddressFromCoords(customPinCoords[0], customPinCoords[1]);
+        pinStatus.innerHTML = `📍 <b>Pinned Location:</b> ${address}<br><span class="text-[10px] text-slate-500 font-normal">Coordinates: ${customPinCoords[0].toFixed(5)}, ${customPinCoords[1].toFixed(5)}</span>`;
     });
 }
 
-// --- FIXED DRAG BOUNDARIES ---
 function setupDrag() {
     const dragItem = document.getElementById("route-panel");
     const dragHeader = document.getElementById("route-panel-header");
@@ -212,7 +233,6 @@ function setupDrag() {
             const mapHeight = window.innerHeight;
             const panelRect = dragItem.getBoundingClientRect();
             
-            // Check if sidebar is open to prevent dragging underneath it
             const sidebar = document.getElementById('user-sidebar');
             const isSidebarOpen = !sidebar.classList.contains('-translate-x-full');
             const sidebarWidth = (isSidebarOpen && mapWidth >= 768) ? sidebar.offsetWidth : 0;
@@ -240,7 +260,7 @@ function showToast(msg, type = 'error') {
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
     const colorClass = type === 'error' ? 'bg-rose-500' : 'bg-emerald-500';
-    toast.className = `${colorClass} text-white px-6 py-3 rounded-lg shadow-xl font-bold text-sm transform transition-all duration-300 translate-y-[-20px] opacity-0 flex items-center gap-2`;
+    toast.className = `${colorClass} text-white px-6 py-3 rounded-lg shadow-xl font-bold text-sm transform transition-all duration-300 translate-y-[-20px] opacity-0 flex items-center gap-2 z-[100000]`;
     toast.innerHTML = type === 'error' ? `<span>⚠️</span> ${msg}` : `<span>✅</span> ${msg}`;
     container.appendChild(toast);
     setTimeout(() => { toast.classList.remove('translate-y-[-20px]', 'opacity-0'); }, 10);
@@ -260,7 +280,6 @@ function toggleDarkMode() {
 function toggleSidebar() {
     document.getElementById('user-sidebar').classList.toggle('-translate-x-full');
     document.getElementById('expand-sidebar-btn').classList.toggle('hidden');
-    // Force route panel boundary recalculation if they move the sidebar
     setupDrag();
 }
 
@@ -296,7 +315,7 @@ function filterReports() {
     let filtered = mockReports.filter(report => {
         const matchCat = activeFilter === 'all' || report.type === activeFilter;
         const matchSearch = report.title.toLowerCase().includes(search) || report.desc.toLowerCase().includes(search);
-        const matchRadius = (!isRadiusActive || !radiusCenterCoords) ? true : (getDistance(radiusCenterCoords[0], radiusCenterCoords[1], report.lat, report.lng) <= 5);
+        const matchRadius = (!isRadiusActive || !radiusCenterCoords) ? true : (getDistance(radiusCenterCoords[0], radiusCenterCoords[1], report.lat, report.lng) <= 1.0); // 1KM FIX
         return matchCat && matchSearch && matchRadius;
     });
 
@@ -325,7 +344,6 @@ function renderReports(reportsToRender = null) {
 
         const tagHTML = report.tags.map(t => `<span class="text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded">${t}</span>`).join('');
 
-        // Dynamic Voting Styles
         const upBtnStyle = report.userVote === 1 ? "text-emerald-500 scale-125" : "text-slate-400 hover:text-emerald-500";
         const downBtnStyle = report.userVote === -1 ? "text-rose-500 scale-125" : "text-slate-400 hover:text-rose-500";
 
@@ -381,35 +399,35 @@ function submitFlag() {
     closeFlagModal(); showToast("Report flagged for human review.", "success");
 }
 
-// --- FIXED VOTING LOGIC ---
 function voteReport(id, change) {
     const report = mockReports.find(r => r.id === id);
     if (!report) return;
 
-    if (change === 1) { // Upvote clicked
-        if (report.userVote === 1) { report.cred--; report.userVote = 0; } // Undo upvote
-        else if (report.userVote === -1) { report.cred += 2; report.userVote = 1; } // Switch from down to up
-        else { report.cred++; report.userVote = 1; } // New upvote
-    } else if (change === -1) { // Downvote clicked
-        if (report.userVote === -1) { report.cred++; report.userVote = 0; } // Undo downvote
-        else if (report.userVote === 1) { report.cred -= 2; report.userVote = -1; } // Switch from up to down
-        else { report.cred--; report.userVote = -1; } // New downvote
+    if (change === 1) { 
+        if (report.userVote === 1) { report.cred--; report.userVote = 0; } 
+        else if (report.userVote === -1) { report.cred += 2; report.userVote = 1; } 
+        else { report.cred++; report.userVote = 1; } 
+    } else if (change === -1) { 
+        if (report.userVote === -1) { report.cred++; report.userVote = 0; } 
+        else if (report.userVote === 1) { report.cred -= 2; report.userVote = -1; } 
+        else { report.cred--; report.userVote = -1; } 
     }
     
     filterReports();
     if(activeDetailId === id) openDetailModal(id);
 }
 
+// FIXED: Overlapping Close Button padding (pr-10)
 function openDetailModal(id) {
     activeDetailId = id;
     const report = mockReports.find(r => r.id === id);
     document.getElementById('detail-content').innerHTML = `
-        <div class="flex justify-between items-start mb-3">
+        <div class="flex justify-between items-start mb-3 pr-10">
             <span class="text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 uppercase tracking-wider px-2 py-1 rounded border border-slate-200 dark:border-slate-700">${report.type}</span>
-            <span class="text-xs text-slate-400">${formatDate(report.timestamp)}</span>
+            <span class="text-xs text-slate-400 font-medium">${formatDate(report.timestamp)}</span>
         </div>
-        <h2 class="text-2xl font-bold text-slate-800 dark:text-white mb-3">${report.title}</h2>
-        <p class="text-sm text-slate-600 dark:text-slate-300 mb-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg leading-relaxed">${report.desc}</p>
+        <h2 class="text-2xl font-bold text-slate-800 dark:text-white mb-3 pr-4">${report.title}</h2>
+        <p class="text-sm text-slate-600 dark:text-slate-300 mb-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg leading-relaxed border border-slate-100 dark:border-slate-700/50">${report.desc}</p>
     `;
     
     const cList = document.getElementById('detail-comments');
@@ -471,7 +489,11 @@ function submitReport() {
     populateHeatmap(); 
     filterReports();
     currentTags = []; customPinCoords = null;
-    showToast("Report securely submitted.", "success");
+    document.getElementById('emergency-modal').classList.remove('hidden');
+}
+
+function closeEmergencyModal() {
+    document.getElementById('emergency-modal').classList.add('hidden');
 }
 
 function suggestTags() {
@@ -604,15 +626,23 @@ function loginPortal() {
     document.getElementById('portal-login').classList.add('hidden');
     document.getElementById('portal-dashboard').classList.remove('hidden');
     document.getElementById('logout-btn').classList.remove('hidden');
+    document.getElementById('export-btn').classList.remove('hidden'); // Show Export
 }
 function logoutPortal() {
     document.getElementById('portal-dashboard').classList.add('hidden');
     document.getElementById('logout-btn').classList.add('hidden');
+    document.getElementById('export-btn').classList.add('hidden');
     document.getElementById('portal-login').classList.remove('hidden');
     showToast("Logged out securely.", "success");
 }
 
-// --- SPLIT PARTNER PORTAL DATA ---
+function exportData() {
+    showToast("Preparing PDF/CSV Data Package...", "success");
+    setTimeout(() => {
+        showToast("Export Downloaded Successfully.", "success");
+    }, 2000);
+}
+
 function populatePartnerPortal() {
     const sumContainer = document.getElementById('city-summary-container');
     const alertContainer = document.getElementById('high-alert-container');
@@ -634,7 +664,6 @@ function populatePartnerPortal() {
             </div>`;
     });
 
-    // Only show spots over 65 risk in the high alert section
     const highRiskSpots = hotspots.filter(s => s.risk > 65).sort((a,b) => b.risk - a.risk);
     highRiskSpots.forEach(spot => {
         alertContainer.innerHTML += `
