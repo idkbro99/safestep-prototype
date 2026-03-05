@@ -107,8 +107,7 @@
             <div id="map" class="w-full h-full z-[10]"></div>
 
             <div class="absolute bottom-8 right-16 z-[1000] flex flex-col gap-3 items-end">
-                <div id="radius-info" class="hidden bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-4 py-3 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-300 max-w-xs text-right leading-relaxed">
-                    </div>
+                <div id="radius-info" class="hidden bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-4 py-3 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-300 max-w-xs text-right leading-relaxed"></div>
 
                 <button onclick="enableRadiusFilter()" id="radius-btn" class="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-xl font-bold text-sm hover:bg-indigo-700 transition flex items-center gap-2 border border-indigo-500">
                     📍 Focus 1km Area
@@ -145,14 +144,13 @@
                         <div>
                             <label class="block text-xs font-bold text-slate-500 uppercase mb-0.5">Location Privacy <span class="text-rose-500">*</span></label>
                             <select id="loc-privacy" class="bg-transparent text-sm font-bold text-indigo-900 dark:text-indigo-300 outline-none cursor-pointer">
-                                <option value="approx">Approximate (50m Radius)</option>
+                                <option value="approx">Approximate (General Area)</option>
                                 <option value="precise">Precise Location Pin</option>
                             </select>
                         </div>
                         <button onclick="enableMapPicker()" class="bg-indigo-600 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-indigo-700 shadow-sm transition">📍 Pick on Map</button>
                     </div>
-                    <div id="pin-status" class="hidden text-xs bg-white dark:bg-slate-900 p-2 rounded border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 leading-relaxed">
-                        </div>
+                    <div id="pin-status" class="hidden text-xs bg-white dark:bg-slate-900 p-2 rounded border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 leading-relaxed"></div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -208,7 +206,6 @@
             <h1 class="text-xl font-bold">SafeStep | Partner Dashboard</h1>
             <div class="flex items-center gap-6">
                 <button onclick="exportData()" id="export-btn" class="hidden text-sm bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded font-bold transition">📥 Export Data</button>
-                
                 <button onclick="logoutPortal()" id="logout-btn" class="hidden text-sm bg-indigo-800 hover:bg-indigo-700 px-4 py-2 rounded font-bold transition">Logout</button>
                 <button onclick="togglePortal()" class="text-indigo-200 hover:text-white font-bold text-2xl">✕</button>
             </div>
@@ -227,7 +224,6 @@
         </div>
 
         <div id="portal-dashboard" class="hidden p-6 md:p-8 max-w-7xl mx-auto space-y-6">
-            
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="bg-white dark:bg-slate-900 p-6 rounded-lg shadow border border-slate-200 dark:border-slate-800 border-t-4 border-t-indigo-500">
                     <h3 class="text-slate-500 dark:text-slate-400 text-sm font-bold uppercase tracking-wider">Active Reports (24h)</h3>
