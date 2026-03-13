@@ -11,163 +11,184 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://leaflet.github.io/Leaflet.heat/dist/leaflet-heat.js"></script>
+    
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 overflow-hidden font-sans text-slate-800 dark:text-slate-200 transition-colors duration-300">
 
     <div id="toast-container" class="fixed top-10 left-1/2 transform -translate-x-1/2 flex flex-col gap-2 pointer-events-none z-[100000]"></div>
 
-    <nav class="bg-indigo-900 dark:bg-slate-950 text-white p-3 md:p-4 flex justify-between items-center shadow-sm z-[2000] relative border-b border-indigo-800 dark:border-slate-800">
-        <div class="flex items-center gap-3">
-            <h1 class="text-2xl font-bold tracking-tight flex items-center gap-2"><i data-lucide="shield" class="w-6 h-6"></i> SafeStep</h1>
-        </div>
-        <div class="flex gap-3 md:gap-4 items-center">
-            <div class="hidden md:flex gap-2">
-                <span class="badge bg-indigo-800/50 border-indigo-600">📍 NCR Coverage</span>
-                <span class="badge bg-indigo-800/50 border-indigo-600"><i data-lucide="shield-check" class="w-3 h-3 text-emerald-400"></i> AI-Screened</span>
-                <span class="badge bg-indigo-800/50 border-indigo-600"><i data-lucide="eye" class="w-3 h-3 text-indigo-300"></i> Human Moderated</span>
-            </div>
-            
-            <button onclick="toggleDarkMode()" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-indigo-800 transition" id="theme-icon"><i data-lucide="moon" class="w-4 h-4"></i></button>
-            
-            <div class="relative">
-                <button onclick="toggleTopMenu(event)" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-indigo-800 transition"><i data-lucide="more-vertical" class="w-4 h-4"></i></button>
-                <div id="top-nav-menu" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 z-50 py-2 text-slate-700 dark:text-slate-300">
-                    <button onclick="showToast('Help Center opening...', 'success')" class="w-full flex items-center gap-3 px-4 py-2 text-sm font-bold hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="help-circle" class="w-4 h-4"></i> Help Center</button>
-                    <button onclick="showToast('Issue reporter opening...', 'success')" class="w-full flex items-center gap-3 px-4 py-2 text-sm font-bold hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="alert-triangle" class="w-4 h-4"></i> Report Issue</button>
-                    <button onclick="showToast('Suggestion box opening...', 'success')" class="w-full flex items-center gap-3 px-4 py-2 text-sm font-bold hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="lightbulb" class="w-4 h-4"></i> Suggestion</button>
-                    <button onclick="openFeedbackModal()" class="w-full flex items-center gap-3 px-4 py-2 text-sm font-bold hover:bg-slate-100 dark:hover:bg-slate-700 text-indigo-600 dark:text-indigo-400"><i data-lucide="message-square-plus" class="w-4 h-4"></i> Give Feedback</button>
-                </div>
-            </div>
-
-            <div id="auth-container" class="relative">
-                <button id="login-btn" onclick="openLoginOverlay()" class="btn-primary rounded-full px-5 py-1.5 text-xs"><i data-lucide="log-in" class="w-3.5 h-3.5"></i> Login</button>
-                
-                <div id="user-menu-container" class="hidden">
-                    <button onclick="toggleUserMenu(event)" id="user-avatar-btn" class="w-9 h-9 flex items-center justify-center bg-indigo-500 rounded-full hover:bg-indigo-600 transition shadow-md border border-indigo-400"></button>
-                    <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-60 bg-white dark:bg-slate-800 rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 z-50 py-2"></div>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <div class="flex h-[calc(100vh-64px)] relative w-full overflow-hidden">
+    <div class="flex h-screen relative w-full overflow-hidden">
         
-        <div id="user-sidebar" class="glass-panel h-full flex flex-col z-[1500] absolute md:relative shrink-0 transition-all duration-300 w-11/12 sm:w-[380px] md:w-[460px]">
+        <div id="user-sidebar" class="glass-panel h-full shadow-[4px_0_24px_rgba(0,0,0,0.15)] flex flex-col z-[1500] transition-all duration-300 ease-in-out absolute md:relative shrink-0 w-11/12 sm:w-[380px] md:w-[460px]">
+            
             <div id="sidebar-expanded" class="flex flex-col h-full w-full transition-opacity duration-300 opacity-100 min-w-0">
                 <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
-                    <h2 class="text-xl font-bold flex items-center gap-2"><i data-lucide="map" class="w-5 h-5 text-indigo-600"></i> Area Reports</h2>
-                    <button onclick="toggleSidebar()" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full"><i data-lucide="panel-left-close" class="w-4 h-4"></i></button>
+                    <h2 class="text-xl font-bold flex items-center gap-2"><i data-lucide="map" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i> Area Reports</h2>
+                    <button onclick="toggleSidebar()" class="p-2 text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition shrink-0" title="Collapse Sidebar">
+                        <i data-lucide="panel-left-close" class="w-4 h-4"></i>
+                    </button>
                 </div>
 
                 <div class="p-4 border-b border-slate-200 dark:border-slate-800">
                     <div class="relative mb-3">
                         <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
-                        <input type="text" id="search-bar" onkeyup="filterReports()" placeholder="Search keywords..." class="input-base pl-9">
+                        <input type="text" id="search-bar" onkeyup="filterReports()" placeholder="Search keywords, #tags..." class="input-base pl-9">
                     </div>
+                    
                     <div class="flex flex-wrap gap-2 mb-3" id="category-filters">
-                        <button onclick="setCategoryFilter('all')" class="badge bg-indigo-600 text-white">All</button>
-                        <button onclick="setCategoryFilter('Harassment/Aggression')" class="badge border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300">Harassment</button>
-                        <button onclick="setCategoryFilter('Crowd/Atmosphere')" class="badge border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300">Crowds</button>
-                        <button onclick="setCategoryFilter('Environmental/Path Hazards')" class="badge border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300">Hazards</button>
+                        <button onclick="setCategoryFilter('all')" class="filter-btn active badge bg-indigo-600 text-white">All</button>
+                        <button onclick="setCategoryFilter('Harassment/Aggression')" class="filter-btn badge border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">Harassment</button>
+                        <button onclick="setCategoryFilter('Crowd/Atmosphere')" class="filter-btn badge border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">Crowds</button>
+                        <button onclick="setCategoryFilter('Environmental/Path Hazards')" class="filter-btn badge border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">Hazards</button>
+                        <button onclick="setCategoryFilter('Accessibility/Obstructions')" class="filter-btn badge border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">Accessibility</button>
                     </div>
+
                     <div class="flex gap-3 items-center overflow-x-auto no-scrollbar" id="sort-filters">
                         <span class="text-xs text-slate-400 font-bold uppercase tracking-wider mr-1 flex items-center gap-1 shrink-0"><i data-lucide="list-filter" class="w-3 h-3"></i> Sort:</span>
-                        <button onclick="setSortFilter('relevant')" class="sort-btn active text-sm font-bold text-indigo-600 underline decoration-2 underline-offset-4">Relevant</button>
-                        <button onclick="setSortFilter('popular')" class="sort-btn text-sm font-bold text-slate-500">Popular</button>
-                        <button onclick="setSortFilter('newest')" class="sort-btn text-sm font-bold text-slate-500">Newest</button>
+                        <button onclick="setSortFilter('relevant')" class="sort-btn active text-sm font-bold text-indigo-600 dark:text-indigo-400 underline decoration-2 underline-offset-4 shrink-0">Relevant</button>
+                        <button onclick="setSortFilter('popular')" class="sort-btn text-sm font-bold text-slate-500 dark:text-slate-400 shrink-0 hover:text-indigo-600">Popular</button>
+                        <button onclick="setSortFilter('newest')" class="sort-btn text-sm font-bold text-slate-500 dark:text-slate-400 shrink-0 hover:text-indigo-600">Newest</button>
+                        <button onclick="setSortFilter('oldest')" class="sort-btn text-sm font-bold text-slate-500 dark:text-slate-400 shrink-0 hover:text-indigo-600">Oldest</button>
                     </div>
                 </div>
                 
-                <div id="reports-list" class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/50 dark:bg-slate-900/50 pb-20"></div>
+                <div id="reports-list" class="flex-1 overflow-y-auto p-4 space-y-4 pb-20">
+                    </div>
                 
                 <div class="p-4 border-t border-slate-200 dark:border-slate-800">
-                    <button onclick="openReportModal()" class="w-full btn-primary py-3"><i data-lucide="plus-circle" class="w-5 h-5"></i> Report an Incident</button>
+                    <button onclick="openReportModal()" class="w-full btn-primary py-3.5"><i data-lucide="plus-circle" class="w-5 h-5"></i> Report an Incident</button>
                 </div>
             </div>
 
-            <div id="sidebar-collapsed" class="hidden flex-col items-center py-4 h-full w-full border-r border-slate-200 dark:border-slate-800 transition-opacity duration-300 opacity-0">
-                <button onclick="toggleSidebar()" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full" title="Expand"><i data-lucide="panel-left-open" class="w-5 h-5"></i></button>
+            <div id="sidebar-collapsed" class="hidden flex-col items-center py-4 h-full w-full transition-opacity duration-300 opacity-0">
+                <button onclick="toggleSidebar()" class="p-2 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-white bg-slate-100 dark:bg-slate-800 rounded-full shadow-sm transition mb-6" title="Expand Sidebar">
+                    <i data-lucide="panel-left-open" class="w-5 h-5"></i>
+                </button>
             </div>
         </div>
 
         <div id="map-container" class="flex-1 relative bg-slate-200 dark:bg-slate-800 h-full w-full overflow-hidden">
+            <div id="map" class="w-full h-full z-[10]"></div>
             
-            <div class="absolute top-6 left-6 z-[1600] glass-panel rounded-lg w-[calc(100%-3rem)] md:w-[340px]" id="route-panel" style="touch-action: none;">
-                <div id="route-panel-header" class="cursor-move bg-slate-100 dark:bg-slate-800 p-3 rounded-t-lg border-b border-slate-200 dark:border-slate-700 flex justify-between items-center select-none text-slate-800 dark:text-white">
-                    <span class="flex items-center gap-2 text-sm font-bold"><i data-lucide="navigation" class="w-4 h-4"></i> Route Finder</span>
-                    <div class="flex gap-2">
-                        <button onclick="clearRoute()" class="text-xs font-bold text-rose-500 hover:text-rose-600 hidden flex items-center gap-1" id="clear-route-btn"><i data-lucide="x" class="w-3 h-3"></i> Clear</button>
-                        <button onclick="toggleRouteCollapse()" class="text-slate-500 hover:text-slate-800 dark:hover:text-white" id="route-collapse-btn"><i data-lucide="chevron-up" class="w-4 h-4"></i></button>
+            <div class="absolute bottom-6 left-6 z-[1000] text-indigo-900 dark:text-white text-3xl md:text-4xl font-black tracking-tighter drop-shadow-md pointer-events-none opacity-90 flex items-center gap-2">
+                SafeStep
+            </div>
+
+            <div class="absolute top-6 left-1/2 transform -translate-x-1/2 z-[2000] flex gap-3 pointer-events-none drop-shadow-md">
+                <div class="glass-panel px-3 py-1.5 rounded-full text-[10px] text-slate-700 dark:text-slate-300 font-extrabold uppercase tracking-wider flex items-center gap-1.5 shadow-sm">
+                    <i data-lucide="map" class="w-3 h-3 text-indigo-500"></i> NCR Coverage
+                </div>
+                <div class="glass-panel px-3 py-1.5 rounded-full text-[10px] text-indigo-700 dark:text-indigo-400 font-extrabold uppercase tracking-wider flex items-center gap-1.5 shadow-sm">
+                    <i data-lucide="shield-check" class="w-3 h-3 text-emerald-500"></i> AI-Screened
+                </div>
+                <div class="glass-panel px-3 py-1.5 rounded-full text-[10px] text-indigo-700 dark:text-indigo-400 font-extrabold uppercase tracking-wider flex items-center gap-1.5 shadow-sm">
+                    <i data-lucide="users" class="w-3 h-3 text-indigo-500"></i> Human Moderated
+                </div>
+            </div>
+
+            <div class="absolute top-6 right-6 z-[2000] flex items-center gap-3">
+                <button onclick="toggleDarkMode()" class="w-10 h-10 flex items-center justify-center text-slate-700 dark:text-white glass-panel rounded-full shadow-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition shrink-0" title="Toggle Theme" id="theme-icon">
+                    <i data-lucide="moon" class="w-5 h-5"></i>
+                </button>
+
+                <div class="relative shrink-0">
+                    <button onclick="toggleTopMenu(event)" class="w-10 h-10 flex items-center justify-center text-slate-700 dark:text-white glass-panel rounded-full shadow-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                        <i data-lucide="more-vertical" class="w-5 h-5"></i>
+                    </button>
+                    <div id="top-nav-menu" class="hidden absolute right-0 mt-2 w-56 glass-panel rounded-lg shadow-2xl z-50 py-2">
+                        <button onclick="showToast('Help Center opening...', 'success')" class="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 border-b border-slate-200 dark:border-slate-700/50"><i data-lucide="help-circle" class="w-4 h-4"></i> Help Center</button>
+                        <button onclick="showToast('Issue reporter opening...', 'success')" class="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 border-b border-slate-200 dark:border-slate-700/50"><i data-lucide="alert-triangle" class="w-4 h-4"></i> Report an Issue</button>
+                        <button onclick="showToast('Suggestion box opening...', 'success')" class="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 border-b border-slate-200 dark:border-slate-700/50"><i data-lucide="lightbulb" class="w-4 h-4"></i> Send Suggestion</button>
+                        <button onclick="openFeedbackModal()" class="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800"><i data-lucide="star" class="w-4 h-4"></i> Give Feedback</button>
                     </div>
                 </div>
-                
+
+                <div id="auth-container" class="relative shrink-0">
+                    <button id="login-btn" onclick="openLoginOverlay()" class="btn-primary rounded-full px-6 py-2 h-10 text-sm shadow-lg gap-2">
+                        <i data-lucide="log-in" class="w-4 h-4"></i> Login
+                    </button>
+                    
+                    <div id="user-menu-container" class="hidden">
+                        <button onclick="toggleUserMenu(event)" id="user-avatar-btn" class="w-10 h-10 flex items-center justify-center bg-indigo-600 text-white rounded-full shadow-lg hover:bg-indigo-700 transition border-2 border-white dark:border-slate-800"></button>
+                        <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-64 glass-panel rounded-lg shadow-2xl z-50 py-2"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="absolute top-24 right-6 z-[1000] flex flex-col gap-3 items-end">
+                <div class="glass-panel px-3 py-2.5 rounded-lg shadow-lg flex items-center">
+                    <label class="inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="heatmap-toggle" class="sr-only peer" checked onchange="toggleHeatmap()">
+                        <div class="relative w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-slate-500 peer-checked:bg-indigo-600"></div>
+                        <span class="ms-2 text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5"><i data-lucide="layers" class="w-3 h-3"></i> Heatmap Layer</span>
+                    </label>
+                </div>
+                <button onclick="enableRadiusFilter()" id="radius-btn" class="btn-primary w-full bg-indigo-600 shadow-lg text-xs py-2"><i data-lucide="crosshair" class="w-3 h-3"></i> Focus 1km Area</button>
+                <div id="radius-info" class="hidden glass-panel px-3 py-2 rounded-lg shadow-lg text-[10px] text-right max-w-[160px] leading-tight"></div>
+            </div>
+
+            <div class="absolute bottom-6 right-6 z-[1000] glass-panel px-3 py-2 rounded-lg shadow-lg flex flex-col sm:flex-row items-center gap-4">
+                <div class="flex items-center gap-2">
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Opacity</span>
+                    <span class="text-[10px] font-bold">0%</span>
+                    <input type="range" id="heatmap-opacity" min="0.1" max="1" step="0.1" value="1" class="w-24 bg-slate-200 dark:bg-slate-700 rounded-full h-1.5 outline-none" oninput="updateOpacity()">
+                    <span class="text-[10px] font-bold">100%</span>
+                </div>
+                <div class="hidden sm:block w-px h-6 bg-slate-300 dark:bg-slate-700"></div>
+                <div class="flex items-center gap-2">
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Zoom</span>
+                    <div class="flex rounded border border-slate-200 dark:border-slate-700 overflow-hidden font-bold">
+                        <button onclick="map.zoomOut()" class="w-8 h-7 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 border-r border-slate-200 dark:border-slate-700 transition-colors"><i data-lucide="minus" class="w-3 h-3"></i></button>
+                        <button onclick="map.zoomIn()" class="w-8 h-7 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"><i data-lucide="plus" class="w-3 h-3"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="absolute top-6 left-6 z-[1600] glass-panel rounded-lg shadow-2xl w-[calc(100%-3rem)] md:w-[340px] transition-all" id="route-panel" style="touch-action: none;">
+                <div id="route-panel-header" class="cursor-move bg-slate-100 dark:bg-slate-800 p-3 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center select-none rounded-t-lg">
+                    <span class="flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-white"><i data-lucide="navigation" class="w-4 h-4"></i> Route Finder</span>
+                    <div class="flex gap-2 items-center">
+                        <button onclick="clearRoute()" class="text-xs uppercase tracking-wider text-rose-500 hover:text-rose-600 hidden font-bold flex items-center gap-1" id="clear-route-btn"><i data-lucide="x" class="w-3 h-3"></i> Clear</button>
+                        <button onclick="toggleRouteCollapse()" class="text-slate-500 hover:text-slate-800 dark:hover:text-white" id="route-collapse-btn" title="Toggle Route Panel"><i data-lucide="chevron-up" class="w-4 h-4"></i></button>
+                    </div>
+                </div>
                 <div id="route-panel-body" class="p-4 space-y-3">
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-3">
                         <div class="flex-1 space-y-2 min-w-0">
                             <div class="relative">
                                 <i data-lucide="map-pin" class="absolute left-2.5 top-2.5 w-4 h-4 text-slate-400"></i>
                                 <input type="text" id="route-start" oninput="handleSearch(this, 'start-results', 'start')" placeholder="Start Location" class="input-base pl-8 text-xs">
-                                <ul id="start-results" class="absolute w-full bg-white dark:bg-slate-800 border border-slate-200 rounded mt-1 hidden max-h-48 overflow-y-auto shadow-xl z-50 text-xs"></ul>
+                                <ul id="start-results" class="absolute w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded mt-1 hidden max-h-48 overflow-y-auto shadow-xl z-50 text-xs"></ul>
                             </div>
                             <div class="relative">
                                 <i data-lucide="flag" class="absolute left-2.5 top-2.5 w-4 h-4 text-slate-400"></i>
                                 <input type="text" id="route-end" oninput="handleSearch(this, 'end-results', 'end')" placeholder="Destination" class="input-base pl-8 text-xs">
-                                <ul id="end-results" class="absolute w-full bg-white dark:bg-slate-800 border border-slate-200 rounded mt-1 hidden max-h-48 overflow-y-auto shadow-xl z-50 text-xs"></ul>
+                                <ul id="end-results" class="absolute w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded mt-1 hidden max-h-48 overflow-y-auto shadow-xl z-50 text-xs"></ul>
                             </div>
                         </div>
-                        <button onclick="swapRoute()" class="p-2 border border-slate-200 dark:border-slate-700 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition" title="Swap locations"><i data-lucide="arrow-up-down" class="w-4 h-4"></i></button>
+                        <button onclick="swapRoute()" class="p-2 border border-slate-200 dark:border-slate-700 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition shrink-0" title="Swap locations"><i data-lucide="arrow-up-down" class="w-4 h-4"></i></button>
                     </div>
-                    <button onclick="calculateRealRoute()" id="route-btn" class="w-full btn-primary py-2 text-xs"><i data-lucide="route" class="w-4 h-4"></i> Calculate Route</button>
+                    <button onclick="calculateRealRoute()" id="route-btn" class="w-full btn-primary py-2.5 text-xs"><i data-lucide="route" class="w-4 h-4"></i> Calculate</button>
                 </div>
                 <div id="route-details" class="hidden px-4 pb-4">
                     <div class="flex justify-between text-xs font-bold text-indigo-600 dark:text-indigo-400 mb-2 pt-2 border-t border-slate-200 dark:border-slate-700">
-                        <span id="route-dist" class="flex items-center gap-1"></span>
-                        <span id="route-time" class="flex items-center gap-1"></span>
+                        <span id="route-dist" class="flex items-center gap-1.5"></span>
+                        <span id="route-time" class="flex items-center gap-1.5"></span>
                     </div>
-                    <ul id="route-streets" class="text-xs text-slate-600 dark:text-slate-300 max-h-24 overflow-y-auto space-y-1 bg-slate-50 dark:bg-slate-800 p-2 rounded"></ul>
+                    <ul id="route-streets" class="text-[10px] text-slate-600 dark:text-slate-300 max-h-24 overflow-y-auto space-y-1 bg-slate-50 dark:bg-slate-800/50 p-2 rounded border border-slate-100 dark:border-slate-700 leading-relaxed"></ul>
                 </div>
             </div>
             
-            <div id="map" class="w-full h-full z-[10]"></div>
-
-            <div class="absolute top-6 right-6 z-[1000] flex flex-col gap-3 items-end">
-                <div class="glass-panel px-3 py-2 rounded-lg flex items-center">
-                    <label class="inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="heatmap-toggle" class="sr-only peer" checked onchange="toggleHeatmap()">
-                        <div class="relative w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600"></div>
-                        <span class="ms-2 text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5"><i data-lucide="layers" class="w-3 h-3"></i> Heatmap</span>
-                    </label>
-                </div>
-                <button onclick="enableRadiusFilter()" id="radius-btn" class="btn-primary bg-indigo-600 w-full"><i data-lucide="crosshair" class="w-3 h-3"></i> Focus 1km</button>
-                <div id="radius-info" class="hidden glass-panel p-3 rounded-lg text-[10px] text-right"></div>
-            </div>
-
-            <div class="absolute bottom-6 right-6 z-[1000] glass-panel px-3 py-2 rounded-lg flex flex-col sm:flex-row items-center gap-4">
-                <div class="flex items-center gap-2">
-                    <span class="text-[10px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-widest flex items-center gap-1"><i data-lucide="zoom-in" class="w-3 h-3"></i> Zoom</span>
-                    <div class="flex rounded border border-slate-200 dark:border-slate-700 overflow-hidden font-bold">
-                        <button onclick="map.zoomOut()" class="w-6 h-6 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800"><i data-lucide="minus" class="w-3 h-3"></i></button>
-                        <button onclick="map.zoomIn()" class="w-6 h-6 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 border-l border-slate-200 dark:border-slate-700"><i data-lucide="plus" class="w-3 h-3"></i></button>
-                    </div>
-                </div>
-                <div class="hidden sm:block w-px h-6 bg-slate-200 dark:bg-slate-700"></div>
-                <div class="flex items-center gap-2">
-                    <span class="text-[10px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-widest flex items-center gap-1"><i data-lucide="droplet" class="w-3 h-3"></i> Opacity</span>
-                    <span class="text-[10px] font-bold text-slate-500">0%</span>
-                    <input type="range" id="heatmap-opacity" min="0.1" max="1" step="0.1" value="1" class="w-16 h-1.5 cursor-pointer accent-indigo-600 bg-slate-200 dark:bg-slate-700 rounded-full appearance-none" oninput="updateOpacity()">
-                    <span class="text-[10px] font-bold text-slate-500">100%</span>
-                </div>
-            </div>
         </div>
     </div>
 
     <div id="login-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[9999] flex justify-center items-center">
-        <div class="glass-panel p-8 rounded-xl w-11/12 max-w-sm relative">
+        <div class="glass-panel p-8 rounded-xl w-11/12 max-w-sm relative shadow-2xl">
             <button onclick="closeLoginOverlay()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-800 dark:hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
             <div id="login-step-1">
                 <div class="text-center mb-6">
-                    <i data-lucide="shield" class="w-10 h-10 mx-auto text-indigo-600 mb-2"></i>
+                    <i data-lucide="shield" class="w-12 h-12 mx-auto text-indigo-600 mb-2"></i>
                     <h2 class="text-2xl font-bold">Welcome Back</h2>
                     <p class="text-sm text-slate-500 mt-1">Select your account type</p>
                 </div>
@@ -182,7 +203,7 @@
                     <button onclick="showLoginForm('partner')" class="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:border-emerald-500 transition group text-left">
                         <div class="flex items-center gap-3">
                             <div class="bg-emerald-100 dark:bg-emerald-900/50 p-2 rounded-full text-emerald-600 dark:text-emerald-400"><i data-lucide="building" class="w-5 h-5"></i></div>
-                            <div><p class="font-bold text-sm">Partner Agency</p><p class="text-[10px] text-slate-500">LGU & Admin Access</p></div>
+                            <div><p class="font-bold text-sm text-emerald-600 dark:text-emerald-400">Partner Agency</p><p class="text-[10px] text-slate-500">LGU & Admin Access</p></div>
                         </div>
                         <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
                     </button>
@@ -197,38 +218,56 @@
         </div>
     </div>
 
-    <div id="report-modal" class="hidden fixed inset-0 bg-slate-900/70 z-[9999] flex justify-center items-center backdrop-blur-sm p-4">
-        <div class="glass-panel p-6 rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto relative">
-            <h2 class="text-xl font-bold mb-4 flex items-center gap-2"><i data-lucide="alert-triangle" class="text-rose-500 w-5 h-5"></i> Submit Report</h2>
-            <div class="space-y-3">
-                <div class="bg-indigo-50 dark:bg-slate-800 p-3 rounded border border-indigo-100 dark:border-slate-700 flex justify-between items-center">
-                    <select id="loc-privacy" class="bg-transparent text-xs font-bold outline-none cursor-pointer"><option value="approx">Approximate Area</option><option value="precise">Precise Pin</option></select>
-                    <button onclick="enableMapPicker()" class="btn-primary px-3 py-1.5 text-xs"><i data-lucide="map-pin" class="w-3 h-3"></i> Map</button>
+    <div id="feedback-modal" class="hidden fixed inset-0 bg-slate-900/70 z-[9999] flex justify-center items-center backdrop-blur-sm p-4">
+        <div class="glass-panel p-6 rounded-lg w-full max-w-sm relative">
+            <h2 class="text-xl font-bold mb-1 flex items-center gap-2"><i data-lucide="message-square-plus" class="w-5 h-5 text-indigo-500"></i> Give Feedback</h2>
+            <p class="text-xs text-slate-500 mb-5">Help us improve SafeStep.</p>
+            <div class="mb-4 text-center">
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">Rate your experience</label>
+                <div id="star-rating" class="flex justify-center gap-2 text-slate-300 dark:text-slate-600 cursor-pointer">
+                    <span class="star-icon" data-value="1" onclick="setRating(1)" onmouseover="hoverRating(1)" onmouseout="resetRating()"><i data-lucide="star" class="w-8 h-8"></i></span>
+                    <span class="star-icon" data-value="2" onclick="setRating(2)" onmouseover="hoverRating(2)" onmouseout="resetRating()"><i data-lucide="star" class="w-8 h-8"></i></span>
+                    <span class="star-icon" data-value="3" onclick="setRating(3)" onmouseover="hoverRating(3)" onmouseout="resetRating()"><i data-lucide="star" class="w-8 h-8"></i></span>
+                    <span class="star-icon" data-value="4" onclick="setRating(4)" onmouseover="hoverRating(4)" onmouseout="resetRating()"><i data-lucide="star" class="w-8 h-8"></i></span>
+                    <span class="star-icon" data-value="5" onclick="setRating(5)" onmouseover="hoverRating(5)" onmouseout="resetRating()"><i data-lucide="star" class="w-8 h-8"></i></span>
                 </div>
-                <div id="pin-status" class="hidden text-[10px] p-2 bg-slate-100 dark:bg-slate-800 rounded"></div>
-                <div class="grid grid-cols-2 gap-3">
-                    <input type="text" id="report-title" placeholder="Subject..." class="input-base text-xs">
-                    <select id="report-category" class="input-base text-xs"><option value="">Category...</option><option value="Harassment/Aggression">Harassment</option><option value="Crowd/Atmosphere">Crowd</option><option value="Environmental/Path Hazards">Hazards</option><option value="Accessibility/Obstructions">Accessibility</option></select>
-                </div>
-                <textarea id="report-desc" class="input-base h-20 text-xs resize-none" placeholder="Details (Min 15 chars)..."></textarea>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button onclick="closeReportModal()" class="text-xs font-bold text-slate-500 px-3 py-1.5 hover:bg-slate-100 rounded">Cancel</button>
-                    <button onclick="submitReport()" class="btn-primary text-xs"><i data-lucide="upload-cloud" class="w-3 h-3"></i> Post</button>
-                </div>
+            </div>
+            <textarea id="feedback-text" class="input-base h-24 resize-none mb-4" placeholder="Suggestions / Bugs..."></textarea>
+            <div class="flex justify-end gap-2 border-t border-slate-200 dark:border-slate-800 pt-4">
+                <button onclick="closeFeedbackModal()" class="text-sm font-bold text-slate-500 px-4 py-2 hover:bg-slate-100 rounded">Cancel</button>
+                <button onclick="submitFeedback()" class="btn-primary px-5 py-2 text-sm"><i data-lucide="send" class="w-4 h-4"></i> Send</button>
             </div>
         </div>
     </div>
 
-    <div id="report-detail-modal" class="hidden fixed inset-0 bg-slate-900/70 z-[9999] flex justify-center items-center backdrop-blur-sm p-4">
-        <div class="glass-panel p-6 rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto relative">
-            <button onclick="closeDetailModal()" class="absolute top-4 right-4 text-slate-400"><i data-lucide="x" class="w-5 h-5"></i></button>
-            <div id="detail-content"></div>
-            <div class="mt-4 border-t border-slate-200 dark:border-slate-800 pt-4">
-                <h4 class="font-bold text-sm mb-2">Comments</h4>
-                <div id="detail-comments" class="space-y-2 mb-3 max-h-32 overflow-y-auto"></div>
-                <div class="flex gap-2">
-                    <input type="text" id="new-comment" placeholder="Add comment..." class="input-base text-xs">
-                    <button onclick="submitComment()" class="btn-primary px-3 text-xs"><i data-lucide="send" class="w-3 h-3"></i></button>
+    <div id="report-modal" class="hidden fixed inset-0 bg-slate-900/70 z-[9999] flex justify-center items-center backdrop-blur-sm p-4">
+        <div class="glass-panel p-6 md:p-8 rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto relative">
+            <h2 class="text-xl font-bold mb-5 flex items-center gap-2"><i data-lucide="alert-triangle" class="w-6 h-6 text-rose-500"></i> Submit a Report</h2>
+            <div class="space-y-4">
+                <div class="bg-indigo-50 dark:bg-slate-800 p-3 rounded border border-indigo-100 dark:border-slate-700 flex flex-col gap-2">
+                    <div class="flex justify-between items-center">
+                        <select id="loc-privacy" class="bg-transparent text-sm font-bold text-indigo-900 dark:text-indigo-300 outline-none cursor-pointer"><option value="approx">Approximate Area</option><option value="precise">Precise Pin</option></select>
+                        <button onclick="enableMapPicker()" class="btn-primary px-3 py-1.5 text-xs"><i data-lucide="map-pin" class="w-3 h-3"></i> Pick on Map</button>
+                    </div>
+                    <div id="pin-status" class="hidden text-xs bg-white dark:bg-slate-900 p-2 rounded"></div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input type="text" id="report-title" oninput="suggestTags()" placeholder="Subject *" class="input-base">
+                    <select id="report-category" onchange="suggestTags()" class="input-base"><option value="">Category *</option><option value="Harassment/Aggression">Harassment</option><option value="Crowd/Atmosphere">Crowds</option><option value="Environmental/Path Hazards">Hazards</option><option value="Accessibility/Obstructions">Accessibility</option></select>
+                </div>
+                <div class="bg-indigo-50/50 dark:bg-slate-800/50 p-4 rounded border border-indigo-100 dark:border-slate-700">
+                    <label class="block text-xs font-bold text-indigo-800 dark:text-indigo-400 mb-2">Tags</label>
+                    <div id="ai-tags" class="hidden mb-3"><div id="tag-container" class="flex gap-2 flex-wrap"></div></div>
+                    <div class="flex gap-2 mb-3"><input type="text" id="custom-tag-input" placeholder="Type tag..." class="input-base" onkeypress="handleTagKeypress(event)"><button onclick="addCustomTag()" class="btn-primary px-3"><i data-lucide="plus" class="w-4 h-4"></i></button></div>
+                    <div id="active-tags-container" class="flex gap-2 flex-wrap min-h-[28px]"></div>
+                </div>
+                <textarea id="report-desc" class="input-base h-24 resize-none" placeholder="Description (Min 15 chars)..."></textarea>
+                <div class="bg-amber-50 dark:bg-amber-900/20 p-4 rounded border border-amber-200 dark:border-amber-800/50 flex items-start gap-3">
+                    <input type="checkbox" id="safety-confirm" class="mt-1"><label for="safety-confirm" class="text-sm text-amber-800 dark:text-amber-200">I confirm I am safe to post this.</label>
+                </div>
+                <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+                    <button onclick="closeReportModal()" class="px-5 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-100 rounded">Cancel</button>
+                    <button onclick="submitReport()" class="btn-primary bg-rose-600 hover:bg-rose-700 px-6"><i data-lucide="upload-cloud" class="w-4 h-4"></i> Post Report</button>
                 </div>
             </div>
         </div>
