@@ -20,7 +20,7 @@ let searchTimeout;
 let startCoords = null, endCoords = null;
 let isDragging = false, currentX=0, currentY=0, initialX=0, initialY=0, xOffset = 0, yOffset = 0;
 
-let openMenuId = null; // Track open Kebab menus
+let openMenuId = null; 
 let feedbackRating = 0;
 
 const citySummaries = [
@@ -64,7 +64,7 @@ hotspots.forEach(spot => {
     }
 });
 
-// Close open menus globally
+// Document Click listener for menus
 document.addEventListener('click', () => {
     if(openMenuId) {
         const menu = document.getElementById(`menu-${openMenuId}`);
@@ -72,7 +72,9 @@ document.addEventListener('click', () => {
         openMenuId = null;
     }
     const topMenu = document.getElementById('top-nav-menu');
-    if(!topMenu.classList.contains('hidden')) topMenu.classList.add('hidden');
+    if(topMenu && !topMenu.classList.contains('hidden')) {
+        topMenu.classList.add('hidden');
+    }
 });
 
 function toggleTopMenu(e) {
@@ -92,7 +94,9 @@ function initMap() {
     populateHeatmap();
     renderReports();
     populatePartnerPortal();
-    setupDrag();
+    
+    // Slight delay to ensure DOM is ready for bounds calculation
+    setTimeout(setupDrag, 100); 
 }
 
 function getDistance(lat1, lon1, lat2, lon2) {
@@ -192,36 +196,35 @@ function aiContentCheck(text) {
     return null;
 }
 
-// --- Dynamic Sidebar Toggle ---
+// --- Collapse/Expand Sidebar ---
 function toggleSidebar() {
     const sidebar = document.getElementById('user-sidebar');
-    const expanded = document.getElementById('sidebar-expanded-content');
-    const collapsed = document.getElementById('sidebar-collapsed-content');
+    const expanded = document.getElementById('sidebar-expanded');
+    const collapsed = document.getElementById('sidebar-collapsed');
     
-    // Toggle width classes
-    sidebar.classList.toggle('w-[460px]');
-    sidebar.classList.toggle('w-12');
-    
-    if(sidebar.classList.contains('w-12')) {
+    // Toggle widths
+    if(sidebar.classList.contains('w-[460px]')) {
+        sidebar.classList.replace('w-[460px]', 'w-16');
+        sidebar.classList.replace('sm:w-[380px]', 'sm:w-16');
         expanded.classList.add('hidden');
         collapsed.classList.remove('hidden');
         collapsed.classList.add('flex');
     } else {
+        sidebar.classList.replace('w-16', 'w-[460px]');
+        sidebar.classList.replace('sm:w-16', 'sm:w-[380px]');
         expanded.classList.remove('hidden');
         collapsed.classList.add('hidden');
         collapsed.classList.remove('flex');
     }
     
-    // Recalculate map bounds for panel dragging
-    setTimeout(setupDrag, 350);
+    // Update map boundaries for route panel drag
+    setTimeout(setupDrag, 350); 
 }
 
-// --- Login Flow ---
 function showLoginToast() {
-    // Reusing the toast container to mock a quick prompt
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
-    toast.className = `bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white px-6 py-4 rounded-lg shadow-2xl font-bold text-sm transform transition-all duration-300 translate-y-[-20px] opacity-0 flex flex-col gap-3 z-[100000] pointer-events-auto`;
+    toast.className = `bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white px-6 py-4 rounded-lg shadow-2xl font-bold text-sm transform transition-all duration-300 translate-y-[-20px] opacity-0 flex flex-col gap-3 pointer-events-auto`;
     toast.innerHTML = `
         <p class="text-center">Select Account Type</p>
         <div class="flex gap-2">
@@ -241,20 +244,15 @@ function loginPartner(btn) {
     togglePortal();
 }
 
-// --- Feedback System ---
+// Feedback Star Logic
 function hoverRating(val) {
     document.querySelectorAll('.star').forEach(s => {
         if(parseInt(s.dataset.value) <= val) { s.innerHTML = '★'; s.classList.add('text-yellow-400', 'dark:text-yellow-400'); } 
         else { s.innerHTML = '☆'; s.classList.remove('text-yellow-400', 'dark:text-yellow-400'); }
     });
 }
-function resetRating() {
-    hoverRating(feedbackRating);
-}
-function setRating(val) {
-    feedbackRating = val;
-    hoverRating(val);
-}
+function resetRating() { hoverRating(feedbackRating); }
+function setRating(val) { feedbackRating = val; hoverRating(val); }
 function openFeedbackModal() { document.getElementById('feedback-modal').classList.remove('hidden'); }
 function closeFeedbackModal() { document.getElementById('feedback-modal').classList.add('hidden'); }
 function submitFeedback() {
@@ -312,6 +310,9 @@ function enableMapPicker() {
 function setupDrag() {
     const dragItem = document.getElementById("route-panel");
     const dragHeader = document.getElementById("route-panel-header");
+    const mapContainer = document.getElementById('map-container');
+    
+    if(!mapContainer || !dragItem || !dragHeader) return;
 
     dragHeader.addEventListener("mousedown", dragStart, false);
     document.addEventListener("mouseup", dragEnd, false);
@@ -330,14 +331,13 @@ function setupDrag() {
             let testX = e.clientX - initialX;
             let testY = e.clientY - initialY;
             
-            const mapContainer = document.getElementById('map-container');
             const mapRect = mapContainer.getBoundingClientRect();
             const panelRect = dragItem.getBoundingClientRect();
             
-            // Constrain strictly within the visual map container bounds
+            // Constrain strictly to map container. 
             const minX = 10; 
             const maxX = mapRect.width - panelRect.width - 10;
-            const minY = 64; // Respect Header and top badges
+            const minY = 64; // Respect Top badges
             const maxY = mapRect.height - panelRect.height - 10;
 
             currentX = Math.max(minX, Math.min(testX, maxX));
@@ -449,7 +449,7 @@ function renderReports(reportsToRender = null) {
             <div class="flex flex-col items-center justify-center py-12 text-center opacity-80">
                 <span class="text-4xl mb-3">📭</span>
                 <p class="text-sm text-slate-500 dark:text-slate-400 font-bold">No matching reports found.</p>
-                <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">Try adjusting your search, filters, or clearing the map radius.</p>
+                <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">Try adjusting your search, filters, or map radius.</p>
             </div>`;
         return;
     }
@@ -619,4 +619,282 @@ function openDetailModal(id) {
         </div>
         <h2 class="text-2xl font-bold text-slate-800 dark:text-white mb-4 pr-4">${report.title}</h2>
         
-        <div class="mb-4
+        <div class="mb-4 p-3 bg-slate-50 dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+            <p class="font-bold flex justify-between items-center mb-1 border-b border-slate-200 dark:border-slate-700 pb-1">
+                <span class="text-slate-800 dark:text-slate-200">📍 ${report.address}</span>
+                <span class="uppercase tracking-wider ${privStyle}">${report.privacy === 'precise' ? 'Precise Pin' : 'Area Report'}</span>
+            </p>
+            <p>Coordinates: ${report.lat.toFixed(5)}, ${report.lng.toFixed(5)}</p>
+        </div>
+
+        <p class="text-sm text-slate-700 dark:text-slate-300 mb-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg leading-relaxed border border-slate-100 dark:border-slate-700/50">${report.desc}</p>
+    `;
+    
+    const cList = document.getElementById('detail-comments');
+    cList.innerHTML = report.comments.length ? '' : '<p class="text-sm text-slate-400">No comments yet.</p>';
+    report.comments.forEach((c, idx) => {
+        const actionBtns = c.isMine ? `
+            <div class="flex gap-2">
+                <button onclick="editComment(${report.id}, ${idx})" class="text-indigo-500 hover:text-indigo-700 font-bold text-xs">Edit</button>
+                <button onclick="deleteComment(${report.id}, ${idx})" class="text-rose-500 hover:text-rose-700 font-bold text-xs">Delete</button>
+            </div>` : '';
+        cList.innerHTML += `<div class="bg-slate-50 dark:bg-slate-800 p-3.5 rounded-lg text-sm flex justify-between items-start border border-slate-100 dark:border-slate-700"><p class="text-slate-800 dark:text-slate-200 pr-4">${c.text}</p>${actionBtns}</div>`;
+    });
+    document.getElementById('report-detail-modal').classList.remove('hidden');
+}
+function closeDetailModal() { document.getElementById('report-detail-modal').classList.add('hidden'); }
+
+function submitComment() {
+    const val = document.getElementById('new-comment').value.trim();
+    if(!val) return;
+    
+    const aiError = aiContentCheck(val);
+    if(aiError) return showToast(`AI Flag: ${aiError}`, "error");
+
+    const report = mockReports.find(r => r.id === activeDetailId);
+    report.comments.push({ text: val, isMine: true }); 
+    document.getElementById('new-comment').value = '';
+    openDetailModal(activeDetailId);
+    filterReports();
+}
+
+function openReportModal() { 
+    document.getElementById('report-modal').classList.remove('hidden'); 
+}
+
+function closeReportModal() { 
+    document.getElementById('report-modal').classList.add('hidden'); 
+    document.getElementById('pin-status').classList.add('hidden');
+    if(customPinMarker) {
+        map.removeLayer(customPinMarker);
+        customPinMarker = null;
+        customPinCoords = null;
+    }
+}
+
+async function submitReport() {
+    const title = document.getElementById('report-title').value.trim();
+    const cat = document.getElementById('report-category').value;
+    const desc = document.getElementById('report-desc').value.trim();
+    const privacy = document.getElementById('loc-privacy').value;
+    
+    if(!title || !cat) return showToast("Please fill all required fields.", "error");
+    if(desc.length < 15) return showToast("Description must be at least 15 characters.", "error");
+
+    const aiError = aiContentCheck(desc) || aiContentCheck(title);
+    if(aiError) return showToast(`AI Flag: ${aiError}`, "error");
+
+    let finalLat = manilaCenter[0] + (Math.random() - 0.5) * 0.01;
+    let finalLng = manilaCenter[1] + (Math.random() - 0.5) * 0.01;
+    
+    if (privacy === 'precise' && customPinCoords) {
+        finalLat = customPinCoords[0];
+        finalLng = customPinCoords[1];
+    }
+
+    const address = await getAddressFromCoords(finalLat, finalLng);
+
+    mockReports.unshift({
+        id: idCounter++, type: cat, title: title, desc: desc, cred: 1, relevance: 100, timestamp: Date.now(),
+        lat: finalLat, lng: finalLng, address: address, privacy: privacy,
+        tags: [...currentTags], comments: [], userVote: 1, isMine: true
+    });
+
+    document.getElementById('report-title').value = '';
+    document.getElementById('report-desc').value = '';
+    document.getElementById('custom-tag-input').value = '';
+    
+    closeReportModal();
+    populateHeatmap(); 
+    filterReports();
+    currentTags = []; 
+    
+    if(customPinMarker) {
+        map.removeLayer(customPinMarker);
+        customPinMarker = null;
+        customPinCoords = null;
+    }
+    
+    document.getElementById('emergency-modal').classList.remove('hidden');
+}
+
+function closeEmergencyModal() {
+    document.getElementById('emergency-modal').classList.add('hidden');
+}
+
+function suggestTags() {
+    const title = document.getElementById('report-title').value.toLowerCase();
+    const cat = document.getElementById('report-category').value;
+    const aiTags = document.getElementById('ai-tags');
+    const container = document.getElementById('tag-container');
+    
+    let suggested = [];
+    if(cat === 'Harassment/Aggression') suggested.push('#unsafe', '#catcalling');
+    if(cat === 'Crowd/Atmosphere') suggested.push('#overcrowded', '#pickpocket');
+    if(cat === 'Environmental/Path Hazards') suggested.push('#hazard', '#dark_alley');
+    if(cat === 'Accessibility/Obstructions') suggested.push('#pwd', '#blocked_path');
+    
+    if(title.includes('feu') || title.includes('tech')) suggested.push('#FEUTech');
+    if(title.includes('ust') || title.includes('espana')) suggested.push('#UST');
+
+    if(suggested.length === 0) { aiTags.classList.add('hidden'); return; }
+    
+    aiTags.classList.remove('hidden');
+    container.innerHTML = suggested.map(tag => 
+        `<span class="text-[10px] font-bold bg-white text-indigo-600 border border-indigo-200 px-2 py-1 rounded cursor-pointer hover:bg-indigo-50" onclick="addTag('${tag}')">${tag} +</span>`
+    ).join('');
+}
+
+function handleTagKeypress(e) { if (e.key === 'Enter') { e.preventDefault(); addCustomTag(); } }
+function addCustomTag() {
+    let val = document.getElementById('custom-tag-input').value.trim().replace(/\s+/g, '_');
+    if(val) {
+        if(!val.startsWith('#')) val = '#' + val;
+        addTag(val.toLowerCase());
+        document.getElementById('custom-tag-input').value = '';
+    }
+}
+function addTag(tag) {
+    if(!currentTags.includes(tag) && currentTags.length < 5) {
+        currentTags.push(tag);
+        document.getElementById('active-tags-container').innerHTML = currentTags.map(t => `<span class="text-xs bg-indigo-600 text-white px-2 py-1 rounded flex items-center gap-1">${t} <button onclick="removeTag('${t}')" class="hover:text-rose-300 font-bold ml-1">✕</button></span>`).join('');
+    }
+}
+function removeTag(tag) { currentTags = currentTags.filter(t => t !== tag); addTag('hack'); currentTags.pop(); }
+
+function handleSearch(inputEl, resultsId, target) {
+    clearTimeout(searchTimeout);
+    const query = inputEl.value;
+    const resultsUl = document.getElementById(resultsId);
+    
+    if(query.length < 3) { resultsUl.classList.add('hidden'); return; }
+
+    searchTimeout = setTimeout(async () => {
+        try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=5&countrycodes=ph`);
+            const data = await res.json();
+            
+            resultsUl.innerHTML = '';
+            if(data.length === 0) { resultsUl.classList.add('hidden'); return; }
+
+            data.forEach(item => {
+                const li = document.createElement('li');
+                li.className = "p-2 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer border-b border-slate-100 dark:border-slate-700 dark:text-slate-200 text-slate-700";
+                li.innerText = item.display_name;
+                li.onclick = () => {
+                    inputEl.value = item.display_name.split(',')[0];
+                    resultsUl.classList.add('hidden');
+                    if(target === 'start') startCoords = [parseFloat(item.lat), parseFloat(item.lon)];
+                    if(target === 'end') endCoords = [parseFloat(item.lat), parseFloat(item.lon)];
+                };
+                resultsUl.appendChild(li);
+            });
+            resultsUl.classList.remove('hidden');
+        } catch(e) {}
+    }, 500); 
+}
+
+async function calculateRealRoute() {
+    const btn = document.getElementById('route-btn');
+    if(!startCoords || !endCoords) return showToast("Select Start and Destination from suggestions.", "error");
+
+    btn.innerText = "Finding safe paths..."; btn.disabled = true;
+
+    try {
+        const osrmUrl = `https://router.project-osrm.org/route/v1/foot/${startCoords[1]},${startCoords[0]};${endCoords[1]},${endCoords[0]}?overview=full&geometries=geojson&steps=true`;
+        const res = await fetch(osrmUrl);
+        const data = await res.json();
+
+        if(data.code !== "Ok") throw new Error();
+
+        const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+        const distKm = (data.routes[0].distance / 1000).toFixed(2);
+        const timeMin = Math.round((distKm / 3.5) * 60);
+
+        if(routingLine) map.removeLayer(routingLine);
+        routingLine = L.polyline(coords, { color: '#4f46e5', weight: 6, opacity: 0.8 }).addTo(map);
+        map.fitBounds(routingLine.getBounds(), { padding: [50, 50] });
+
+        const steps = data.routes[0].legs[0].steps;
+        const streetList = document.getElementById('route-streets');
+        streetList.innerHTML = '';
+        
+        let lastStreet = "";
+        steps.forEach(step => {
+            if(step.name && step.name !== lastStreet) {
+                streetList.innerHTML += `<li class="flex items-center gap-2"><span>▪</span> ${step.name}</li>`;
+                lastStreet = step.name;
+            }
+        });
+
+        document.getElementById('route-details').classList.remove('hidden');
+        document.getElementById('clear-route-btn').classList.remove('hidden');
+        document.getElementById('route-dist').innerHTML = `🚶 ${distKm} km`;
+        document.getElementById('route-time').innerHTML = `⏱ ${timeMin} mins`;
+        
+    } catch (e) { showToast("Error calculating route.", "error"); }
+    btn.innerText = "Calculate Route"; btn.disabled = false;
+}
+
+function clearRoute() {
+    if(routingLine) map.removeLayer(routingLine);
+    document.getElementById('route-details').classList.add('hidden');
+    document.getElementById('clear-route-btn').classList.add('hidden');
+    document.getElementById('route-start').value = '';
+    document.getElementById('route-end').value = '';
+    startCoords = null; endCoords = null;
+    map.setView(manilaCenter, 14);
+}
+
+function togglePortal() { document.getElementById('partner-portal').classList.toggle('hidden'); }
+function logoutPortal() {
+    document.getElementById('portal-dashboard').classList.add('hidden');
+    document.getElementById('logout-btn').classList.add('hidden');
+    document.getElementById('export-btn').classList.add('hidden');
+    document.getElementById('portal-login').classList.remove('hidden');
+    showToast("Logged out securely.", "success");
+}
+
+function exportData() {
+    showToast("Preparing PDF/CSV Data Package...", "success");
+    setTimeout(() => { showToast("Export Downloaded Successfully.", "success"); }, 2000);
+}
+
+function populatePartnerPortal() {
+    const sumContainer = document.getElementById('city-summary-container');
+    const alertContainer = document.getElementById('high-alert-container');
+    
+    sumContainer.innerHTML = '';
+    alertContainer.innerHTML = '';
+
+    citySummaries.forEach(city => {
+        const color = city.risk > 70 ? 'bg-rose-600' : city.risk > 40 ? 'bg-amber-500' : 'bg-emerald-500';
+        sumContainer.innerHTML += `
+            <div>
+                <div class="flex justify-between text-sm mb-1.5 font-bold">
+                    <span class="dark:text-slate-300">${city.name}</span>
+                    <span class="text-slate-500 dark:text-slate-400 text-xs">${city.risk}/100</span>
+                </div>
+                <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5">
+                    <div class="${color} h-2.5 rounded-full" style="width: ${city.risk}%"></div>
+                </div>
+            </div>`;
+    });
+
+    const highRiskSpots = hotspots.filter(s => s.risk > 65).sort((a,b) => b.risk - a.risk);
+    highRiskSpots.forEach(spot => {
+        alertContainer.innerHTML += `
+            <div class="bg-rose-50 dark:bg-rose-900/10 p-4 rounded-lg border border-rose-100 dark:border-rose-900/50 flex justify-between items-center">
+                <div>
+                    <h4 class="font-bold text-rose-700 dark:text-rose-400 mb-1">${spot.name}</h4>
+                    <p class="text-xs text-rose-600/80 dark:text-rose-300/80">${spot.reports} active incidents.</p>
+                </div>
+                <div class="flex flex-col items-end gap-2">
+                    <span class="text-xs bg-rose-600 text-white px-2 py-0.5 rounded font-bold">Risk: ${spot.risk}</span>
+                    <button class="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline">View Map</button>
+                </div>
+            </div>`;
+    });
+}
+
+window.onload = initMap;
