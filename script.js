@@ -213,19 +213,40 @@ function toggleSidebar() {
     const collapsed = document.getElementById('sidebar-collapsed');
 
     if(sidebarCollapsed) {
+        // Shrink width
         sidebar.classList.remove('md:w-[460px]', 'sm:w-[380px]', 'w-11/12');
         sidebar.classList.add('w-16');
-        expanded.classList.add('hidden');
-        collapsed.classList.remove('hidden');
-        collapsed.classList.add('flex');
+        
+        // Fade out expanded, then show collapsed
+        expanded.classList.replace('opacity-100', 'opacity-0');
+        setTimeout(() => {
+            expanded.classList.add('hidden');
+            collapsed.classList.remove('hidden');
+            collapsed.classList.add('flex');
+            // Fade in collapsed
+            setTimeout(() => collapsed.classList.replace('opacity-0', 'opacity-100'), 50);
+            
+            map.invalidateSize(true); 
+            setupDrag(); 
+        }, 300);
     } else {
+        // Expand width
         sidebar.classList.remove('w-16');
         sidebar.classList.add('md:w-[460px]', 'sm:w-[380px]', 'w-11/12');
-        collapsed.classList.add('hidden');
-        collapsed.classList.remove('flex');
-        expanded.classList.remove('hidden');
+        
+        // Fade out collapsed, then show expanded
+        collapsed.classList.replace('opacity-100', 'opacity-0');
+        setTimeout(() => {
+            collapsed.classList.add('hidden');
+            collapsed.classList.remove('flex');
+            expanded.classList.remove('hidden');
+            // Fade in expanded
+            setTimeout(() => expanded.classList.replace('opacity-0', 'opacity-100'), 50);
+            
+            map.invalidateSize(true); 
+            setupDrag();
+        }, 300);
     }
-    setTimeout(() => { map.invalidateSize(true); setupDrag(); }, 350); 
 }
 
 function toggleRouteCollapse() {
