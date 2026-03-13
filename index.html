@@ -21,12 +21,15 @@
             <h1 class="text-2xl font-bold tracking-tight">SafeStep</h1>
             <span class="text-xs uppercase font-bold tracking-wider bg-indigo-700/50 dark:bg-slate-800 px-2 py-1 rounded border border-indigo-500 dark:border-slate-700 hidden sm:inline-block">NCR Coverage</span>
         </div>
-        <div class="flex gap-4 items-center">
+        <div class="flex gap-3 md:gap-4 items-center">
             <button onclick="toggleDarkMode()" class="text-xl hover:scale-110 transition-transform" title="Toggle Dark Mode">🌓</button>
             <div class="hidden md:flex gap-2 text-xs font-bold uppercase tracking-wider items-center bg-indigo-800/50 dark:bg-slate-800 px-3 py-1.5 rounded border border-indigo-600 dark:border-slate-700 shadow-inner">
                 <span class="flex items-center gap-1"><div class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></div> AI-Screened & Human Moderated</span>
             </div>
-            <button onclick="togglePortal()" class="bg-white dark:bg-indigo-600 text-indigo-900 dark:text-white px-5 py-2 rounded-md text-sm font-bold hover:bg-indigo-50 hover:shadow transition-all">Partner Portal</button>
+            
+            <button onclick="openFeedbackModal()" class="text-indigo-200 hover:text-white text-xs font-bold transition-colors hidden sm:block">💬 Give Feedback</button>
+            
+            <button onclick="togglePortal()" class="bg-white dark:bg-indigo-600 text-indigo-900 dark:text-white px-4 py-2 rounded-md text-sm font-bold hover:bg-indigo-50 hover:shadow transition-all">Partner Portal</button>
         </div>
     </nav>
 
@@ -76,22 +79,30 @@
 
         <div class="flex-1 relative bg-slate-200 dark:bg-slate-800 w-full h-full">
             
-            <div class="absolute top-6 left-6 md:left-[490px] z-[1600] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 w-[calc(100%-3rem)] md:w-80" id="route-panel" style="touch-action: none;">
+            <div class="absolute top-6 left-6 md:left-[490px] z-[1600] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 w-[calc(100%-3rem)] md:w-[360px]" id="route-panel" style="touch-action: none;">
                 <div id="route-panel-header" class="cursor-move bg-slate-100 dark:bg-slate-800 p-3 rounded-t-lg border-b border-slate-200 dark:border-slate-700 flex justify-between items-center select-none">
                     <span class="flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-white">🧭 Route Finder</span>
                     <button onclick="clearRoute()" class="text-xs uppercase tracking-wider text-rose-500 hover:text-rose-600 hidden font-bold" id="clear-route-btn">✕ Clear</button>
                 </div>
                 
                 <div class="p-4 space-y-3">
-                    <div class="relative">
-                        <input type="text" id="route-start" oninput="handleSearch(this, 'start-results', 'start')" placeholder="Start Location" class="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-sm focus:ring-2 focus:ring-indigo-500 outline-none dark:text-white">
-                        <ul id="start-results" class="absolute w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded mt-1 hidden max-h-48 overflow-y-auto shadow-xl z-50 text-sm"></ul>
+                    <div class="flex items-center gap-3">
+                        <div class="flex-1 space-y-3">
+                            <div class="relative">
+                                <input type="text" id="route-start" oninput="handleSearch(this, 'start-results', 'start')" placeholder="Start Location" class="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-sm focus:ring-2 focus:ring-indigo-500 outline-none dark:text-white">
+                                <ul id="start-results" class="absolute w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded mt-1 hidden max-h-48 overflow-y-auto shadow-xl z-50 text-sm"></ul>
+                            </div>
+                            <div class="relative">
+                                <input type="text" id="route-end" oninput="handleSearch(this, 'end-results', 'end')" placeholder="Destination" class="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-sm focus:ring-2 focus:ring-indigo-500 outline-none dark:text-white">
+                                <ul id="end-results" class="absolute w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded mt-1 hidden max-h-48 overflow-y-auto shadow-xl z-50 text-sm"></ul>
+                            </div>
+                        </div>
+                        <button onclick="swapRoute()" class="bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition" title="Swap locations">
+                            <span class="text-lg">⇅</span>
+                        </button>
                     </div>
-                    <div class="relative">
-                        <input type="text" id="route-end" oninput="handleSearch(this, 'end-results', 'end')" placeholder="Destination" class="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-sm focus:ring-2 focus:ring-indigo-500 outline-none dark:text-white">
-                        <ul id="end-results" class="absolute w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded mt-1 hidden max-h-48 overflow-y-auto shadow-xl z-50 text-sm"></ul>
-                    </div>
-                    <button onclick="calculateRealRoute()" id="route-btn" class="w-full bg-indigo-600 text-white py-2.5 rounded text-sm font-bold hover:bg-indigo-700 shadow-sm transition-all">Calculate Route</button>
+                    
+                    <button onclick="calculateRealRoute()" id="route-btn" class="w-full bg-indigo-600 text-white py-2.5 rounded text-sm font-bold hover:bg-indigo-700 shadow-sm transition-all mt-1">Calculate Route</button>
                 </div>
 
                 <div id="route-details" class="hidden px-4 pb-4">
@@ -106,12 +117,7 @@
             
             <div id="map" class="w-full h-full z-[10]"></div>
 
-            <div class="absolute bottom-8 right-16 z-[1000] flex flex-col gap-3 items-end">
-                <div id="radius-info" class="hidden bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-4 py-3 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-300 max-w-xs text-right leading-relaxed"></div>
-
-                <button onclick="enableRadiusFilter()" id="radius-btn" class="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-xl font-bold text-sm hover:bg-indigo-700 transition flex items-center gap-2 border border-indigo-500">
-                    📍 Focus 1km Area
-                </button>
+            <div class="absolute top-6 right-6 md:top-8 md:right-8 z-[1000] flex flex-col gap-3 items-end">
                 
                 <div class="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-4 py-3 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 flex items-center">
                     <label class="inline-flex items-center cursor-pointer">
@@ -120,15 +126,45 @@
                         <span class="ms-3 text-sm font-bold text-slate-700 dark:text-slate-200">Heatmap Layer</span>
                     </label>
                 </div>
+
+                <button onclick="enableRadiusFilter()" id="radius-btn" class="bg-indigo-600 text-white px-4 py-2.5 rounded-lg shadow-xl font-bold text-sm hover:bg-indigo-700 transition flex items-center gap-2 border border-indigo-500 w-full justify-center">
+                    📍 Focus 1km Area
+                </button>
+                
+                <div id="radius-info" class="hidden bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-4 py-3 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-300 max-w-xs text-right leading-relaxed"></div>
             </div>
 
-            <div class="absolute right-4 top-1/2 transform -translate-y-1/2 z-[1000] bg-white/95 dark:bg-slate-900/95 py-5 px-3 rounded-full shadow-xl border border-slate-200 dark:border-slate-700 flex flex-col items-center gap-4">
+            <div class="absolute right-6 top-1/2 transform -translate-y-1/2 z-[1000] bg-white/95 dark:bg-slate-900/95 py-5 px-3 rounded-full shadow-xl border border-slate-200 dark:border-slate-700 flex flex-col items-center gap-4">
                 <span class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1">Opacity</span>
                 <div class="relative w-4 h-32">
                     <input type="range" id="heatmap-opacity" min="0" max="1" step="0.1" value="1" class="absolute top-1/2 left-1/2 w-32 h-1.5 -translate-x-1/2 -translate-y-1/2 -rotate-90 cursor-pointer accent-indigo-600 rounded-full appearance-none bg-slate-200 dark:bg-slate-700" oninput="updateOpacity()">
                 </div>
             </div>
             
+        </div>
+    </div>
+
+    <div id="feedback-modal" class="hidden fixed inset-0 bg-slate-900/70 z-[9999] flex justify-center items-center backdrop-blur-sm">
+        <div class="bg-white dark:bg-slate-900 p-6 rounded-lg w-11/12 max-w-sm shadow-2xl border border-slate-200 dark:border-slate-800">
+            <h2 class="text-xl font-bold text-slate-800 dark:text-white mb-2">Send Feedback</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Help us improve SafeStep for the community.</p>
+            
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Rate your experience</label>
+            <select id="feedback-rating" class="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-sm outline-none dark:text-white mb-4">
+                <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
+                <option value="4">⭐⭐⭐⭐ Good</option>
+                <option value="3">⭐⭐⭐ Average</option>
+                <option value="2">⭐⭐ Poor</option>
+                <option value="1">⭐ Needs Work</option>
+            </select>
+            
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Comments or Suggestions</label>
+            <textarea id="feedback-text" class="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded h-24 text-sm outline-none resize-none dark:text-white" placeholder="Tell us what you think..."></textarea>
+            
+            <div class="flex justify-end gap-3 pt-4 mt-2">
+                <button onclick="closeFeedbackModal()" class="px-4 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded">Cancel</button>
+                <button onclick="submitFeedback()" class="bg-indigo-600 text-white px-5 py-2 rounded text-sm font-bold hover:bg-indigo-700 shadow-md">Send to Devs</button>
+            </div>
         </div>
     </div>
 
@@ -200,65 +236,10 @@
             </div>
         </div>
     </div>
-    
-    <div id="partner-portal" class="hidden fixed inset-0 bg-slate-100 dark:bg-slate-950 z-[9999] overflow-y-auto">
-        <div class="bg-indigo-900 dark:bg-slate-900 text-white p-5 flex justify-between items-center shadow border-b border-indigo-800 dark:border-slate-800">
-            <h1 class="text-xl font-bold">SafeStep | Partner Dashboard</h1>
-            <div class="flex items-center gap-6">
-                <button onclick="exportData()" id="export-btn" class="hidden text-sm bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded font-bold transition">📥 Export Data</button>
-                <button onclick="logoutPortal()" id="logout-btn" class="hidden text-sm bg-indigo-800 hover:bg-indigo-700 px-4 py-2 rounded font-bold transition">Logout</button>
-                <button onclick="togglePortal()" class="text-indigo-200 hover:text-white font-bold text-2xl">✕</button>
-            </div>
-        </div>
-        
-        <div id="portal-login" class="flex justify-center items-center h-[80vh] px-4">
-            <div class="bg-white dark:bg-slate-900 p-8 rounded-lg shadow-xl w-full max-w-md border border-slate-200 dark:border-slate-800">
-                <div class="text-center mb-8"><span class="text-5xl">🏢</span><h2 class="text-2xl font-bold mt-4 dark:text-white">Agency Login</h2></div>
-                <div class="space-y-4">
-                    <input type="text" id="org-name" placeholder="Organization (e.g. LGU Manila)" class="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-sm outline-none dark:text-white" value="LGU Manila">
-                    <input type="text" id="emp-id" placeholder="Employee ID" class="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-sm outline-none dark:text-white" value="EMP-4029">
-                    <input type="password" id="emp-pass" placeholder="Password" class="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-sm outline-none dark:text-white" value="password">
-                    <button onclick="loginPortal()" class="w-full bg-indigo-600 text-white py-3 rounded text-base font-bold hover:bg-indigo-700 shadow-md mt-2">Login</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="portal-dashboard" class="hidden p-6 md:p-8 max-w-7xl mx-auto space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="bg-white dark:bg-slate-900 p-6 rounded-lg shadow border border-slate-200 dark:border-slate-800 border-t-4 border-t-indigo-500">
-                    <h3 class="text-slate-500 dark:text-slate-400 text-sm font-bold uppercase tracking-wider">Active Reports (24h)</h3>
-                    <p class="text-4xl font-extrabold mt-2 text-slate-800 dark:text-white">412</p>
-                </div>
-                <div class="bg-white dark:bg-slate-900 p-6 rounded-lg shadow border border-slate-200 dark:border-slate-800 border-t-4 border-t-rose-500">
-                    <h3 class="text-slate-500 dark:text-slate-400 text-sm font-bold uppercase tracking-wider">High Risk Zones</h3>
-                    <p class="text-4xl font-extrabold mt-2 text-slate-800 dark:text-white">8</p>
-                </div>
-                <div class="bg-white dark:bg-slate-900 p-6 rounded-lg shadow border border-slate-200 dark:border-slate-800 border-t-4 border-t-emerald-500">
-                    <h3 class="text-slate-500 dark:text-slate-400 text-sm font-bold uppercase tracking-wider">Avg Response Time</h3>
-                    <p class="text-4xl font-extrabold mt-2 text-slate-800 dark:text-white">42m</p>
-                    <p class="text-xs font-medium text-emerald-500 mt-2 flex items-center gap-1"><span>↓</span> 5 mins faster than yesterday</p>
-                </div>
-            </div>
-            <h2 class="text-2xl font-bold text-slate-800 dark:text-white pt-4 border-t border-slate-200 dark:border-slate-800">NCR Regional Overview</h2>
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div class="bg-white dark:bg-slate-900 p-6 rounded-lg shadow border border-slate-200 dark:border-slate-800">
-                    <h3 class="font-bold text-slate-800 dark:text-white mb-6 text-sm uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 pb-2">City-Level Risk Summaries</h3>
-                    <div class="space-y-5" id="city-summary-container"></div>
-                </div>
-                <div class="bg-white dark:bg-slate-900 p-6 rounded-lg shadow border border-slate-200 dark:border-slate-800">
-                    <h3 class="font-bold text-slate-800 dark:text-white mb-6 text-sm uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 pb-2 flex items-center justify-between">
-                        <span>Specific High Alert Zones</span>
-                        <span class="text-xs text-rose-500 bg-rose-50 dark:bg-rose-900/30 px-2 py-1 rounded">Requires Immediate Action</span>
-                    </h3>
-                    <div class="space-y-5" id="high-alert-container"></div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <div id="report-detail-modal" class="hidden fixed inset-0 bg-slate-900/70 z-[9999] flex justify-center items-center backdrop-blur-sm">
         <div class="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-lg w-11/12 md:w-1/2 lg:w-2/5 max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 dark:border-slate-800 relative">
-            <button onclick="closeDetailModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-white font-bold text-xl">✕</button>
+            <button onclick="closeDetailModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-white font-bold text-xl z-50">✕</button>
             <div id="detail-content"></div>
             <div class="mt-6 border-t border-slate-200 dark:border-slate-800 pt-5">
                 <h4 class="font-bold text-base text-slate-800 dark:text-white mb-3">Comments</h4>
@@ -281,23 +262,6 @@
                 <button onclick="closeFlagModal()" class="px-4 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded">Cancel</button>
                 <button onclick="submitFlag()" class="bg-rose-600 text-white px-4 py-2 rounded text-sm font-bold shadow">Submit</button>
             </div>
-        </div>
-    </div>
-
-    <div id="emergency-modal" class="hidden fixed inset-0 bg-slate-900/80 z-[10000] flex justify-center items-center backdrop-blur-sm">
-        <div class="bg-white dark:bg-slate-900 p-8 rounded-lg text-center max-w-md w-11/12 shadow-2xl border border-rose-200 dark:border-rose-900/50">
-            <div class="bg-emerald-100 dark:bg-emerald-900/50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"><span class="text-3xl">✅</span></div>
-            <h3 class="text-2xl font-extrabold text-slate-800 dark:text-white mb-2">Report Secured</h3>
-            <p class="text-slate-600 dark:text-slate-400 mb-6 text-sm">Your report has been broadcasted to the community and flagged for agency review.</p>
-            
-            <div class="space-y-3 mb-8 text-left bg-rose-50 dark:bg-rose-900/10 p-5 rounded-lg border border-rose-100 dark:border-rose-900/30 text-slate-800 dark:text-white">
-                <h4 class="font-bold text-rose-700 dark:text-rose-400 mb-2 border-b border-rose-200 dark:border-rose-800/50 pb-2">🚨 Emergency Hotlines</h4>
-                <p class="text-sm flex justify-between border-b border-slate-200 dark:border-slate-700/50 pb-2"><span>National Emergency:</span> <a href="tel:911" class="text-rose-600 font-bold hover:underline">911</a></p>
-                <p class="text-sm flex justify-between border-b border-slate-200 dark:border-slate-700/50 pb-2"><span>PNP NCRPO:</span> <a href="tel:117" class="font-bold hover:underline">117</a></p>
-                <p class="text-sm flex justify-between border-b border-slate-200 dark:border-slate-700/50 pb-2"><span>Red Cross / Medical:</span> <a href="tel:143" class="font-bold hover:underline">143</a></p>
-                <p class="text-sm flex justify-between"><span>Violence Against Women (VAWC):</span> <a href="tel:1343" class="font-bold hover:underline text-indigo-600 dark:text-indigo-400">1343</a></p>
-            </div>
-            <button onclick="closeEmergencyModal()" class="w-full mt-2 bg-slate-800 dark:bg-slate-700 text-white py-3 rounded-md font-bold hover:bg-slate-900 shadow-lg transition">I am safe, close this window</button>
         </div>
     </div>
 
