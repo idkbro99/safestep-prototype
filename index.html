@@ -16,18 +16,18 @@
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 overflow-hidden font-sans text-slate-800 dark:text-slate-200 transition-colors duration-300">
 
-    <div id="toast-container" class="fixed top-10 left-1/2 transform -translate-x-1/2 flex flex-col gap-2 pointer-events-none" style="z-index: 999999;"></div>
+    <div id="toast-container" class="fixed top-10 left-1/2 transform -translate-x-1/2 flex flex-col gap-2 pointer-events-none" style="z-index: 100000;"></div>
 
     <div class="flex h-screen relative w-full overflow-hidden">
         
         <div id="user-sidebar" class="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md h-full shadow-[4px_0_24px_rgba(0,0,0,0.15)] flex flex-col z-[1500] transition-all duration-300 ease-in-out border-r border-slate-200 dark:border-slate-800 absolute md:relative shrink-0 w-11/12 sm:w-[380px] md:w-[460px]">
             
-            <div id="sidebar-expanded" class="flex flex-col h-full w-full transition-opacity duration-300 opacity-100">
+            <div id="sidebar-expanded" class="flex flex-col h-full w-full transition-opacity duration-300 opacity-100 min-w-0">
                 <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900">
-                    <h2 class="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                    <h2 class="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2 whitespace-nowrap">
                         <i data-lucide="map" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i> Area Reports
                     </h2>
-                    <button onclick="toggleSidebar()" class="p-2 text-slate-500 hover:text-slate-800 dark:hover:text-white bg-slate-100 dark:bg-slate-800 rounded-full hover:bg-slate-200 transition" title="Collapse Sidebar">
+                    <button onclick="toggleSidebar()" class="p-2 text-slate-500 hover:text-slate-800 dark:hover:text-white bg-slate-100 dark:bg-slate-800 rounded-full hover:bg-slate-200 transition shrink-0" title="Collapse Sidebar">
                         <i data-lucide="panel-left-close" class="w-4 h-4"></i>
                     </button>
                 </div>
@@ -39,19 +39,19 @@
                     </div>
                     
                     <div class="flex flex-wrap gap-2 mb-3" id="category-filters">
-                        <button onclick="setCategoryFilter('all')" class="filter-btn active text-[11px] uppercase font-bold tracking-wider px-3 py-1.5 rounded bg-indigo-600 text-white">All</button>
-                        <button onclick="setCategoryFilter('Harassment/Aggression')" class="filter-btn text-[11px] uppercase font-bold tracking-wider px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100">Harassment</button>
-                        <button onclick="setCategoryFilter('Crowd/Atmosphere')" class="filter-btn text-[11px] uppercase font-bold tracking-wider px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100">Crowds</button>
-                        <button onclick="setCategoryFilter('Environmental/Path Hazards')" class="filter-btn text-[11px] uppercase font-bold tracking-wider px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100">Hazards</button>
-                        <button onclick="setCategoryFilter('Accessibility/Obstructions')" class="filter-btn text-[11px] uppercase font-bold tracking-wider px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100">Accessibility</button>
+                        <button onclick="setCategoryFilter('all')" class="filter-btn active text-[11px] uppercase font-bold tracking-wider px-3 py-1.5 rounded bg-indigo-600 text-white whitespace-nowrap">All</button>
+                        <button onclick="setCategoryFilter('Harassment/Aggression')" class="filter-btn text-[11px] uppercase font-bold tracking-wider px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 whitespace-nowrap">Harassment</button>
+                        <button onclick="setCategoryFilter('Crowd/Atmosphere')" class="filter-btn text-[11px] uppercase font-bold tracking-wider px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 whitespace-nowrap">Crowds</button>
+                        <button onclick="setCategoryFilter('Environmental/Path Hazards')" class="filter-btn text-[11px] uppercase font-bold tracking-wider px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 whitespace-nowrap">Hazards</button>
+                        <button onclick="setCategoryFilter('Accessibility/Obstructions')" class="filter-btn text-[11px] uppercase font-bold tracking-wider px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 whitespace-nowrap">Accessibility</button>
                     </div>
 
-                    <div class="flex gap-3 items-center" id="sort-filters">
-                        <span class="text-xs text-slate-400 font-bold uppercase tracking-wider mr-1 flex items-center gap-1"><i data-lucide="list-filter" class="w-3 h-3"></i> Sort:</span>
-                        <button onclick="setSortFilter('relevant')" class="sort-btn active text-sm font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 underline decoration-2 underline-offset-4">Relevant</button>
-                        <button onclick="setSortFilter('popular')" class="sort-btn text-sm font-bold text-slate-500 dark:text-slate-400 hover:text-indigo-600">Popular</button>
-                        <button onclick="setSortFilter('newest')" class="sort-btn text-sm font-bold text-slate-500 dark:text-slate-400 hover:text-indigo-600">Newest</button>
-                        <button onclick="setSortFilter('oldest')" class="sort-btn text-sm font-bold text-slate-500 dark:text-slate-400 hover:text-indigo-600">Oldest</button>
+                    <div class="flex gap-3 items-center overflow-x-auto no-scrollbar" id="sort-filters">
+                        <span class="text-xs text-slate-400 font-bold uppercase tracking-wider mr-1 flex items-center gap-1 shrink-0"><i data-lucide="list-filter" class="w-3 h-3"></i> Sort:</span>
+                        <button onclick="setSortFilter('relevant')" class="sort-btn active text-sm font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 underline decoration-2 underline-offset-4 whitespace-nowrap shrink-0">Relevant</button>
+                        <button onclick="setSortFilter('popular')" class="sort-btn text-sm font-bold text-slate-500 dark:text-slate-400 hover:text-indigo-600 whitespace-nowrap shrink-0">Popular</button>
+                        <button onclick="setSortFilter('newest')" class="sort-btn text-sm font-bold text-slate-500 dark:text-slate-400 hover:text-indigo-600 whitespace-nowrap shrink-0">Newest</button>
+                        <button onclick="setSortFilter('oldest')" class="sort-btn text-sm font-bold text-slate-500 dark:text-slate-400 hover:text-indigo-600 whitespace-nowrap shrink-0">Oldest</button>
                     </div>
                 </div>
                 
@@ -59,7 +59,7 @@
                     </div>
                 
                 <div class="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-                    <button onclick="openReportModal()" class="w-full bg-rose-600 text-white text-sm font-bold py-3.5 rounded-md shadow-md hover:bg-rose-700 hover:-translate-y-0.5 transition-all flex justify-center items-center gap-2">
+                    <button onclick="openReportModal()" class="w-full bg-rose-600 text-white text-sm font-bold py-3.5 rounded-md shadow-md hover:bg-rose-700 hover:-translate-y-0.5 transition-all flex justify-center items-center gap-2 whitespace-nowrap">
                         <i data-lucide="plus-circle" class="w-5 h-5"></i> Report an Incident
                     </button>
                 </div>
@@ -69,17 +69,12 @@
                 <button onclick="toggleSidebar()" class="p-2 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-white bg-slate-100 dark:bg-slate-800 rounded-full shadow-sm transition mb-6" title="Expand Sidebar">
                     <i data-lucide="panel-left-open" class="w-5 h-5"></i>
                 </button>
-                <div class="flex flex-col items-center gap-8 text-slate-400 cursor-pointer" onclick="toggleSidebar()" title="Click to view reports">
-                    <i data-lucide="map-pin" class="w-6 h-6 hover:text-indigo-500 transition-colors"></i>
-                    <i data-lucide="alert-triangle" class="w-6 h-6 hover:text-rose-500 transition-colors"></i>
-                    <i data-lucide="message-square" class="w-6 h-6 hover:text-emerald-500 transition-colors"></i>
                 </div>
-            </div>
         </div>
 
         <div id="map-container" class="flex-1 relative bg-slate-200 dark:bg-slate-800 h-full w-full overflow-hidden">
             
-            <div class="absolute top-4 left-1/2 transform -translate-x-1/2 z-[2000] flex gap-3 pointer-events-none drop-shadow-md">
+            <div class="absolute top-4 left-1/2 transform -translate-x-1/2 z-[2000] flex gap-3 pointer-events-none drop-shadow-md whitespace-nowrap">
                 <div class="bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-full shadow-sm text-[10px] text-slate-700 dark:text-slate-300 font-extrabold uppercase tracking-wider flex items-center gap-1.5">
                     <i data-lucide="map" class="w-3 h-3 text-indigo-500"></i> NCR Coverage
                 </div>
@@ -92,64 +87,73 @@
             </div>
 
             <div class="absolute top-4 right-4 z-[2000] flex items-center gap-3">
-                <button onclick="toggleDarkMode()" class="w-10 h-10 flex items-center justify-center text-slate-700 dark:text-white bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-full shadow-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition" title="Toggle Theme" id="theme-icon">
+                <button onclick="toggleDarkMode()" class="w-10 h-10 flex items-center justify-center text-slate-700 dark:text-white bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-full shadow-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition shrink-0" title="Toggle Theme" id="theme-icon">
                     <i data-lucide="moon" class="w-5 h-5"></i>
                 </button>
 
-                <div class="relative">
+                <div class="relative shrink-0">
                     <button onclick="toggleTopMenu(event)" class="w-10 h-10 flex items-center justify-center text-slate-700 dark:text-white bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-full shadow-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition">
                         <i data-lucide="more-vertical" class="w-5 h-5"></i>
                     </button>
                     <div id="top-nav-menu" class="hidden absolute right-0 mt-2 w-56 bg-white dark:bg-slate-800 rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 z-50 py-2">
-                        <button onclick="showToast('Help Center opening...', 'success')" class="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold border-b border-slate-100 dark:border-slate-700/50"><i data-lucide="help-circle" class="w-4 h-4"></i> Help Center</button>
-                        <button onclick="showToast('Issue reporter opening...', 'success')" class="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold border-b border-slate-100 dark:border-slate-700/50"><i data-lucide="alert-triangle" class="w-4 h-4"></i> Report an Issue</button>
-                        <button onclick="showToast('Suggestion box opening...', 'success')" class="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold border-b border-slate-100 dark:border-slate-700/50"><i data-lucide="lightbulb" class="w-4 h-4"></i> Send Suggestion</button>
-                        <button onclick="openFeedbackModal()" class="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-indigo-600 dark:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold"><i data-lucide="message-square-plus" class="w-4 h-4"></i> Give Feedback</button>
+                        <button onclick="showToast('Help Center opening...', 'success')" class="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold border-b border-slate-100 dark:border-slate-700/50 whitespace-nowrap"><i data-lucide="help-circle" class="w-4 h-4"></i> Help Center</button>
+                        <button onclick="showToast('Issue reporter opening...', 'success')" class="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold border-b border-slate-100 dark:border-slate-700/50 whitespace-nowrap"><i data-lucide="alert-triangle" class="w-4 h-4"></i> Report an Issue</button>
+                        <button onclick="showToast('Suggestion box opening...', 'success')" class="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold border-b border-slate-100 dark:border-slate-700/50 whitespace-nowrap"><i data-lucide="lightbulb" class="w-4 h-4"></i> Send Suggestion</button>
+                        <button onclick="openFeedbackModal()" class="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-indigo-600 dark:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold whitespace-nowrap"><i data-lucide="message-square-plus" class="w-4 h-4"></i> Give Feedback</button>
                     </div>
                 </div>
 
-                <button onclick="openLoginOverlay()" class="bg-indigo-600 text-white px-6 py-2 h-10 flex items-center justify-center rounded-full text-sm font-bold shadow-lg hover:bg-indigo-700 transition gap-2">
-                    <i data-lucide="log-in" class="w-4 h-4"></i> Login
-                </button>
+                <div id="auth-container" class="relative shrink-0">
+                    <button id="login-btn" onclick="openLoginOverlay()" class="bg-indigo-600 text-white px-6 py-2 h-10 flex items-center justify-center rounded-full text-sm font-bold shadow-lg hover:bg-indigo-700 transition gap-2 whitespace-nowrap">
+                        <i data-lucide="log-in" class="w-4 h-4"></i> Login
+                    </button>
+                    
+                    <div id="user-menu-container" class="hidden">
+                        <button onclick="toggleUserMenu(event)" id="user-avatar-btn" class="w-10 h-10 flex items-center justify-center bg-indigo-600 text-white rounded-full shadow-lg hover:bg-indigo-700 transition">
+                            </button>
+                        <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-64 bg-white dark:bg-slate-800 rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 z-50 py-2">
+                            </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="absolute bottom-6 left-6 z-[1000] text-indigo-900 dark:text-white text-4xl font-black tracking-tighter drop-shadow-md pointer-events-none opacity-80 flex items-center gap-2">
+            <div class="absolute bottom-6 left-6 z-[1000] text-indigo-900 dark:text-white text-4xl font-black tracking-tighter drop-shadow-md pointer-events-none opacity-80 flex items-center gap-2 whitespace-nowrap">
                 <i data-lucide="shield" class="w-8 h-8"></i> SafeStep
             </div>
 
             <div class="absolute top-20 left-6 z-[1600] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 w-[calc(100%-3rem)] md:w-[360px]" id="route-panel" style="touch-action: none;">
                 <div id="route-panel-header" class="cursor-move bg-slate-100 dark:bg-slate-800 p-3 rounded-t-lg border-b border-slate-200 dark:border-slate-700 flex justify-between items-center select-none text-slate-600 dark:text-slate-300">
-                    <span class="flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-white">
+                    <span class="flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-white whitespace-nowrap">
                         <i data-lucide="navigation" class="w-4 h-4"></i> Route Finder
                     </span>
-                    <button onclick="clearRoute()" class="text-xs uppercase tracking-wider text-rose-500 hover:text-rose-600 hidden font-bold flex items-center gap-1" id="clear-route-btn">
+                    <button onclick="clearRoute()" class="text-xs uppercase tracking-wider text-rose-500 hover:text-rose-600 hidden font-bold flex items-center gap-1 whitespace-nowrap" id="clear-route-btn">
                         <i data-lucide="x" class="w-3 h-3"></i> Clear
                     </button>
                 </div>
                 <div class="p-4 space-y-3">
                     <div class="flex items-center gap-3">
-                        <div class="flex-1 space-y-3">
+                        <div class="flex-1 space-y-3 min-w-0">
                             <div class="relative">
                                 <i data-lucide="map-pin" class="absolute left-3 top-2.5 w-4 h-4 text-slate-400"></i>
-                                <input type="text" id="route-start" oninput="handleSearch(this, 'start-results', 'start')" placeholder="Start Location" class="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-sm focus:ring-2 focus:ring-indigo-500 outline-none dark:text-white">
+                                <input type="text" id="route-start" oninput="handleSearch(this, 'start-results', 'start')" placeholder="Start Location" class="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-sm focus:ring-2 focus:ring-indigo-500 outline-none dark:text-white truncate">
                                 <ul id="start-results" class="absolute w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded mt-1 hidden max-h-48 overflow-y-auto shadow-xl z-50 text-sm"></ul>
                             </div>
                             <div class="relative">
                                 <i data-lucide="flag" class="absolute left-3 top-2.5 w-4 h-4 text-slate-400"></i>
-                                <input type="text" id="route-end" oninput="handleSearch(this, 'end-results', 'end')" placeholder="Destination" class="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-sm focus:ring-2 focus:ring-indigo-500 outline-none dark:text-white">
+                                <input type="text" id="route-end" oninput="handleSearch(this, 'end-results', 'end')" placeholder="Destination" class="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-sm focus:ring-2 focus:ring-indigo-500 outline-none dark:text-white truncate">
                                 <ul id="end-results" class="absolute w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded mt-1 hidden max-h-48 overflow-y-auto shadow-xl z-50 text-sm"></ul>
                             </div>
                         </div>
-                        <button onclick="swapRoute()" class="bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition shadow-sm text-slate-600 dark:text-slate-300" title="Swap locations">
+                        <button onclick="swapRoute()" class="bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition shadow-sm text-slate-600 dark:text-slate-300 shrink-0" title="Swap locations">
                             <i data-lucide="arrow-up-down" class="w-5 h-5"></i>
                         </button>
                     </div>
-                    <button onclick="calculateRealRoute()" id="route-btn" class="w-full bg-indigo-600 text-white py-2.5 rounded text-sm font-bold hover:bg-indigo-700 shadow-sm transition-all mt-1 flex justify-center items-center gap-2">
+                    <button onclick="calculateRealRoute()" id="route-btn" class="w-full bg-indigo-600 text-white py-2.5 rounded text-sm font-bold hover:bg-indigo-700 shadow-sm transition-all mt-1 flex justify-center items-center gap-2 whitespace-nowrap">
                         <i data-lucide="route" class="w-4 h-4"></i> Calculate Route
                     </button>
                 </div>
                 <div id="route-details" class="hidden px-4 pb-4">
-                    <div class="flex justify-between text-sm font-bold text-indigo-900 dark:text-indigo-400 mb-2 pt-3 border-t border-slate-200 dark:border-slate-700">
+                    <div class="flex justify-between text-sm font-bold text-indigo-900 dark:text-indigo-400 mb-2 pt-3 border-t border-slate-200 dark:border-slate-700 whitespace-nowrap">
                         <span id="route-dist" class="flex items-center gap-1.5"><i data-lucide="footprints" class="w-4 h-4"></i> --</span>
                         <span id="route-time" class="flex items-center gap-1.5"><i data-lucide="clock" class="w-4 h-4"></i> --</span>
                     </div>
@@ -164,59 +168,69 @@
                     <label class="inline-flex items-center cursor-pointer">
                         <input type="checkbox" id="heatmap-toggle" class="sr-only peer" checked onchange="toggleHeatmap()">
                         <div class="relative w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600"></div>
-                        <span class="ms-2 text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                        <span class="ms-2 text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5 whitespace-nowrap">
                             <i data-lucide="layers" class="w-3 h-3"></i> Heatmap Layer
                         </span>
                     </label>
                 </div>
-                <button onclick="enableRadiusFilter()" id="radius-btn" class="bg-indigo-600 text-white px-3 py-2 rounded-lg shadow-lg font-bold text-xs hover:bg-indigo-700 transition flex items-center gap-1.5 border border-indigo-500 w-full justify-center">
+                <button onclick="enableRadiusFilter()" id="radius-btn" class="bg-indigo-600 text-white px-3 py-2 rounded-lg shadow-lg font-bold text-xs hover:bg-indigo-700 transition flex items-center justify-center gap-1.5 border border-indigo-500 w-full whitespace-nowrap">
                     <i data-lucide="crosshair" class="w-3 h-3"></i> Focus 1km Area
                 </button>
                 <div id="radius-info" class="hidden bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-3 py-2 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 text-[10px] text-slate-700 dark:text-slate-300 max-w-[150px] text-right leading-tight"></div>
             </div>
 
             <div class="absolute bottom-6 right-4 z-[1000] flex items-end gap-3">
-                <div class="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-3 py-2 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 flex items-center gap-2 text-[10px] font-bold text-slate-500 dark:text-slate-400 h-10">
-                    <span>10%</span>
-                    <input type="range" id="heatmap-opacity" min="0.1" max="1" step="0.1" value="1" class="w-24 h-1.5 cursor-pointer accent-indigo-600 bg-slate-200 dark:bg-slate-700 rounded-full appearance-none" oninput="updateOpacity()">
-                    <span>100%</span>
+                <div class="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-3 py-2 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 flex items-center gap-3 h-10">
+                    <span class="text-[10px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-widest whitespace-nowrap flex items-center gap-1">
+                        <i data-lucide="droplet" class="w-3 h-3"></i> Opacity
+                    </span>
+                    <div class="flex items-center gap-2 text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                        <span>10%</span>
+                        <input type="range" id="heatmap-opacity" min="0.1" max="1" step="0.1" value="1" class="w-24 h-1.5 cursor-pointer accent-indigo-600 bg-slate-200 dark:bg-slate-700 rounded-full appearance-none" oninput="updateOpacity()">
+                        <span>100%</span>
+                    </div>
                 </div>
                 
-                <div class="flex shadow-lg rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md font-bold text-slate-700 dark:text-white h-10">
-                    <button onclick="map.zoomOut()" class="w-10 h-full hover:bg-slate-100 dark:hover:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex items-center justify-center transition-colors">
-                        <i data-lucide="minus" class="w-4 h-4"></i>
-                    </button>
-                    <button onclick="map.zoomIn()" class="w-10 h-full hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors">
-                        <i data-lucide="plus" class="w-4 h-4"></i>
-                    </button>
+                <div class="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-3 py-1.5 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 flex items-center gap-3 h-10">
+                    <span class="text-[10px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-widest whitespace-nowrap flex items-center gap-1">
+                        <i data-lucide="zoom-in" class="w-3 h-3"></i> Zoom
+                    </span>
+                    <div class="flex rounded border border-slate-200 dark:border-slate-700 overflow-hidden font-bold text-slate-700 dark:text-white h-7">
+                        <button onclick="map.zoomOut()" class="w-8 h-full hover:bg-slate-100 dark:hover:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex items-center justify-center transition-colors">
+                            <i data-lucide="minus" class="w-3 h-3"></i>
+                        </button>
+                        <button onclick="map.zoomIn()" class="w-8 h-full hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors">
+                            <i data-lucide="plus" class="w-3 h-3"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
             
         </div>
     </div>
 
-    <div id="login-modal" class="hidden fixed inset-0 bg-slate-900/80 z-[9999] flex justify-center items-center backdrop-blur-md">
-        <div class="bg-white dark:bg-slate-900 p-8 rounded-lg w-11/12 max-w-sm shadow-2xl border border-slate-200 dark:border-slate-800 relative">
+    <div id="login-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[9999] flex justify-center items-center">
+        <div class="bg-white dark:bg-slate-900 p-8 rounded-xl w-11/12 max-w-sm shadow-2xl border border-slate-200 dark:border-slate-800 relative">
             <button onclick="closeLoginOverlay()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
             
             <div id="login-step-1">
                 <div class="text-center mb-6">
                     <i data-lucide="shield" class="w-12 h-12 mx-auto text-indigo-600 mb-2"></i>
-                    <h2 class="text-2xl font-bold text-slate-800 dark:text-white">Welcome Back</h2>
-                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Select your account type to continue</p>
+                    <h2 class="text-2xl font-bold text-slate-800 dark:text-white whitespace-nowrap">Welcome Back</h2>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Select your account type</p>
                 </div>
                 <div class="space-y-3">
                     <button onclick="showLoginForm('general')" class="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:border-indigo-500 dark:hover:border-indigo-500 transition group text-left">
                         <div class="flex items-center gap-3">
                             <div class="bg-indigo-100 dark:bg-indigo-900/50 p-2 rounded-full text-indigo-600 dark:text-indigo-400"><i data-lucide="user" class="w-5 h-5"></i></div>
-                            <div><p class="font-bold text-slate-800 dark:text-white text-sm">General User</p><p class="text-[10px] text-slate-500">Report and track incidents</p></div>
+                            <div><p class="font-bold text-slate-800 dark:text-white text-sm whitespace-nowrap">General User</p><p class="text-[10px] text-slate-500 truncate">Report and track incidents</p></div>
                         </div>
                         <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 group-hover:text-indigo-500"></i>
                     </button>
                     <button onclick="showLoginForm('partner')" class="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:border-indigo-500 dark:hover:border-indigo-500 transition group text-left">
                         <div class="flex items-center gap-3">
                             <div class="bg-rose-100 dark:bg-rose-900/50 p-2 rounded-full text-rose-600 dark:text-rose-400"><i data-lucide="building" class="w-5 h-5"></i></div>
-                            <div><p class="font-bold text-slate-800 dark:text-white text-sm">Partner Agency</p><p class="text-[10px] text-slate-500">LGU & Admin Access</p></div>
+                            <div><p class="font-bold text-slate-800 dark:text-white text-sm whitespace-nowrap">Partner Agency</p><p class="text-[10px] text-slate-500 truncate">LGU & Admin Access</p></div>
                         </div>
                         <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 group-hover:text-indigo-500"></i>
                     </button>
@@ -225,17 +239,17 @@
 
             <div id="login-step-2" class="hidden">
                 <button onclick="backToLoginSelect()" class="text-sm text-slate-500 hover:text-indigo-600 flex items-center gap-1 mb-4"><i data-lucide="arrow-left" class="w-3 h-3"></i> Back</button>
-                <h2 id="login-form-title" class="text-xl font-bold text-slate-800 dark:text-white mb-4">Login</h2>
+                <h2 id="login-form-title" class="text-xl font-bold text-slate-800 dark:text-white mb-4 whitespace-nowrap">Login</h2>
                 <div class="space-y-3" id="login-fields-container">
                     </div>
-                <button onclick="executeLogin()" class="w-full bg-indigo-600 text-white py-3 rounded-lg text-sm font-bold hover:bg-indigo-700 shadow-md mt-4 transition">Sign In</button>
+                <button onclick="executeLogin()" class="w-full bg-indigo-600 text-white py-3 rounded-lg text-sm font-bold hover:bg-indigo-700 shadow-md mt-4 transition flex justify-center items-center gap-2"><i data-lucide="log-in" class="w-4 h-4"></i> Sign In</button>
             </div>
         </div>
     </div>
 
     <div id="feedback-modal" class="hidden fixed inset-0 bg-slate-900/70 z-[9999] flex justify-center items-center backdrop-blur-sm">
         <div class="bg-white dark:bg-slate-900 p-6 rounded-lg w-11/12 max-w-sm shadow-2xl border border-slate-200 dark:border-slate-800 relative">
-            <h2 class="text-xl font-bold text-slate-800 dark:text-white mb-1 flex items-center gap-2"><i data-lucide="message-square-plus" class="w-5 h-5 text-indigo-500"></i> Give Feedback</h2>
+            <h2 class="text-xl font-bold text-slate-800 dark:text-white mb-1 flex items-center gap-2 whitespace-nowrap"><i data-lucide="message-square-plus" class="w-5 h-5 text-indigo-500"></i> Give Feedback</h2>
             <p class="text-xs text-slate-500 dark:text-slate-400 mb-5">Help us improve SafeStep for the community.</p>
             
             <div class="mb-4 text-center">
@@ -253,78 +267,75 @@
             <textarea id="feedback-text" class="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded h-24 text-sm outline-none resize-none dark:text-white" placeholder="Tell us what you think..."></textarea>
             
             <div class="flex justify-end gap-3 pt-4 mt-2 border-t border-slate-200 dark:border-slate-800">
-                <button onclick="closeFeedbackModal()" class="px-4 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded">Cancel</button>
-                <button onclick="submitFeedback()" class="bg-indigo-600 text-white px-5 py-2 rounded text-sm font-bold hover:bg-indigo-700 shadow-md flex items-center gap-2"><i data-lucide="send" class="w-4 h-4"></i> Send</button>
+                <button onclick="closeFeedbackModal()" class="px-4 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded whitespace-nowrap">Cancel</button>
+                <button onclick="submitFeedback()" class="bg-indigo-600 text-white px-5 py-2 rounded text-sm font-bold hover:bg-indigo-700 shadow-md flex items-center gap-2 whitespace-nowrap"><i data-lucide="send" class="w-4 h-4"></i> Send</button>
             </div>
         </div>
     </div>
 
     <div id="report-modal" class="hidden fixed inset-0 bg-slate-900/70 z-[9999] flex justify-center items-center backdrop-blur-sm">
         <div class="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-lg w-11/12 md:w-1/2 lg:w-2/5 max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 dark:border-slate-800 relative">
-            <h2 class="text-xl font-bold text-slate-800 dark:text-white mb-5 flex items-center gap-2">
-                <i data-lucide="alert-triangle" class="w-6 h-6 text-rose-500"></i> Submit a Report
-            </h2>
+            <h2 class="text-xl font-bold text-slate-800 dark:text-white mb-5 flex items-center gap-2 whitespace-nowrap"><i data-lucide="alert-triangle" class="w-6 h-6 text-rose-500"></i> Submit a Report</h2>
             <div class="space-y-4">
                 <div class="bg-indigo-50 dark:bg-slate-800 p-3 rounded border border-indigo-100 dark:border-slate-700 flex flex-col gap-2">
                     <div class="flex justify-between items-center">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase mb-0.5">Location Privacy <span class="text-rose-500">*</span></label>
-                            <select id="loc-privacy" class="bg-transparent text-sm font-bold text-indigo-900 dark:text-indigo-300 outline-none cursor-pointer"><option value="approx">Approximate (General Area)</option><option value="precise">Precise Location Pin</option></select>
+                        <div class="min-w-0">
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-0.5 whitespace-nowrap">Location Privacy <span class="text-rose-500">*</span></label>
+                            <select id="loc-privacy" class="bg-transparent text-sm font-bold text-indigo-900 dark:text-indigo-300 outline-none cursor-pointer w-full truncate"><option value="approx">Approximate (General Area)</option><option value="precise">Precise Location Pin</option></select>
                         </div>
-                        <button onclick="enableMapPicker()" class="bg-indigo-600 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-indigo-700 shadow-sm transition flex items-center gap-1.5"><i data-lucide="map-pin" class="w-3 h-3"></i> Pick on Map</button>
+                        <button onclick="enableMapPicker()" class="bg-indigo-600 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-indigo-700 shadow-sm transition flex items-center gap-1.5 shrink-0 whitespace-nowrap"><i data-lucide="map-pin" class="w-3 h-3"></i> Pick on Map</button>
                     </div>
-                    <div id="pin-status" class="hidden text-xs bg-white dark:bg-slate-900 p-2 rounded border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 leading-relaxed"></div>
+                    <div id="pin-status" class="hidden text-xs bg-white dark:bg-slate-900 p-2 rounded border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 leading-relaxed truncate"></div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Subject <span class="text-rose-500">*</span></label><input type="text" id="report-title" oninput="suggestTags()" placeholder="Brief title..." class="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-sm outline-none dark:text-white"></div>
-                    <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Category <span class="text-rose-500">*</span></label><select id="report-category" onchange="suggestTags()" class="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-sm outline-none dark:text-white"><option value="">Select an option...</option><option value="Harassment/Aggression">Harassment/Aggression</option><option value="Crowd/Atmosphere">Crowd/Atmosphere</option><option value="Environmental/Path Hazards">Environmental/Path Hazards</option><option value="Accessibility/Obstructions">Accessibility/Obstructions</option></select></div>
+                    <div class="min-w-0"><label class="block text-xs font-bold text-slate-500 uppercase mb-1 whitespace-nowrap">Subject <span class="text-rose-500">*</span></label><input type="text" id="report-title" oninput="suggestTags()" placeholder="Brief title..." class="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-sm outline-none dark:text-white"></div>
+                    <div class="min-w-0"><label class="block text-xs font-bold text-slate-500 uppercase mb-1 whitespace-nowrap">Category <span class="text-rose-500">*</span></label><select id="report-category" onchange="suggestTags()" class="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-sm outline-none dark:text-white"><option value="">Select an option...</option><option value="Harassment/Aggression">Harassment/Aggression</option><option value="Crowd/Atmosphere">Crowd/Atmosphere</option><option value="Environmental/Path Hazards">Environmental/Path Hazards</option><option value="Accessibility/Obstructions">Accessibility/Obstructions</option></select></div>
                 </div>
                 <div class="bg-indigo-50/50 dark:bg-slate-800/50 p-4 rounded border border-indigo-100 dark:border-slate-700">
-                    <label class="block text-xs font-bold text-indigo-800 dark:text-indigo-400 uppercase tracking-wider mb-2">Tags & Hashtags</label>
-                    <div id="ai-tags" class="hidden mb-3"><p class="text-xs text-indigo-600/70 dark:text-indigo-400 mb-1.5 font-medium">AI Suggested (Click to add):</p><div id="tag-container" class="flex gap-2 flex-wrap"></div></div>
-                    <div class="flex gap-2 mb-3"><input type="text" id="custom-tag-input" placeholder="Type custom tag..." class="w-full p-2 border border-indigo-200 dark:border-slate-600 bg-white dark:bg-slate-700 rounded text-sm outline-none dark:text-white" onkeypress="handleTagKeypress(event)"><button onclick="addCustomTag()" class="bg-indigo-600 text-white px-4 rounded text-sm font-bold hover:bg-indigo-700"><i data-lucide="plus" class="w-4 h-4"></i></button></div>
+                    <label class="block text-xs font-bold text-indigo-800 dark:text-indigo-400 uppercase tracking-wider mb-2 whitespace-nowrap">Tags & Hashtags</label>
+                    <div id="ai-tags" class="hidden mb-3"><p class="text-xs text-indigo-600/70 dark:text-indigo-400 mb-1.5 font-medium whitespace-nowrap">AI Suggested (Click to add):</p><div id="tag-container" class="flex gap-2 flex-wrap"></div></div>
+                    <div class="flex gap-2 mb-3"><input type="text" id="custom-tag-input" placeholder="Type custom tag..." class="w-full p-2 border border-indigo-200 dark:border-slate-600 bg-white dark:bg-slate-700 rounded text-sm outline-none dark:text-white" onkeypress="handleTagKeypress(event)"><button onclick="addCustomTag()" class="bg-indigo-600 text-white px-4 rounded text-sm font-bold hover:bg-indigo-700 shrink-0"><i data-lucide="plus" class="w-4 h-4"></i></button></div>
                     <div id="active-tags-container" class="flex gap-2 flex-wrap min-h-[28px]"></div>
                 </div>
-                <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Description <span class="text-rose-500">*</span></label><textarea id="report-desc" class="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded h-24 text-sm outline-none resize-none dark:text-white" placeholder="Provide details (Min 15 chars)..."></textarea></div>
-                <div class="bg-amber-50 dark:bg-amber-900/20 p-4 rounded border border-amber-200 dark:border-amber-800/50 flex items-start gap-3 mt-4"><input type="checkbox" id="safety-confirm" class="mt-1 w-4 h-4 text-amber-600 rounded"><label for="safety-confirm" class="text-sm text-amber-800 dark:text-amber-200 leading-tight">I confirm I am safe to post this, or accept the risks to post instantly.</label></div>
-                <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700 mt-4"><button onclick="closeReportModal()" class="px-5 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded">Cancel</button><button onclick="submitReport()" class="bg-rose-600 text-white px-6 py-2.5 rounded text-sm font-bold hover:bg-rose-700 shadow-lg flex items-center gap-2"><i data-lucide="upload-cloud" class="w-4 h-4"></i> Post Report</button></div>
+                <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1 whitespace-nowrap">Description <span class="text-rose-500">*</span></label><textarea id="report-desc" class="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded h-24 text-sm outline-none resize-none dark:text-white" placeholder="Provide details (Min 15 chars)..."></textarea></div>
+                <div class="bg-amber-50 dark:bg-amber-900/20 p-4 rounded border border-amber-200 dark:border-amber-800/50 flex items-start gap-3 mt-4"><input type="checkbox" id="safety-confirm" class="mt-1 w-4 h-4 text-amber-600 rounded shrink-0"><label for="safety-confirm" class="text-sm text-amber-800 dark:text-amber-200 leading-tight">I confirm I am safe to post this, or accept the risks to post instantly.</label></div>
+                <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700 mt-4"><button onclick="closeReportModal()" class="px-5 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded whitespace-nowrap">Cancel</button><button onclick="submitReport()" class="bg-rose-600 text-white px-6 py-2.5 rounded text-sm font-bold hover:bg-rose-700 shadow-lg flex items-center gap-2 whitespace-nowrap"><i data-lucide="upload-cloud" class="w-4 h-4"></i> Post Report</button></div>
             </div>
         </div>
     </div>
     
     <div id="partner-portal" class="hidden fixed inset-0 bg-slate-100 dark:bg-slate-950 z-[9999] overflow-y-auto">
         <div class="bg-indigo-900 dark:bg-slate-900 text-white p-5 flex justify-between items-center shadow border-b border-indigo-800 dark:border-slate-800">
-            <h1 class="text-xl font-bold flex items-center gap-2"><i data-lucide="layout-dashboard" class="w-6 h-6"></i> SafeStep | Partner Dashboard</h1>
+            <h1 class="text-xl font-bold flex items-center gap-2 whitespace-nowrap"><i data-lucide="layout-dashboard" class="w-6 h-6"></i> SafeStep | Partner Dashboard</h1>
             <div class="flex items-center gap-6">
-                <button onclick="exportData()" id="export-btn" class="text-sm bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded font-bold transition flex items-center gap-2"><i data-lucide="download" class="w-4 h-4"></i> Export Data</button>
-                <button onclick="logoutPortal()" id="logout-btn" class="text-sm bg-indigo-800 hover:bg-indigo-700 px-4 py-2 rounded font-bold transition flex items-center gap-2"><i data-lucide="log-out" class="w-4 h-4"></i> Logout</button>
-                <button onclick="togglePortal()" class="text-indigo-200 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+                <button onclick="exportData()" class="text-sm bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded font-bold transition flex items-center gap-2 whitespace-nowrap"><i data-lucide="download" class="w-4 h-4"></i> Export Data</button>
+                <button onclick="togglePortal()" class="text-indigo-200 hover:text-white shrink-0"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
         </div>
         <div id="portal-dashboard" class="p-6 md:p-8 max-w-7xl mx-auto space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="bg-white dark:bg-slate-900 p-6 rounded-lg shadow border border-slate-200 dark:border-slate-800 border-t-4 border-t-indigo-500"><h3 class="text-slate-500 dark:text-slate-400 text-sm font-bold uppercase tracking-wider">Active Reports (24h)</h3><p class="text-4xl font-extrabold mt-2 text-slate-800 dark:text-white">412</p></div>
-                <div class="bg-white dark:bg-slate-900 p-6 rounded-lg shadow border border-slate-200 dark:border-slate-800 border-t-4 border-t-rose-500"><h3 class="text-slate-500 dark:text-slate-400 text-sm font-bold uppercase tracking-wider">High Risk Zones</h3><p class="text-4xl font-extrabold mt-2 text-slate-800 dark:text-white">8</p></div>
-                <div class="bg-white dark:bg-slate-900 p-6 rounded-lg shadow border border-slate-200 dark:border-slate-800 border-t-4 border-t-emerald-500"><h3 class="text-slate-500 dark:text-slate-400 text-sm font-bold uppercase tracking-wider">Avg Response Time</h3><p class="text-4xl font-extrabold mt-2 text-slate-800 dark:text-white">42m</p><p class="text-xs font-medium text-emerald-500 mt-2 flex items-center gap-1"><i data-lucide="arrow-down" class="w-3 h-3"></i> 5 mins faster than yesterday</p></div>
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-lg shadow border border-slate-200 dark:border-slate-800 border-t-4 border-t-indigo-500"><h3 class="text-slate-500 dark:text-slate-400 text-sm font-bold uppercase tracking-wider whitespace-nowrap">Active Reports (24h)</h3><p class="text-4xl font-extrabold mt-2 text-slate-800 dark:text-white">412</p></div>
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-lg shadow border border-slate-200 dark:border-slate-800 border-t-4 border-t-rose-500"><h3 class="text-slate-500 dark:text-slate-400 text-sm font-bold uppercase tracking-wider whitespace-nowrap">High Risk Zones</h3><p class="text-4xl font-extrabold mt-2 text-slate-800 dark:text-white">8</p></div>
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-lg shadow border border-slate-200 dark:border-slate-800 border-t-4 border-t-emerald-500"><h3 class="text-slate-500 dark:text-slate-400 text-sm font-bold uppercase tracking-wider whitespace-nowrap">Avg Response Time</h3><p class="text-4xl font-extrabold mt-2 text-slate-800 dark:text-white">42m</p><p class="text-xs font-medium text-emerald-500 mt-2 flex items-center gap-1 whitespace-nowrap"><i data-lucide="arrow-down" class="w-3 h-3"></i> 5 mins faster than yesterday</p></div>
             </div>
-            <h2 class="text-2xl font-bold text-slate-800 dark:text-white pt-4 border-t border-slate-200 dark:border-slate-800">NCR Regional Overview</h2>
+            <h2 class="text-2xl font-bold text-slate-800 dark:text-white pt-4 border-t border-slate-200 dark:border-slate-800 whitespace-nowrap">NCR Regional Overview</h2>
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div class="bg-white dark:bg-slate-900 p-6 rounded-lg shadow border border-slate-200 dark:border-slate-800"><h3 class="font-bold text-slate-800 dark:text-white mb-6 text-sm uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 pb-2">City-Level Risk Summaries</h3><div class="space-y-5" id="city-summary-container"></div></div>
-                <div class="bg-white dark:bg-slate-900 p-6 rounded-lg shadow border border-slate-200 dark:border-slate-800"><h3 class="font-bold text-slate-800 dark:text-white mb-6 text-sm uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 pb-2 flex items-center justify-between"><span>Specific High Alert Zones</span><span class="text-xs text-rose-500 bg-rose-50 dark:bg-rose-900/30 px-2 py-1 rounded font-bold">Requires Immediate Action</span></h3><div class="space-y-5" id="high-alert-container"></div></div>
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-lg shadow border border-slate-200 dark:border-slate-800"><h3 class="font-bold text-slate-800 dark:text-white mb-6 text-sm uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 pb-2 whitespace-nowrap">City-Level Risk Summaries</h3><div class="space-y-5" id="city-summary-container"></div></div>
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-lg shadow border border-slate-200 dark:border-slate-800"><h3 class="font-bold text-slate-800 dark:text-white mb-6 text-sm uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 pb-2 flex items-center justify-between"><span class="whitespace-nowrap">Specific High Alert Zones</span><span class="text-[10px] sm:text-xs text-rose-500 bg-rose-50 dark:bg-rose-900/30 px-2 py-1 rounded font-bold whitespace-nowrap">Requires Immediate Action</span></h3><div class="space-y-5" id="high-alert-container"></div></div>
             </div>
         </div>
     </div>
 
     <div id="report-detail-modal" class="hidden fixed inset-0 bg-slate-900/70 z-[9999] flex justify-center items-center backdrop-blur-sm">
         <div class="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-lg w-11/12 md:w-1/2 lg:w-2/5 max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 dark:border-slate-800 relative">
-            <button onclick="closeDetailModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-white z-[60]"><i data-lucide="x" class="w-6 h-6"></i></button>
+            <button onclick="closeDetailModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-white font-bold text-xl z-[60]"><i data-lucide="x" class="w-6 h-6"></i></button>
             <div id="detail-content"></div>
             <div class="mt-6 border-t border-slate-200 dark:border-slate-800 pt-5">
-                <h4 class="font-bold text-base text-slate-800 dark:text-white mb-3">Comments</h4>
+                <h4 class="font-bold text-base text-slate-800 dark:text-white mb-3 whitespace-nowrap">Comments</h4>
                 <div id="detail-comments" class="space-y-3 mb-4 max-h-40 overflow-y-auto pr-2"></div>
                 <div class="flex gap-2">
                     <input type="text" id="new-comment" placeholder="Add a public comment..." class="flex-1 p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-sm outline-none dark:text-white">
-                    <button onclick="submitComment()" class="bg-indigo-600 text-white px-4 py-2 rounded text-sm font-bold hover:bg-indigo-700 shadow flex items-center gap-1.5"><i data-lucide="send" class="w-4 h-4"></i> Post</button>
+                    <button onclick="submitComment()" class="bg-indigo-600 text-white px-4 py-2 rounded text-sm font-bold hover:bg-indigo-700 shadow flex items-center gap-1.5 shrink-0"><i data-lucide="send" class="w-4 h-4"></i> Post</button>
                 </div>
             </div>
         </div>
@@ -332,25 +343,25 @@
 
     <div id="flag-modal" class="hidden fixed inset-0 bg-slate-900/70 z-[10000] flex justify-center items-center backdrop-blur-sm">
         <div class="bg-white dark:bg-slate-900 p-6 rounded-lg w-11/12 max-w-sm shadow-2xl border border-slate-200 dark:border-slate-800">
-            <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2"><i data-lucide="flag" class="w-5 h-5 text-rose-500"></i> Report Content</h3>
+            <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2 whitespace-nowrap"><i data-lucide="flag" class="w-5 h-5 text-rose-500"></i> Report Content</h3>
             <select id="flag-reason" class="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded mb-4 text-sm outline-none dark:text-white"><option value="">Select reason...</option><option value="spam">Spam</option><option value="false">False report</option><option value="inappropriate">Inappropriate</option></select>
-            <div class="flex justify-end gap-3"><button onclick="closeFlagModal()" class="px-4 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded">Cancel</button><button onclick="submitFlag()" class="bg-rose-600 text-white px-4 py-2 rounded text-sm font-bold shadow">Submit</button></div>
+            <div class="flex justify-end gap-3"><button onclick="closeFlagModal()" class="px-4 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded whitespace-nowrap">Cancel</button><button onclick="submitFlag()" class="bg-rose-600 text-white px-4 py-2 rounded text-sm font-bold shadow whitespace-nowrap">Submit</button></div>
         </div>
     </div>
 
     <div id="emergency-modal" class="hidden fixed inset-0 bg-slate-900/80 z-[10000] flex justify-center items-center backdrop-blur-sm">
         <div class="bg-white dark:bg-slate-900 p-8 rounded-lg text-center max-w-md w-11/12 shadow-2xl border border-rose-200 dark:border-rose-900/50">
             <div class="bg-emerald-100 dark:bg-emerald-900/50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"><i data-lucide="check-circle" class="w-8 h-8 text-emerald-600"></i></div>
-            <h3 class="text-2xl font-extrabold text-slate-800 dark:text-white mb-2">Report Secured</h3>
+            <h3 class="text-2xl font-extrabold text-slate-800 dark:text-white mb-2 whitespace-nowrap">Report Secured</h3>
             <p class="text-slate-600 dark:text-slate-400 mb-6 text-sm">Your report has been broadcasted to the community and flagged for agency review.</p>
             <div class="space-y-3 mb-8 text-left bg-rose-50 dark:bg-rose-900/10 p-5 rounded-lg border border-rose-100 dark:border-rose-900/30 text-slate-800 dark:text-white">
-                <h4 class="font-bold text-rose-700 dark:text-rose-400 mb-2 border-b border-rose-200 dark:border-rose-800/50 pb-2 flex items-center gap-2"><i data-lucide="phone-call" class="w-4 h-4"></i> Emergency Hotlines</h4>
-                <p class="text-sm flex justify-between border-b border-slate-200 dark:border-slate-700/50 pb-2"><span>National Emergency:</span> <a href="tel:911" class="text-rose-600 font-bold hover:underline">911</a></p>
-                <p class="text-sm flex justify-between border-b border-slate-200 dark:border-slate-700/50 pb-2"><span>PNP NCRPO:</span> <a href="tel:117" class="font-bold hover:underline">117</a></p>
-                <p class="text-sm flex justify-between border-b border-slate-200 dark:border-slate-700/50 pb-2"><span>Red Cross / Medical:</span> <a href="tel:143" class="font-bold hover:underline">143</a></p>
-                <p class="text-sm flex justify-between"><span>VAWC:</span> <a href="tel:1343" class="font-bold hover:underline text-indigo-600 dark:text-indigo-400">1343</a></p>
+                <h4 class="font-bold text-rose-700 dark:text-rose-400 mb-2 border-b border-rose-200 dark:border-rose-800/50 pb-2 flex items-center gap-2 whitespace-nowrap"><i data-lucide="phone-call" class="w-4 h-4"></i> Emergency Hotlines</h4>
+                <p class="text-sm flex justify-between border-b border-slate-200 dark:border-slate-700/50 pb-2"><span class="whitespace-nowrap">National Emergency:</span> <a href="tel:911" class="text-rose-600 font-bold hover:underline">911</a></p>
+                <p class="text-sm flex justify-between border-b border-slate-200 dark:border-slate-700/50 pb-2"><span class="whitespace-nowrap">PNP NCRPO:</span> <a href="tel:117" class="font-bold hover:underline">117</a></p>
+                <p class="text-sm flex justify-between border-b border-slate-200 dark:border-slate-700/50 pb-2"><span class="whitespace-nowrap">Red Cross / Medical:</span> <a href="tel:143" class="font-bold hover:underline">143</a></p>
+                <p class="text-sm flex justify-between"><span class="whitespace-nowrap">VAWC:</span> <a href="tel:1343" class="font-bold hover:underline text-indigo-600 dark:text-indigo-400">1343</a></p>
             </div>
-            <button onclick="closeEmergencyModal()" class="w-full mt-2 bg-slate-800 dark:bg-slate-700 text-white py-3 rounded-md font-bold hover:bg-slate-900 shadow-lg transition flex justify-center items-center gap-2"><i data-lucide="shield-check" class="w-4 h-4"></i> I am safe, close this window</button>
+            <button onclick="closeEmergencyModal()" class="w-full mt-2 bg-slate-800 dark:bg-slate-700 text-white py-3 rounded-md font-bold hover:bg-slate-900 shadow-lg transition flex justify-center items-center gap-2 whitespace-nowrap"><i data-lucide="shield-check" class="w-4 h-4"></i> I am safe, close this window</button>
         </div>
     </div>
 
