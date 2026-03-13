@@ -14,13 +14,13 @@
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 overflow-hidden font-sans text-slate-800 dark:text-slate-200 transition-colors duration-300">
 
-    <div id="toast-container" class="fixed top-10 left-1/2 transform -translate-x-1/2 z-[100000] flex flex-col gap-2 pointer-events-none"></div>
+    <div id="toast-container" class="fixed top-10 left-1/2 transform -translate-x-1/2 flex flex-col gap-2 pointer-events-none" style="z-index: 999999;"></div>
 
-    <div class="flex h-screen relative w-full">
+    <div class="flex h-screen relative w-full overflow-hidden">
         
-        <div id="user-sidebar" class="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md h-full shadow-2xl flex flex-col z-[1500] transition-all duration-300 ease-in-out border-r border-slate-200 dark:border-slate-800 w-11/12 sm:w-[380px] md:w-[460px] absolute md:relative">
+        <div id="user-sidebar" class="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md h-full shadow-[4px_0_24px_rgba(0,0,0,0.15)] flex flex-col z-[1500] transition-all duration-300 ease-in-out border-r border-slate-200 dark:border-slate-800 w-11/12 sm:w-[380px] md:w-[460px] absolute md:relative shrink-0">
             
-            <div id="sidebar-expanded-content" class="flex flex-col h-full w-full opacity-100 transition-opacity duration-300">
+            <div id="sidebar-expanded" class="flex flex-col h-full w-full transition-opacity duration-300">
                 <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900">
                     <h2 class="text-xl font-bold text-slate-800 dark:text-white">Area Reports</h2>
                     <button onclick="toggleSidebar()" class="p-2 text-slate-500 hover:text-slate-800 dark:hover:text-white bg-slate-100 dark:bg-slate-800 rounded hover:bg-slate-200 transition" title="Collapse Sidebar">
@@ -58,35 +58,41 @@
                 </div>
             </div>
 
-            <div id="sidebar-collapsed-content" class="hidden flex-col items-center py-4 h-full w-12 bg-white dark:bg-slate-900">
-                <button onclick="toggleSidebar()" class="p-2 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-white bg-slate-100 dark:bg-slate-800 rounded shadow-sm transition" title="Expand Sidebar">
+            <div id="sidebar-collapsed" class="hidden flex-col items-center py-4 h-full w-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800">
+                <button onclick="toggleSidebar()" class="p-2 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-white bg-slate-100 dark:bg-slate-800 rounded shadow-sm transition mb-6" title="Expand Sidebar">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
                 </button>
-                <div class="mt-8 flex flex-col items-center gap-6 text-xl text-slate-400 cursor-pointer" onclick="toggleSidebar()">
-                    <span>📍</span>
-                    <span>🚨</span>
-                    <span>💬</span>
+                <div class="flex flex-col items-center gap-8 text-2xl text-slate-400 cursor-pointer" onclick="toggleSidebar()" title="Click to view reports">
+                    <span class="hover:scale-110 transition-transform">📍</span>
+                    <span class="hover:scale-110 transition-transform">🚨</span>
+                    <span class="hover:scale-110 transition-transform">💬</span>
                 </div>
             </div>
         </div>
 
         <div id="map-container" class="flex-1 relative bg-slate-200 dark:bg-slate-800 h-full w-full overflow-hidden">
             
-            <div class="absolute top-4 left-1/2 transform -translate-x-1/2 z-[2000] flex gap-2 pointer-events-none drop-shadow-sm">
-                <span class="bg-white/95 dark:bg-slate-800/95 border border-slate-200 dark:border-slate-700 px-2.5 py-1 rounded-md text-[10px] text-slate-700 dark:text-slate-300 font-extrabold uppercase tracking-wider">📍 NCR Coverage</span>
-                <span class="bg-white/95 dark:bg-slate-800/95 border border-slate-200 dark:border-slate-700 px-2.5 py-1 rounded-md text-[10px] text-indigo-700 dark:text-indigo-400 font-extrabold uppercase tracking-wider flex items-center gap-1"><div class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></div> AI-Screened</span>
-                <span class="bg-white/95 dark:bg-slate-800/95 border border-slate-200 dark:border-slate-700 px-2.5 py-1 rounded-md text-[10px] text-indigo-700 dark:text-indigo-400 font-extrabold uppercase tracking-wider">👁️ Human Moderated</span>
+            <div class="absolute top-6 left-1/2 transform -translate-x-1/2 z-[2000] flex gap-3 pointer-events-none drop-shadow-md">
+                <div class="bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded shadow-sm text-[10px] text-slate-700 dark:text-slate-300 font-extrabold uppercase tracking-wider flex items-center">
+                    📍 NCR Coverage
+                </div>
+                <div class="bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded shadow-sm text-[10px] text-indigo-700 dark:text-indigo-400 font-extrabold uppercase tracking-wider flex items-center gap-1.5">
+                    <div class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></div> AI-Screened
+                </div>
+                <div class="bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded shadow-sm text-[10px] text-indigo-700 dark:text-indigo-400 font-extrabold uppercase tracking-wider flex items-center">
+                    👁️ Human Moderated
+                </div>
             </div>
 
-            <div class="absolute top-4 right-4 z-[2000] flex items-center gap-3">
-                <button onclick="toggleDarkMode()" class="text-2xl text-slate-800 dark:text-white hover:scale-110 transition-transform drop-shadow-md" title="Toggle Theme" id="theme-icon">🌓</button>
+            <div class="absolute top-6 right-6 z-[2000] flex items-center gap-3">
+                <button onclick="toggleDarkMode()" class="text-xl text-slate-800 dark:text-white hover:scale-110 transition-transform drop-shadow-md bg-white/80 dark:bg-slate-800/80 p-1.5 rounded-full" title="Toggle Theme" id="theme-icon">🌓</button>
                 
-                <button onclick="showLoginToast()" class="bg-indigo-600 text-white px-5 py-1.5 rounded-md text-sm font-bold shadow-lg hover:bg-indigo-700 transition">Login</button>
+                <button onclick="showLoginToast()" class="bg-indigo-600 text-white px-6 py-2 rounded-md text-sm font-bold shadow-lg hover:bg-indigo-700 transition">Login</button>
                 
                 <div class="relative">
-                    <button onclick="toggleTopMenu(event)" class="text-slate-800 dark:text-white text-xl font-bold px-2 py-0.5 bg-white/95 dark:bg-slate-800/95 rounded-md shadow-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition">⁝</button>
+                    <button onclick="toggleTopMenu(event)" class="text-slate-800 dark:text-white text-xl font-bold px-2.5 py-1 bg-white/95 dark:bg-slate-800/95 rounded-md shadow-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition">⁝</button>
                     <div id="top-nav-menu" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-md shadow-2xl border border-slate-200 dark:border-slate-700 z-50 py-1">
-                        <button onclick="showToast('Help Center coming soon.', 'success')" class="text-left w-full block px-4 py-2.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold border-b border-slate-100 dark:border-slate-700">📚 Help Center</button>
+                        <button onclick="showToast('Help Center opening...', 'success')" class="text-left w-full block px-4 py-2.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold border-b border-slate-100 dark:border-slate-700">📚 Help Center</button>
                         <button onclick="showToast('Issue reporter opening...', 'success')" class="text-left w-full block px-4 py-2.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold border-b border-slate-100 dark:border-slate-700">⚠️ Report an Issue</button>
                         <button onclick="showToast('Suggestion box opening...', 'success')" class="text-left w-full block px-4 py-2.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold border-b border-slate-100 dark:border-slate-700">💡 Send Suggestion</button>
                         <button onclick="openFeedbackModal()" class="text-left w-full block px-4 py-2.5 text-xs text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold">⭐ Give Feedback</button>
@@ -94,11 +100,11 @@
                 </div>
             </div>
 
-            <div class="absolute bottom-6 left-6 z-[1000] text-indigo-900 dark:text-white text-3xl font-extrabold tracking-tighter drop-shadow-md pointer-events-none">
+            <div class="absolute bottom-6 left-6 z-[1000] text-indigo-900 dark:text-white text-4xl font-black tracking-tighter drop-shadow-md pointer-events-none">
                 SafeStep
             </div>
 
-            <div class="absolute top-16 left-6 z-[1600] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 w-[calc(100%-3rem)] md:w-[360px]" id="route-panel" style="touch-action: none;">
+            <div class="absolute top-20 left-6 z-[1600] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 w-[calc(100%-3rem)] md:w-[360px]" id="route-panel" style="touch-action: none;">
                 <div id="route-panel-header" class="cursor-move bg-slate-100 dark:bg-slate-800 p-3 rounded-t-lg border-b border-slate-200 dark:border-slate-700 flex justify-between items-center select-none">
                     <span class="flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-white">🧭 Route Finder</span>
                     <button onclick="clearRoute()" class="text-xs uppercase tracking-wider text-rose-500 hover:text-rose-600 hidden font-bold" id="clear-route-btn">✕ Clear</button>
@@ -132,30 +138,30 @@
             
             <div id="map" class="w-full h-full z-[10]"></div>
 
-            <div class="absolute top-16 right-4 z-[1000] flex flex-col gap-2 items-end">
+            <div class="absolute top-20 right-4 z-[1000] flex flex-col gap-3 items-end">
                 <div class="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-3 py-2.5 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 flex items-center">
                     <label class="inline-flex items-center cursor-pointer">
                         <input type="checkbox" id="heatmap-toggle" class="sr-only peer" checked onchange="toggleHeatmap()">
                         <div class="relative w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600"></div>
-                        <span class="ms-2 text-xs font-bold text-slate-700 dark:text-slate-200">Heatmap</span>
+                        <span class="ms-2 text-xs font-bold text-slate-700 dark:text-slate-200">Heatmap Layer</span>
                     </label>
                 </div>
                 <button onclick="enableRadiusFilter()" id="radius-btn" class="bg-indigo-600 text-white px-3 py-2 rounded-lg shadow-lg font-bold text-xs hover:bg-indigo-700 transition flex items-center gap-1.5 border border-indigo-500 w-full justify-center">
-                    📍 Focus 1km
+                    📍 Focus 1km Area
                 </button>
                 <div id="radius-info" class="hidden bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-3 py-2 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 text-[10px] text-slate-700 dark:text-slate-300 max-w-[150px] text-right leading-tight"></div>
             </div>
 
-            <div class="absolute bottom-6 right-4 z-[1000] flex items-end gap-3">
+            <div class="absolute bottom-6 right-4 z-[1000] flex flex-col items-end gap-3">
+                <div class="flex shadow-lg rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md font-bold text-slate-700 dark:text-white">
+                    <button onclick="map.zoomOut()" class="p-2 w-10 h-10 hover:bg-slate-100 dark:hover:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex items-center justify-center text-xl transition-colors">−</button>
+                    <button onclick="map.zoomIn()" class="p-2 w-10 h-10 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-xl transition-colors">+</button>
+                </div>
+
                 <div class="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-3 py-2 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 flex items-center gap-2 text-[10px] font-bold text-slate-500 dark:text-slate-400">
                     <span>0%</span>
                     <input type="range" id="heatmap-opacity" min="0" max="1" step="0.1" value="1" class="w-24 h-1.5 cursor-pointer accent-indigo-600 bg-slate-200 dark:bg-slate-700 rounded-full appearance-none" oninput="updateOpacity()">
                     <span>100%</span>
-                </div>
-                
-                <div class="flex flex-col shadow-lg rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md font-bold text-slate-700 dark:text-white">
-                    <button onclick="map.zoomIn()" class="p-2 w-9 h-9 hover:bg-slate-100 dark:hover:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center justify-center text-lg transition-colors">+</button>
-                    <button onclick="map.zoomOut()" class="p-2 w-9 h-9 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-lg transition-colors">−</button>
                 </div>
             </div>
             
@@ -163,8 +169,8 @@
     </div>
 
     <div id="feedback-modal" class="hidden fixed inset-0 bg-slate-900/70 z-[9999] flex justify-center items-center backdrop-blur-sm">
-        <div class="bg-white dark:bg-slate-900 p-6 rounded-lg w-11/12 max-w-sm shadow-2xl border border-slate-200 dark:border-slate-800">
-            <h2 class="text-xl font-bold text-slate-800 dark:text-white mb-1">Feedback</h2>
+        <div class="bg-white dark:bg-slate-900 p-6 rounded-lg w-11/12 max-w-sm shadow-2xl border border-slate-200 dark:border-slate-800 relative">
+            <h2 class="text-xl font-bold text-slate-800 dark:text-white mb-1">Give Feedback</h2>
             <p class="text-xs text-slate-500 dark:text-slate-400 mb-5">Help us improve SafeStep for the community.</p>
             
             <div class="mb-4">
@@ -178,12 +184,12 @@
                 </div>
             </div>
             
-            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Suggestions</label>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Suggestions / Bugs</label>
             <textarea id="feedback-text" class="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded h-24 text-sm outline-none resize-none dark:text-white" placeholder="Tell us what you think..."></textarea>
             
-            <div class="flex justify-end gap-3 pt-4 mt-2 border-t border-slate-200 dark:border-slate-800">
+            <div class="flex justify-end gap-3 pt-4 mt-2">
                 <button onclick="closeFeedbackModal()" class="px-4 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded">Cancel</button>
-                <button onclick="submitFeedback()" class="bg-indigo-600 text-white px-5 py-2 rounded text-sm font-bold hover:bg-indigo-700 shadow-md">Send</button>
+                <button onclick="submitFeedback()" class="bg-indigo-600 text-white px-5 py-2 rounded text-sm font-bold hover:bg-indigo-700 shadow-md">Send to Devs</button>
             </div>
         </div>
     </div>
