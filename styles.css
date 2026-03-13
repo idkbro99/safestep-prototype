@@ -4,12 +4,13 @@
 ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 .dark ::-webkit-scrollbar-thumb { background: #475569; }
 
-/* Reusable UI Components - NOW SOLID */
-.glass-panel {
+/* Solid Panels (Replaced Glass) */
+.solid-panel {
     background-color: #ffffff;
     border: 1px solid #e2e8f0;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
-.dark .glass-panel {
+.dark .solid-panel {
     background-color: #0f172a;
     border-color: #1e293b;
 }
@@ -31,13 +32,13 @@
     color: white;
 }
 .input-base:focus {
-    border-color: #64748b;
-    box-shadow: 0 0 0 2px rgba(100, 116, 139, 0.2);
+    border-color: #4f46e5; /* Indigo */
+    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
 }
 
-/* Buttons */
+/* Buttons (Restored Indigo) */
 .btn-primary {
-    background-color: #64748b; /* Grayscale */
+    background-color: #4f46e5; 
     color: white;
     padding: 0.6rem 1.2rem;
     border-radius: 0.5rem;
@@ -50,45 +51,49 @@
     justify-content: center;
     gap: 0.5rem;
 }
-.btn-primary:hover { background-color: #475569; }
+.btn-primary:hover { background-color: #4338ca; }
 .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
 
-/* Polished Category Badges */
+/* FIXED: Polished Category Badges (No Clipping) */
 .badge {
-    font-size: 0.6rem;
+    font-size: 0.65rem;
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    padding: 0.2rem 0.45rem;
-    border-radius: 0.35rem;
+    padding: 0.35rem 0.6rem;
+    border-radius: 0.375rem;
     border: 1px solid transparent;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
+    line-height: 1; /* Prevents vertical clipping */
     gap: 0.25rem;
     white-space: nowrap;
 }
 
-/* Sleek Hashtags */
+/* FIXED: Sleek Hashtags (No Clipping) */
 .tag-badge {
-    font-size: 0.65rem;
+    font-size: 0.7rem;
     font-weight: 600;
-    padding: 0.15rem 0.55rem;
+    padding: 0.3rem 0.75rem;
     border-radius: 9999px;
     border: 1px solid #e2e8f0;
     background-color: #f8fafc;
-    color: #64748b;
+    color: #4f46e5; /* Indigo Text */
     display: inline-flex;
     align-items: center;
+    justify-content: center;
+    line-height: 1; /* Prevents vertical clipping */
     gap: 0.25rem;
     transition: all 0.2s;
 }
 .dark .tag-badge {
     border-color: #334155;
     background-color: #1e293b;
-    color: #94a3b8;
+    color: #818cf8; /* Light Indigo Text */
 }
 
-/* Cards */
+/* Report Cards */
 .report-card {
     background-color: white;
     border-radius: 0.75rem;
@@ -99,29 +104,29 @@
     position: relative;
 }
 .dark .report-card {
-    background-color: #1e293b;
-    border-color: #334155;
+    background-color: #0f172a;
+    border-color: #1e293b;
 }
 .report-card:hover { 
-    border-color: #94a3b8; 
+    border-color: #818cf8; /* Indigo Hover */
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); 
 }
 
 /* Map Pin Pulse */
 #map[style*="cursor: crosshair"] { animation: mapPulse 1.5s infinite; }
 @keyframes mapPulse {
-    0% { box-shadow: inset 0 0 0 0 rgba(100, 116, 139, 0.5); }
-    50% { box-shadow: inset 0 0 0 10px rgba(100, 116, 139, 0.2); }
-    100% { box-shadow: inset 0 0 0 0 rgba(100, 116, 139, 0); }
+    0% { box-shadow: inset 0 0 0 0 rgba(79, 70, 229, 0.5); }
+    50% { box-shadow: inset 0 0 0 10px rgba(79, 70, 229, 0.2); }
+    100% { box-shadow: inset 0 0 0 0 rgba(79, 70, 229, 0); }
 }
 
-/* Custom Grayscale slider */
+/* Custom GREYSCALE slider as requested */
 input[type=range] { -webkit-appearance: none; background: transparent; }
 input[type=range]::-webkit-slider-thumb { 
     -webkit-appearance: none; 
     height: 14px; 
     width: 14px; 
     border-radius: 50%; 
-    background: #64748b; 
+    background: #64748b; /* Slate Gray */
     cursor: pointer; 
 }
