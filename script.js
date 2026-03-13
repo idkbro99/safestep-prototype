@@ -57,7 +57,7 @@ hotspots.forEach(spot => {
             id: idCounter++, type: type, title: `${type.split('/')[0]} near ${spot.name.split(' ')[0]}`, desc: issueDesc,
             cred: Math.floor(Math.random() * 300) + 10, relevance: spot.risk + Math.random() * 30,
             lat: spot.lat + (Math.random() - 0.5) * spot.spread, lng: spot.lng + (Math.random() - 0.5) * spot.spread,
-            address: `${spot.name} Area`, privacy: 'approx',
+            address: `${spot.name} Area`, 
             tags: ['#' + spot.name.split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '')],
             userVote: 0, timestamp: Date.now() - (Math.random() * 10000000000), 
             comments: Math.random() > 0.6 ? [{text: "Noted, thank you for sharing.", isMine: false}] : [],
@@ -66,6 +66,7 @@ hotspots.forEach(spot => {
     }
 });
 
+// Close open menus globally
 document.addEventListener('click', (e) => {
     if(openMenuId) {
         const menu = document.getElementById(`menu-${openMenuId}`);
@@ -174,12 +175,12 @@ function enableRadiusFilter() {
             radiusCircle = L.circle(radiusCenterCoords, {radius: 1000, color: '#4f46e5', fillOpacity: 0.1, weight: 2}).addTo(map);
             
             btn.innerHTML = `<i data-lucide="x" class="w-3.5 h-3.5 inline"></i> Clear 1km Focus`; 
-
+            
             infoBox.innerHTML = `<i>Fetching location...</i>`;
             infoBox.classList.remove('hidden');
             const address = await getAddressFromCoords(radiusCenterCoords[0], radiusCenterCoords[1]);
-            infoBox.innerHTML = `<b>1km Radius Focus</b><br><span class="opacity-80 leading-snug block mt-1 text-slate-500">${address}</span>`;
-            
+            infoBox.innerHTML = `<b>1km Radius Focus</b><br><span class="opacity-80 leading-snug block mt-1 text-slate-500 line-clamp-2">${address}</span>`;
+
             populateHeatmap();
             filterReports(); 
             lucide.createIcons();
@@ -273,18 +274,21 @@ function showLoginForm(type) {
     const container = document.getElementById('login-fields-container');
     const title = document.getElementById('login-form-title');
     
+    // Explicit Inputs injected here so they NEVER render "bare"
+    const inputStyle = "w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all dark:bg-slate-800 dark:border-slate-700 dark:text-white";
+    
     if(type === 'general') {
         title.innerText = "General User Login";
         container.innerHTML = `
-            <input type="text" id="login-email" placeholder="Username or Email" class="input-base" value="user@mail.com">
-            <input type="password" placeholder="Password" class="input-base" value="password">
+            <input type="text" id="login-email" placeholder="Username or Email" class="${inputStyle}" value="user@mail.com">
+            <input type="password" placeholder="Password" class="${inputStyle}" value="password">
         `;
     } else {
         title.innerText = "Partner Agency Login";
         container.innerHTML = `
-            <input type="text" id="login-email" placeholder="Official Email" class="input-base" value="agency@ncr.gov.ph">
-            <input type="text" placeholder="Employee ID" class="input-base" value="EMP-4029">
-            <input type="password" placeholder="Password" class="input-base" value="password">
+            <input type="text" id="login-email" placeholder="Official Email" class="${inputStyle}" value="agency@ncr.gov.ph">
+            <input type="text" placeholder="Employee ID" class="${inputStyle}" value="EMP-4029">
+            <input type="password" placeholder="Password" class="${inputStyle}" value="password">
         `;
     }
 }
@@ -302,6 +306,7 @@ function executeLogin() {
 function logoutUser() {
     currentUser = null;
     document.getElementById('user-dropdown').classList.add('hidden');
+    document.getElementById('partner-portal').classList.add('hidden');
     updateAuthUI();
     showToast("Successfully logged out.", "success");
 }
@@ -319,16 +324,16 @@ function updateAuthUI() {
         loginBtn.classList.add('hidden');
         userContainer.classList.remove('hidden');
         
-        // Partner uses Slate-500/600 grayish coloring, User uses Indigo
-        const colorClass = currentUser.type === 'partner' ? 'bg-slate-500 hover:bg-slate-600 border-slate-400' : 'bg-indigo-500 hover:bg-indigo-600 border-indigo-400';
+        // Partner uses Slate-500 gray, General uses Indigo
+        const colorClass = currentUser.type === 'partner' ? 'bg-slate-500 hover:bg-slate-600 border-slate-400' : 'bg-indigo-600 hover:bg-indigo-700 border-indigo-500';
         const iconName = currentUser.type === 'partner' ? 'building' : 'user';
-        avatarBtn.className = `w-10 h-10 flex items-center justify-center text-white rounded-full shadow-lg transition border border-white dark:border-slate-700 ${colorClass}`;
+        avatarBtn.className = `w-10 h-10 flex items-center justify-center text-white rounded-full shadow-lg transition border-2 border-white dark:border-slate-700 ${colorClass}`;
         avatarBtn.innerHTML = `<i data-lucide="${iconName}" class="w-5 h-5"></i>`;
         
         const typeLabelColor = currentUser.type === 'partner' ? 'text-slate-500 dark:text-slate-400' : 'text-indigo-600 dark:text-indigo-400';
         const typeLabelText = currentUser.type === 'partner' ? 'Partner Agency' : 'General Account';
         
-        let extraLinks = currentUser.type === 'partner' ? `<button onclick="togglePortal()" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold border-b border-slate-100 dark:border-slate-700/50 whitespace-nowrap"><i data-lucide="layout-dashboard" class="w-4 h-4 text-slate-500"></i> Dashboard Access</button>` : '';
+        let extraLinks = currentUser.type === 'partner' ? `<button onclick="togglePortal()" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold border-b border-slate-100 dark:border-slate-700/50 whitespace-nowrap"><i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard Access</button>` : '';
         
         dropdown.innerHTML = `
             <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-700/50 min-w-0">
@@ -360,19 +365,25 @@ function submitFeedback() {
     const text = document.getElementById('feedback-text').value;
     if(feedbackRating === 0) return showToast("Please select a star rating.", "error");
     if(!text.trim()) return showToast("Feedback cannot be empty.", "error");
-    document.getElementById('feedback-text').value = ''; feedbackRating = 0; resetRating();
-    closeFeedbackModal(); showToast("Feedback sent! Thank you.", "success");
+    
+    document.getElementById('feedback-text').value = '';
+    feedbackRating = 0; resetRating();
+    closeFeedbackModal();
+    showToast("Feedback sent! Thank you.", "success");
 }
 
 function swapRoute() {
     const startInput = document.getElementById('route-start');
     const endInput = document.getElementById('route-end');
+    
     const tempVal = startInput.value;
     startInput.value = endInput.value;
     endInput.value = tempVal;
+    
     const tempCoords = startCoords;
     startCoords = endCoords;
     endCoords = tempCoords;
+    
     if(startCoords && endCoords) calculateRealRoute();
 }
 
@@ -387,14 +398,17 @@ function enableMapPicker() {
         isPickingLocation = false;
         document.getElementById('map').style.cursor = '';
         customPinCoords = [e.latlng.lat, e.latlng.lng];
+        
         if(customPinMarker) map.removeLayer(customPinMarker);
         customPinMarker = L.marker(customPinCoords).addTo(map);
+        
         openReportModal();
         document.getElementById('loc-privacy').value = 'precise';
         
         const pinStatus = document.getElementById('pin-status');
         pinStatus.classList.remove('hidden');
         pinStatus.innerHTML = `<i>Fetching precise address...</i>`;
+        
         const address = await getAddressFromCoords(customPinCoords[0], customPinCoords[1]);
         pinStatus.innerHTML = `<b>Pinned Location:</b><br><span class="text-[10px] text-slate-500 font-normal leading-snug block mt-1">${address}</span><span class="text-[10px] text-slate-400 font-normal mt-1 block">Lat: ${customPinCoords[0].toFixed(5)}, Lng: ${customPinCoords[1].toFixed(5)}</span>`;
     });
@@ -409,7 +423,7 @@ function focusOnLocation(lat, lng) {
     }, 4000);
 }
 
-// FIX: Absolute coordinate dragging with perfectly balanced top/bottom padding
+// FIX: Absolute coordinate dragging strictly mathematically bounded
 function setupDrag() {
     const dragItem = document.getElementById("route-panel");
     const dragHeader = document.getElementById("route-panel-header");
@@ -438,7 +452,7 @@ function setupDrag() {
             let newLeft = e.clientX - dragOffsetX;
             let newTop = e.clientY - dragOffsetY;
             
-            // 24px padding on ALL sides so it cannot get lost
+            // Boundary constraints ensuring perfect 24px padding on all sides of map container
             const minLeft = mapRect.left + 24; 
             const maxLeft = mapRect.right - dragItem.offsetWidth - 24;
             const minTop = mapRect.top + 24; 
@@ -468,16 +482,17 @@ function formatDate(timestamp) {
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' • ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 }
 
+// Centered Toast truncation manually overridden via max-width
 function showToast(msg, type = 'error') {
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
     const colorClass = type === 'error' ? 'bg-rose-500' : 'bg-emerald-500';
-    // Raw SVGs ensure instant visual rendering
+    // Raw SVGs used so it forces rendering before Lucide catches up
     const icon = type === 'error' 
         ? `<svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>` 
         : `<svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
     
-    toast.className = `${colorClass} text-white px-6 py-4 rounded-xl shadow-2xl font-bold text-sm transform transition-all duration-300 translate-y-[-20px] opacity-0 flex items-start justify-center gap-3 pointer-events-auto max-w-sm w-max`;
+    toast.className = `${colorClass} text-white px-6 py-4 rounded-xl shadow-2xl font-bold text-sm transform transition-all duration-300 translate-y-[-20px] opacity-0 flex items-start justify-center gap-3 pointer-events-auto max-w-md w-full`;
     toast.innerHTML = `${icon} <span class="break-words w-full leading-snug">${msg}</span>`;
     container.appendChild(toast);
     setTimeout(() => { toast.classList.remove('translate-y-[-20px]', 'opacity-0'); }, 10);
@@ -588,7 +603,7 @@ function renderReports(reportsToRender = null) {
         let typeColor = 'text-indigo-700 bg-indigo-100 border-indigo-200 dark:bg-indigo-900/50 dark:text-indigo-300 dark:border-indigo-700';
         if(report.type.includes('Harassment')) typeColor = 'text-rose-700 bg-rose-100 border-rose-200 dark:bg-rose-900/50 dark:text-rose-300 dark:border-rose-700';
         if(report.type.includes('Hazards')) typeColor = 'text-amber-700 bg-amber-100 border-amber-200 dark:bg-amber-900/50 dark:text-amber-300 dark:border-amber-700';
-        if(report.type.includes('Accessibility')) typeColor = 'text-purple-700 bg-purple-100 border-purple-200 dark:bg-purple-900/50 dark:border-purple-800 dark:text-purple-300';
+        if(report.type.includes('Accessibility')) typeColor = 'text-purple-700 bg-purple-100 border-purple-200 dark:bg-purple-900/50 dark:text-purple-300 dark:border-purple-800';
 
         let menuItems = `<button onclick="event.stopPropagation(); shareReport(${report.id})" class="flex items-center gap-2 w-full px-4 py-3 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold whitespace-nowrap">${linkIcon} Share</button>`;
         if(report.isMine) {
@@ -601,41 +616,43 @@ function renderReports(reportsToRender = null) {
         }
 
         const actionBtn = `
-            <div class="absolute top-4 right-4 z-[40]">
+            <div class="absolute top-4 right-4 z-[50]">
                 <div class="relative inline-block text-left" onclick="event.stopPropagation()">
                     <button onclick="toggleReportMenu(event, ${report.id})" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
                     </button>
-                    <div id="menu-${report.id}" class="hidden absolute right-0 mt-1 w-36 solid-panel rounded-lg z-[50] overflow-hidden"><div class="py-1">${menuItems}</div></div>
+                    <div id="menu-${report.id}" class="hidden absolute right-0 mt-1 w-36 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 z-[60] overflow-hidden"><div class="py-1">${menuItems}</div></div>
                 </div>
             </div>`;
 
-        const tagHTML = report.tags.map(t => `<span class="tag-badge">${t}</span>`).join('');
+        // FIXED: Tag Badge Styling to prevent clipping
+        const tagHTML = report.tags.map(t => `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700 border border-indigo-200 dark:bg-indigo-900/50 dark:text-indigo-300 dark:border-indigo-800 whitespace-nowrap">${t}</span>`).join('');
+        
         const upBtnStyle = report.userVote === 1 ? "text-emerald-500 scale-110" : "text-slate-400 hover:text-emerald-500";
         const downBtnStyle = report.userVote === -1 ? "text-rose-500 scale-110" : "text-slate-400 hover:text-rose-500";
         const privStyle = report.privacy === 'precise' ? 'text-rose-600 dark:text-rose-400' : 'text-indigo-600 dark:text-indigo-400';
 
         list.innerHTML += `
-            <div onclick="openDetailModal(${report.id})" class="report-card cursor-pointer min-w-0">
+            <div onclick="openDetailModal(${report.id})" class="bg-white dark:bg-slate-800 p-5 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 hover:border-indigo-400 hover:shadow-md cursor-pointer relative group transition-all min-w-0">
                 ${actionBtn}
                 <div class="mb-3 flex items-center gap-3 pr-10 min-w-0">
-                    <span class="badge border ${typeColor} shrink-0">${report.type.split('/')[0]}</span>
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border shrink-0 ${typeColor}">${report.type.split('/')[0]}</span>
                     <span class="text-[10px] text-slate-400 font-bold truncate">${formatDate(report.timestamp)}</span>
                 </div>
                 <h3 class="font-bold text-slate-800 dark:text-white text-base mb-3 pr-10 truncate" title="${report.title}">${report.title}</h3>
                 
-                <div class="mb-4 p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-100 dark:border-slate-700/50 text-[10px] text-slate-500 dark:text-slate-400 min-w-0 hover:text-indigo-500 transition-colors" onclick="event.stopPropagation(); focusOnLocation(${report.lat}, ${report.lng})">
+                <div class="mb-4 p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-100 dark:border-slate-700/50 text-xs text-slate-500 dark:text-slate-400 min-w-0 cursor-pointer hover:text-indigo-500 transition-colors" onclick="event.stopPropagation(); focusOnLocation(${report.lat}, ${report.lng})">
                     <p class="font-bold flex items-center justify-between mb-1.5 min-w-0 border-b border-slate-200 dark:border-slate-700 pb-1.5">
                         <span class="truncate mr-2 flex items-center gap-1.5 shrink text-slate-700 dark:text-slate-300"><svg class="w-3.5 h-3.5 text-indigo-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg> <span class="truncate">${report.address}</span></span>
                         <span class="text-[9px] uppercase font-black tracking-wider whitespace-nowrap shrink-0 text-slate-400">Pinned Location</span>
                     </p>
-                    <p class="truncate ml-5 opacity-70 text-[10px]">Click to view on map</p>
+                    <p class="mt-1 truncate opacity-70 text-[10px]">Click to view on map</p>
                 </div>
 
                 <p class="text-sm text-slate-600 dark:text-slate-300 mb-4 line-clamp-2 leading-relaxed">${report.desc}</p>
                 <div class="flex flex-wrap gap-2 mb-4">${tagHTML}</div>
                 <div class="flex justify-between items-center border-t border-slate-100 dark:border-slate-700 pt-4">
-                    <span class="text-xs font-bold text-slate-500 flex items-center gap-1.5"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg> ${report.comments.length} Comments</span>
+                    <span class="text-xs font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg> ${report.comments.length} Comments</span>
                     <div class="flex items-center gap-4 bg-slate-50 dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700" onclick="event.stopPropagation()">
                         <button onclick="voteReport(${report.id}, 1)" class="transition-transform ${upBtnStyle}"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg></button>
                         <span class="font-black text-sm text-slate-700 dark:text-slate-200 w-6 text-center">${report.cred}</span>
@@ -737,7 +754,7 @@ function openDetailModal(id) {
 
     document.getElementById('detail-content').innerHTML = `
         <div class="flex justify-between items-start mb-5 pr-10 min-w-0">
-            <span class="badge border ${typeColor}">${report.type}</span>
+            <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border shrink-0 ${typeColor}">${report.type}</span>
             <span class="text-xs text-slate-400 font-bold truncate ml-2">${formatDate(report.timestamp)}</span>
         </div>
         <h2 class="text-2xl font-bold text-slate-800 dark:text-white mb-5 pr-4 break-words">${report.title}</h2>
@@ -807,11 +824,15 @@ async function submitReport() {
     const aiError = aiContentCheck(desc) || aiContentCheck(title) || currentTags.map(t => aiContentCheck(t)).find(e => e !== null);
     if(aiError) return showToast(`AI Flag: ${aiError}`, "error");
 
-    const address = await getAddressFromCoords(customPinCoords[0], customPinCoords[1]);
+    let finalLat = manilaCenter[0] + (Math.random() - 0.5) * 0.01;
+    let finalLng = manilaCenter[1] + (Math.random() - 0.5) * 0.01;
+    if (customPinCoords) { finalLat = customPinCoords[0]; finalLng = customPinCoords[1]; }
+
+    const address = await getAddressFromCoords(finalLat, finalLng);
 
     mockReports.unshift({
         id: idCounter++, type: cat, title: title, desc: desc, cred: 1, relevance: 100, timestamp: Date.now(),
-        lat: customPinCoords[0], lng: customPinCoords[1], address: address, tags: [...currentTags], comments: [], userVote: 1, isMine: true
+        lat: finalLat, lng: finalLng, address: address, privacy: 'precise', tags: [...currentTags], comments: [], userVote: 1, isMine: true
     });
 
     document.getElementById('report-title').value = ''; document.getElementById('report-desc').value = ''; document.getElementById('custom-tag-input').value = '';
@@ -840,7 +861,7 @@ function suggestTags() {
 
     if(suggested.length === 0) { aiTags.classList.add('hidden'); return; }
     aiTags.classList.remove('hidden');
-    container.innerHTML = suggested.map(tag => `<span class="tag-badge cursor-pointer hover:bg-indigo-200 dark:hover:bg-indigo-800" onclick="addTag('${tag}')">${tag} <svg class="w-3 h-3 inline ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg></span>`).join('');
+    container.innerHTML = suggested.map(tag => `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700 border border-indigo-200 cursor-pointer hover:bg-indigo-200 dark:bg-indigo-900/50 dark:text-indigo-300 dark:border-indigo-800 dark:hover:bg-indigo-800 transition-colors" onclick="addTag('${tag}')">${tag} <svg class="w-3 h-3 inline ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg></span>`).join('');
 }
 
 function handleTagKeypress(e) { if (e.key === 'Enter') { e.preventDefault(); addCustomTag(); } }
@@ -851,7 +872,7 @@ function addCustomTag() {
 function addTag(tag) {
     if(!currentTags.includes(tag) && currentTags.length < 5) {
         currentTags.push(tag);
-        document.getElementById('active-tags-container').innerHTML = currentTags.map(t => `<span class="tag-badge !bg-indigo-600 !text-white !border-indigo-600">${t} <button onclick="removeTag('${t}')" class="hover:text-rose-300 ml-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button></span>`).join('');
+        document.getElementById('active-tags-container').innerHTML = currentTags.map(t => `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-600 text-white border border-indigo-600 shadow-sm">${t} <button onclick="removeTag('${t}')" class="hover:text-rose-300 ml-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button></span>`).join('');
     }
 }
 function removeTag(tag) { currentTags = currentTags.filter(t => t !== tag); addTag('hack'); currentTags.pop(); }
@@ -953,7 +974,7 @@ function populatePartnerPortal() {
     const highRiskSpots = hotspots.filter(s => s.risk > 65).sort((a,b) => b.risk - a.risk);
     highRiskSpots.forEach(spot => {
         alertContainer.innerHTML += `
-            <div class="bg-rose-50 dark:bg-rose-900/10 p-4 rounded-lg border border-rose-100 dark:border-rose-900/50 flex justify-between items-center">
+            <div class="bg-rose-50 dark:bg-rose-900/10 p-4 rounded-xl border border-rose-100 dark:border-rose-900/50 flex justify-between items-center">
                 <div><h4 class="font-bold text-rose-700 dark:text-rose-400 mb-1">${spot.name}</h4><p class="text-xs text-rose-600/80 dark:text-rose-300/80">${spot.reports} active incidents.</p></div>
                 <div class="flex flex-col items-end gap-2"><span class="text-xs bg-rose-600 text-white px-2 py-0.5 rounded font-bold">Risk: ${spot.risk}</span></div>
             </div>`;
