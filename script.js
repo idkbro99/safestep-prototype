@@ -18,13 +18,21 @@ let customPinMarker = null;
 
 let searchTimeout;
 let startCoords = null, endCoords = null;
-let isDragging = false, currentX=0, currentY=0, initialX=0, initialY=0, xOffset = 0, yOffset = 0;
+let isDragging = false;
 let isRouteCollapsed = false;
 
 let openMenuId = null; 
 let feedbackRating = 0;
+
+// Auth State
 let currentUser = null; 
 let loginType = 'general';
+
+const citySummaries = [
+    { name: 'City of Manila', risk: 82 }, { name: 'Quezon City', risk: 65 },
+    { name: 'Caloocan City', risk: 70 }, { name: 'Makati City', risk: 25 },
+    { name: 'Taguig City', risk: 18 }, { name: 'Pasay City', risk: 85 }
+];
 
 const hotspots = [
     { name: 'FEU Tech & Main', lat: 14.6040, lng: 120.9875, risk: 90, spread: 0.005, reports: 45 },
@@ -52,13 +60,12 @@ hotspots.forEach(spot => {
             address: `${spot.name} Area`, privacy: 'approx',
             tags: ['#' + spot.name.split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '')],
             userVote: 0, timestamp: Date.now() - (Math.random() * 10000000000), 
-            comments: Math.random() > 0.6 ? [{text: "Noted, thank you for sharing.", isMine: false}] : [],
+            comments: Math.random() > 0.6 ? [{text: "Noted, thank you.", isMine: false}] : [],
             isMine: false
         });
     }
 });
 
-// Close open menus globally
 document.addEventListener('click', (e) => {
     if(openMenuId) {
         const menu = document.getElementById(`menu-${openMenuId}`);
@@ -95,9 +102,11 @@ function initMap() {
 
     populateHeatmap();
     renderReports();
+    populatePartnerPortal();
+    
     lucide.createIcons();
-    updateAuthUI();
     setTimeout(setupDrag, 500); 
+    updateAuthUI();
 }
 
 function getDistance(lat1, lon1, lat2, lon2) {
@@ -147,7 +156,7 @@ function enableRadiusFilter() {
     if(isRadiusActive) {
         isRadiusActive = false;
         if(radiusCircle) map.removeLayer(radiusCircle);
-        btn.innerHTML = `<i data-lucide="crosshair" class="w-3 h-3 inline"></i> Focus 1km Area`;
+        btn.innerHTML = `<i data-lucide="crosshair" class="w-3.5 h-3.5 inline"></i> Focus 1km Area`;
         btn.classList.replace('bg-rose-600', 'bg-indigo-600');
         infoBox.classList.add('hidden');
         populateHeatmap();
@@ -170,14 +179,14 @@ function enableRadiusFilter() {
             infoBox.innerHTML = `<i>Fetching location...</i>`;
             infoBox.classList.remove('hidden');
             const address = await getAddressFromCoords(radiusCenterCoords[0], radiusCenterCoords[1]);
-            infoBox.innerHTML = `<b>1km Radius Focus</b><br><span class="opacity-80 leading-snug block mt-1">${address}</span>`;
+            infoBox.innerHTML = `<b>1km Radius Focus</b><br><span class="opacity-80 leading-snug block mt-1 text-slate-500 line-clamp-2">${address}</span>`;
+
             populateHeatmap();
             lucide.createIcons();
         });
     }
 }
 
-// Target Leaflet canvas properly to not lose the heatmap DOM element
 function updateOpacity() {
     const val = document.getElementById('heatmap-opacity').value;
     if(heatmapLayer && heatmapLayer._canvas) {
@@ -195,7 +204,7 @@ function aiContentCheck(text) {
     return null;
 }
 
-// Sidebars explicitly force resize map correctly to prevent gray zones
+// FIX: Trigger invalidateSize on collapse
 let sidebarCollapsed = false;
 function toggleSidebar() {
     sidebarCollapsed = !sidebarCollapsed;
@@ -205,29 +214,19 @@ function toggleSidebar() {
 
     if(sidebarCollapsed) {
         sidebar.classList.remove('md:w-[460px]', 'sm:w-[380px]', 'w-11/12');
-        sidebar.classList.add('w-20');
-        expanded.classList.replace('opacity-100', 'opacity-0');
-        setTimeout(() => {
-            expanded.classList.add('hidden');
-            collapsed.classList.remove('hidden');
-            collapsed.classList.add('flex');
-            setTimeout(() => collapsed.classList.replace('opacity-0', 'opacity-100'), 50);
-            map.invalidateSize(true);
-            setupDrag();
-        }, 300);
+        sidebar.classList.add('w-16');
+        expanded.classList.add('hidden');
+        collapsed.classList.remove('hidden');
+        collapsed.classList.add('flex');
     } else {
-        sidebar.classList.remove('w-20');
+        sidebar.classList.remove('w-16');
         sidebar.classList.add('md:w-[460px]', 'sm:w-[380px]', 'w-11/12');
-        collapsed.classList.replace('opacity-100', 'opacity-0');
-        setTimeout(() => {
-            collapsed.classList.add('hidden');
-            collapsed.classList.remove('flex');
-            expanded.classList.remove('hidden');
-            setTimeout(() => expanded.classList.replace('opacity-0', 'opacity-100'), 50);
-            map.invalidateSize(true);
-            setupDrag();
-        }, 300);
+        collapsed.classList.add('hidden');
+        collapsed.classList.remove('flex');
+        expanded.classList.remove('hidden');
     }
+    // Refresh map to avoid empty gray space
+    setTimeout(() => { map.invalidateSize(); setupDrag(); }, 350); 
 }
 
 function toggleRouteCollapse() {
@@ -256,15 +255,16 @@ function backToLoginSelect() {
     document.getElementById('login-step-2').classList.add('hidden');
     document.getElementById('login-step-1').classList.remove('hidden');
 }
+
 function showLoginForm(type) {
     loginType = type;
     document.getElementById('login-step-1').classList.add('hidden');
     document.getElementById('login-step-2').classList.remove('hidden');
+    
     const container = document.getElementById('login-fields-container');
     const title = document.getElementById('login-form-title');
     
-    // Exact requested styling mapped back here without style.css conflicts
-    const inputStyle = "w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-white transition-all mb-3";
+    const inputStyle = "w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-white transition-all mb-4";
     
     if(type === 'general') {
         title.innerText = "General User Login";
@@ -285,6 +285,7 @@ function showLoginForm(type) {
 function executeLogin() {
     const email = document.getElementById('login-email').value;
     if(!email) return showToast("Please enter valid credentials", "error");
+    
     currentUser = { type: loginType, email: email };
     closeLoginOverlay();
     updateAuthUI();
@@ -312,15 +313,16 @@ function updateAuthUI() {
         loginBtn.classList.add('hidden');
         userContainer.classList.remove('hidden');
         
-        // Use Slate-500 gray for Partner Agency, Indigo for General
+        // Partner uses Slate-500/600 grayish coloring
         const colorClass = currentUser.type === 'partner' ? 'bg-slate-500 hover:bg-slate-600 border-slate-400' : 'bg-indigo-500 hover:bg-indigo-600 border-indigo-400';
         const iconName = currentUser.type === 'partner' ? 'building' : 'user';
-        avatarBtn.className = `w-10 h-10 flex items-center justify-center text-white rounded-full shadow-lg transition border border-white dark:border-slate-700 ${colorClass}`;
+        avatarBtn.className = `w-10 h-10 flex items-center justify-center text-white rounded-full shadow-lg transition border-2 border-white dark:border-slate-700 ${colorClass}`;
         avatarBtn.innerHTML = `<i data-lucide="${iconName}" class="w-5 h-5"></i>`;
         
         const typeLabelColor = currentUser.type === 'partner' ? 'text-slate-500 dark:text-slate-400' : 'text-indigo-600 dark:text-indigo-400';
         const typeLabelText = currentUser.type === 'partner' ? 'Partner Agency' : 'General Account';
-        let extraLinks = currentUser.type === 'partner' ? `<button onclick="togglePortal()" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold border-b border-slate-100 dark:border-slate-700/50 whitespace-nowrap"><i data-lucide="layout-dashboard" class="w-4 h-4 text-slate-500"></i> Dashboard Access</button>` : '';
+        
+        let extraLinks = currentUser.type === 'partner' ? `<button onclick="togglePortal()" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold border-b border-slate-100 dark:border-slate-700/50 whitespace-nowrap"><i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard Access</button>` : '';
         
         dropdown.innerHTML = `
             <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-700/50 min-w-0">
@@ -352,8 +354,11 @@ function submitFeedback() {
     const text = document.getElementById('feedback-text').value;
     if(feedbackRating === 0) return showToast("Please select a star rating.", "error");
     if(!text.trim()) return showToast("Feedback cannot be empty.", "error");
-    document.getElementById('feedback-text').value = ''; feedbackRating = 0; resetRating();
-    closeFeedbackModal(); showToast("Feedback sent! Thank you.", "success");
+    
+    document.getElementById('feedback-text').value = '';
+    feedbackRating = 0; resetRating();
+    closeFeedbackModal();
+    showToast("Feedback sent! Thank you.", "success");
 }
 
 function swapRoute() {
@@ -362,9 +367,11 @@ function swapRoute() {
     const tempVal = startInput.value;
     startInput.value = endInput.value;
     endInput.value = tempVal;
+    
     const tempCoords = startCoords;
     startCoords = endCoords;
     endCoords = tempCoords;
+    
     if(startCoords && endCoords) calculateRealRoute();
 }
 
@@ -379,15 +386,19 @@ function enableMapPicker() {
         isPickingLocation = false;
         document.getElementById('map').style.cursor = '';
         customPinCoords = [e.latlng.lat, e.latlng.lng];
+        
         if(customPinMarker) map.removeLayer(customPinMarker);
         customPinMarker = L.marker(customPinCoords).addTo(map);
+        
         openReportModal();
         document.getElementById('loc-privacy').value = 'precise';
+        
         const pinStatus = document.getElementById('pin-status');
         pinStatus.classList.remove('hidden');
         pinStatus.innerHTML = `<i>Fetching precise address...</i>`;
+        
         const address = await getAddressFromCoords(customPinCoords[0], customPinCoords[1]);
-        pinStatus.innerHTML = `<b>Pinned Location:</b><br><span class="text-[10px] text-slate-500 font-normal leading-snug block mt-1">${address}</span><span class="text-[10px] text-slate-400 font-normal mt-1 block">Lat: ${customPinCoords[0].toFixed(5)}, Lng: ${customPinCoords[1].toFixed(5)}</span>`;
+        pinStatus.innerHTML = `<b>Pinned Location:</b><br><span class="text-[10px] text-slate-500 font-normal truncate block mt-1">${address}</span><span class="text-[10px] text-slate-400 font-normal mt-1 block">Lat: ${customPinCoords[0].toFixed(5)}, Lng: ${customPinCoords[1].toFixed(5)}</span>`;
     });
 }
 
@@ -398,9 +409,6 @@ function setupDrag() {
     const mapContainer = document.getElementById('map-container');
     
     if(!mapContainer || !dragItem || !dragHeader) return;
-    
-    // Explicitly remove transition classes on the panel so it doesn't "lag" behind the mouse
-    dragItem.style.transition = 'none';
 
     let dragOffsetX = 0, dragOffsetY = 0;
 
@@ -423,10 +431,10 @@ function setupDrag() {
             let newLeft = e.clientX - dragOffsetX;
             let newTop = e.clientY - dragOffsetY;
             
-            // Perfect bounds relative to the map container specifically
+            // Boundary constraints ensuring top and bottom padding are equal (24px)
             const minLeft = mapRect.left + 24; 
             const maxLeft = mapRect.right - dragItem.offsetWidth - 24;
-            const minTop = mapRect.top + 24; // Equal padding top and bottom
+            const minTop = mapRect.top + 80; // Account for floating badges at top
             const maxTop = mapRect.bottom - dragItem.offsetHeight - 24;
 
             newLeft = Math.max(minLeft, Math.min(newLeft, maxLeft));
@@ -435,6 +443,7 @@ function setupDrag() {
             dragItem.style.position = 'fixed';
             dragItem.style.left = newLeft + 'px';
             dragItem.style.top = newTop + 'px';
+            dragItem.style.right = 'auto'; // Prevent conflicts
         }
     }
     
@@ -452,32 +461,30 @@ function formatDate(timestamp) {
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' • ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 }
 
+// Fixed Toast truncation
 function showToast(msg, type = 'error') {
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
     const colorClass = type === 'error' ? 'bg-rose-500' : 'bg-emerald-500';
-    // Raw SVGs for instant render
-    const icon = type === 'error' 
-        ? `<svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>` 
-        : `<svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+    const icon = type === 'error' ? `<i data-lucide="alert-circle" class="w-5 h-5 shrink-0"></i>` : `<i data-lucide="check-circle" class="w-5 h-5 shrink-0"></i>`;
     
-    // Explicit max width and text wrap to prevent cutoff
-    toast.className = `${colorClass} text-white px-6 py-4 rounded-xl shadow-2xl font-bold text-sm transform transition-all duration-300 translate-y-[-20px] opacity-0 flex items-start gap-3 pointer-events-auto max-w-sm w-max`;
-    toast.innerHTML = `${icon} <span class="break-words leading-snug">${msg}</span>`;
+    toast.className = `${colorClass} text-white px-6 py-4 rounded-xl shadow-2xl font-bold text-sm transform transition-all duration-300 translate-y-[-20px] opacity-0 flex items-center gap-3 pointer-events-auto max-w-[90vw]`;
+    toast.innerHTML = `${icon} <span class="break-words w-full text-wrap">${msg}</span>`;
     container.appendChild(toast);
+    lucide.createIcons();
     setTimeout(() => { toast.classList.remove('translate-y-[-20px]', 'opacity-0'); }, 10);
     setTimeout(() => { toast.classList.add('opacity-0'); setTimeout(() => toast.remove(), 300); }, 4000);
 }
 
 function toggleDarkMode() {
     const html = document.documentElement;
-    const icon = document.getElementById('theme-icon');
+    const icons = document.querySelectorAll('.theme-icon');
     if(html.classList.contains('dark')) {
         html.classList.remove('dark'); map.removeLayer(mapTilesDark); mapTilesLight.addTo(map);
-        icon.innerHTML = `<i data-lucide="moon" class="w-5 h-5"></i>`;
+        icons.forEach(i => i.innerHTML = `<i data-lucide="moon" class="w-5 h-5"></i>`);
     } else {
         html.classList.add('dark'); map.removeLayer(mapTilesLight); mapTilesDark.addTo(map);
-        icon.innerHTML = `<i data-lucide="sun" class="w-5 h-5"></i>`;
+        icons.forEach(i => i.innerHTML = `<i data-lucide="sun" class="w-5 h-5"></i>`);
     }
     lucide.createIcons();
     setTimeout(updateOpacity, 100);
@@ -552,42 +559,36 @@ function renderReports(reportsToRender = null) {
     if(reportsToRender.length === 0) {
         list.innerHTML = `
             <div class="flex flex-col items-center justify-center py-12 text-center opacity-80 text-slate-500">
-                <svg class="w-12 h-12 mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+                <i data-lucide="inbox" class="w-12 h-12 mb-3"></i>
                 <p class="text-sm font-bold">No matching reports found.</p>
                 <p class="text-xs mt-1">Try adjusting your search or filters.</p>
             </div>`;
-        return;
+        lucide.createIcons(); return;
     }
 
-    const linkIcon = `<svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>`;
-    const editIcon = `<svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>`;
-    const delIcon = `<svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>`;
-    const flagIcon = `<svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"></path></svg>`;
-    
+    // Explicit Tailwind Cards
     reportsToRender.forEach(report => {
         let typeColor = 'text-indigo-600 bg-indigo-50 border-indigo-200 dark:bg-indigo-900/30 dark:border-indigo-800 dark:text-indigo-400';
         if(report.type.includes('Harassment')) typeColor = 'text-rose-600 bg-rose-50 border-rose-200 dark:bg-rose-900/30 dark:border-rose-800 dark:text-rose-400';
         if(report.type.includes('Hazards')) typeColor = 'text-amber-600 bg-amber-50 border-amber-200 dark:bg-amber-900/30 dark:border-amber-800 dark:text-amber-400';
         if(report.type.includes('Accessibility')) typeColor = 'text-purple-600 bg-purple-50 border-purple-200 dark:bg-purple-900/30 dark:border-purple-800 dark:text-purple-400';
 
-        let menuItems = `<button onclick="event.stopPropagation(); shareReport(${report.id})" class="flex items-center gap-2 w-full px-4 py-3 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold whitespace-nowrap">${linkIcon} Share</button>`;
+        let menuItems = `<button onclick="event.stopPropagation(); shareReport(${report.id})" class="flex items-center gap-2 w-full px-4 py-2.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold whitespace-nowrap"><i data-lucide="link" class="w-3 h-3 shrink-0"></i> Share</button>`;
         if(report.isMine) {
             menuItems += `
-                <button onclick="event.stopPropagation(); editReportDesc(event, ${report.id})" class="flex items-center gap-2 w-full px-4 py-3 text-xs text-indigo-600 dark:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold whitespace-nowrap">${editIcon} Edit</button>
-                <button onclick="event.stopPropagation(); deleteReport(${report.id})" class="flex items-center gap-2 w-full px-4 py-3 text-xs text-rose-600 dark:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold whitespace-nowrap rounded-b-md">${delIcon} Delete</button>
+                <button onclick="event.stopPropagation(); editReportDesc(event, ${report.id})" class="flex items-center gap-2 w-full px-4 py-2.5 text-xs text-indigo-600 dark:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold whitespace-nowrap"><i data-lucide="edit-2" class="w-3 h-3 shrink-0"></i> Edit</button>
+                <button onclick="event.stopPropagation(); deleteReport(${report.id})" class="flex items-center gap-2 w-full px-4 py-2.5 text-xs text-rose-600 dark:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold whitespace-nowrap rounded-b-md"><i data-lucide="trash-2" class="w-3 h-3 shrink-0"></i> Delete</button>
             `;
         } else {
-            menuItems += `<button onclick="event.stopPropagation(); openFlagModal(${report.id})" class="flex items-center gap-2 w-full px-4 py-3 text-xs text-rose-600 dark:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold whitespace-nowrap rounded-b-md">${flagIcon} Report</button>`;
+            menuItems += `<button onclick="event.stopPropagation(); openFlagModal(${report.id})" class="flex items-center gap-2 w-full px-4 py-2.5 text-xs text-rose-600 dark:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold whitespace-nowrap rounded-b-md"><i data-lucide="flag" class="w-3 h-3 shrink-0"></i> Report</button>`;
         }
 
         const actionBtn = `
-            <div class="absolute top-4 right-4 z-20">
-                <div class="relative inline-block text-left" onclick="event.stopPropagation()">
-                    <button onclick="toggleReportMenu(event, ${report.id})" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
-                    </button>
-                    <div id="menu-${report.id}" class="hidden absolute right-0 mt-1 w-36 bg-white dark:bg-slate-800 rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 z-50 overflow-hidden"><div class="py-1">${menuItems}</div></div>
-                </div>
+            <div class="relative inline-block text-left" onclick="event.stopPropagation()">
+                <button onclick="toggleReportMenu(event, ${report.id})" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                    <i data-lucide="more-vertical" class="w-4 h-4"></i>
+                </button>
+                <div id="menu-${report.id}" class="hidden absolute right-0 mt-1 w-32 glass-panel rounded-md shadow-lg z-50 overflow-hidden"><div class="py-1">${menuItems}</div></div>
             </div>`;
 
         const tagHTML = report.tags.map(t => `<span class="tag-badge">${t}</span>`).join('');
@@ -596,34 +597,33 @@ function renderReports(reportsToRender = null) {
         const privStyle = report.privacy === 'precise' ? 'text-rose-600 dark:text-rose-400' : 'text-indigo-600 dark:text-indigo-400';
 
         list.innerHTML += `
-            <div onclick="openDetailModal(${report.id})" class="bg-white dark:bg-slate-800/90 p-5 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 hover:border-indigo-400 hover:shadow-md cursor-pointer relative group transition-all min-w-0">
-                ${actionBtn}
-                <div class="mb-3 flex items-center gap-3 pr-10 min-w-0">
-                    <span class="badge ${typeColor} shrink-0">${report.type.split('/')[0]}</span>
-                    <span class="text-[10px] text-slate-400 font-bold truncate">${formatDate(report.timestamp)}</span>
+            <div onclick="openDetailModal(${report.id})" class="report-card cursor-pointer min-w-0">
+                <div class="absolute top-3 right-3 z-20">${actionBtn}</div>
+                <div class="mb-3 flex items-center gap-2 pr-8 min-w-0">
+                    <span class="badge border ${typeColor} shrink-0">${report.type.split('/')[0]}</span>
+                    <span class="text-[10px] text-slate-400 font-medium truncate">${formatDate(report.timestamp)}</span>
                 </div>
-                <h3 class="font-bold text-slate-800 dark:text-white text-base mb-3 pr-10 truncate" title="${report.title}">${report.title}</h3>
-                
-                <div class="mb-4 p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-100 dark:border-slate-700/50 text-xs text-slate-500 dark:text-slate-400 min-w-0">
-                    <p class="font-bold flex items-center justify-between mb-1 min-w-0">
-                        <span class="truncate mr-2 text-slate-700 dark:text-slate-300 flex items-center gap-1.5 shrink"><svg class="w-3.5 h-3.5 text-indigo-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg> <span class="truncate">${report.address}</span></span>
-                        <span class="text-[9px] uppercase font-black tracking-wider whitespace-nowrap shrink-0 ${privStyle}">${report.privacy === 'precise' ? 'Precise Pin' : 'Area Report'}</span>
+                <h3 class="font-bold text-slate-800 dark:text-white text-sm mb-2 pr-8 truncate" title="${report.title}">${report.title}</h3>
+                <div class="mb-3 p-2.5 bg-slate-50 dark:bg-slate-900 rounded border border-slate-100 dark:border-slate-700 text-[10px] text-slate-500 dark:text-slate-400 min-w-0">
+                    <p class="font-bold flex items-center justify-between mb-1 min-w-0 border-b border-slate-200 dark:border-slate-700 pb-1">
+                        <span class="truncate mr-2 text-slate-700 dark:text-slate-300 flex items-center gap-1 shrink"><i data-lucide="map-pin" class="w-3 h-3 shrink-0 text-indigo-500"></i> <span class="truncate">${report.address}</span></span>
+                        <span class="uppercase tracking-wider whitespace-nowrap shrink-0 ${privStyle}">${report.privacy === 'precise' ? 'Precise Pin' : 'Area Report'}</span>
                     </p>
-                    <p class="mt-1 truncate ml-5 opacity-70 text-[10px]">Coords: ${report.lat.toFixed(5)}, ${report.lng.toFixed(5)}</p>
+                    <p class="mt-1 truncate opacity-75 ml-4">Coords: ${report.lat.toFixed(5)}, ${report.lng.toFixed(5)}</p>
                 </div>
-
-                <p class="text-sm text-slate-600 dark:text-slate-300 mb-4 line-clamp-2 leading-relaxed">${report.desc}</p>
-                <div class="flex flex-wrap gap-2 mb-4">${tagHTML}</div>
-                <div class="flex justify-between items-center border-t border-slate-100 dark:border-slate-700 pt-4">
-                    <span class="text-xs font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg> ${report.comments.length} Comments</span>
-                    <div class="flex items-center gap-4 bg-slate-50 dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700" onclick="event.stopPropagation()">
-                        <button onclick="voteReport(${report.id}, 1)" class="transition-transform ${upBtnStyle}"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg></button>
-                        <span class="font-black text-sm text-slate-700 dark:text-slate-200 w-6 text-center">${report.cred}</span>
-                        <button onclick="voteReport(${report.id}, -1)" class="transition-transform ${downBtnStyle}"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg></button>
+                <p class="text-xs text-slate-600 dark:text-slate-300 mb-3 line-clamp-2 leading-relaxed">${report.desc}</p>
+                <div class="flex flex-wrap gap-1.5 mb-3">${tagHTML}</div>
+                <div class="flex justify-between items-center border-t border-slate-100 dark:border-slate-700 pt-3">
+                    <span class="text-xs font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5"><i data-lucide="message-square" class="w-3.5 h-3.5"></i> ${report.comments.length} Comments</span>
+                    <div class="flex items-center gap-3 bg-slate-50 dark:bg-slate-900 px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700" onclick="event.stopPropagation()">
+                        <button onclick="voteReport(${report.id}, 1)" class="transition-transform ${upBtnStyle}"><i data-lucide="arrow-up" class="w-4 h-4"></i></button>
+                        <span class="font-bold text-sm text-slate-700 dark:text-slate-200 w-6 text-center">${report.cred}</span>
+                        <button onclick="voteReport(${report.id}, -1)" class="transition-transform ${downBtnStyle}"><i data-lucide="arrow-down" class="w-4 h-4"></i></button>
                     </div>
                 </div>
             </div>`;
     });
+    lucide.createIcons();
 }
 
 function openFlagModal(id) {
@@ -702,34 +702,33 @@ function deleteComment(reportId, commentIndex) {
 function openDetailModal(id) {
     activeDetailId = id;
     const report = mockReports.find(r => r.id === id);
-    const typeColor = report.type.includes('Harassment') ? 'text-rose-600 bg-rose-50 border-rose-200 dark:bg-rose-900/30 dark:border-rose-800 dark:text-rose-400' : 'text-indigo-600 bg-indigo-50 border-indigo-200 dark:bg-indigo-900/30 dark:border-indigo-800 dark:text-indigo-400';
     const privStyle = report.privacy === 'precise' ? 'text-rose-500' : 'text-indigo-500';
 
     document.getElementById('detail-content').innerHTML = `
-        <div class="flex justify-between items-start mb-5 pr-10 min-w-0">
-            <span class="badge ${typeColor}">${report.type}</span>
-            <span class="text-xs text-slate-400 font-bold truncate ml-2">${formatDate(report.timestamp)}</span>
+        <div class="flex justify-between items-start mb-4 pr-10 min-w-0">
+            <span class="badge bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">${report.type}</span>
+            <span class="text-xs text-slate-400 font-medium truncate ml-2">${formatDate(report.timestamp)}</span>
         </div>
-        <h2 class="text-2xl font-bold text-slate-800 dark:text-white mb-5 pr-4 break-words">${report.title}</h2>
-        <div class="mb-5 p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 text-sm text-slate-600 dark:text-slate-400 leading-relaxed min-w-0">
+        <h2 class="text-2xl font-bold text-slate-800 dark:text-white mb-4 pr-4 break-words">${report.title}</h2>
+        <div class="mb-4 p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-400 leading-relaxed min-w-0">
             <p class="font-bold flex items-center justify-between mb-2 border-b border-slate-200 dark:border-slate-700 pb-2 min-w-0">
-                <span class="text-slate-800 dark:text-slate-200 flex items-center gap-2 truncate mr-2"><svg class="w-4 h-4 text-indigo-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg> <span class="truncate whitespace-normal">${report.address}</span></span>
-                <span class="text-[10px] uppercase font-black tracking-wider whitespace-nowrap shrink-0 ${privStyle}">${report.privacy === 'precise' ? 'Precise Pin' : 'Area Report'}</span>
+                <span class="text-slate-800 dark:text-slate-200 flex items-center gap-1.5 truncate mr-2"><i data-lucide="map-pin" class="w-4 h-4 text-indigo-500 shrink-0"></i> <span class="truncate whitespace-normal">${report.address}</span></span>
+                <span class="uppercase tracking-wider whitespace-nowrap shrink-0 ${privStyle}">${report.privacy === 'precise' ? 'Precise Pin' : 'Area Report'}</span>
             </p>
-            <p class="ml-6 truncate opacity-80 text-xs">Coordinates: ${report.lat.toFixed(5)}, ${report.lng.toFixed(5)}</p>
+            <p class="ml-5 truncate opacity-80">Coordinates: ${report.lat.toFixed(5)}, ${report.lng.toFixed(5)}</p>
         </div>
-        <p class="text-base text-slate-700 dark:text-slate-300 mb-5 bg-slate-50 dark:bg-slate-800/50 p-5 rounded-xl leading-relaxed border border-slate-100 dark:border-slate-700/50 break-words">${report.desc}</p>
+        <p class="text-sm text-slate-700 dark:text-slate-300 mb-4 bg-slate-50 dark:bg-slate-800/50 p-5 rounded-lg leading-relaxed border border-slate-100 dark:border-slate-700/50 break-words">${report.desc}</p>
     `;
     
     const cList = document.getElementById('detail-comments');
-    cList.innerHTML = report.comments.length ? '' : '<p class="text-sm text-slate-500 italic">No comments yet. Be the first to advise.</p>';
+    cList.innerHTML = report.comments.length ? '' : '<p class="text-sm text-slate-400">No comments yet.</p>';
     report.comments.forEach((c, idx) => {
         const actionBtns = c.isMine ? `
             <div class="flex gap-2 shrink-0">
-                <button onclick="editComment(${report.id}, ${idx})" class="text-indigo-500 hover:text-indigo-700 font-bold text-xs flex items-center gap-1 p-1 bg-indigo-50 dark:bg-indigo-900/30 rounded"><svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg> Edit</button>
-                <button onclick="deleteComment(${report.id}, ${idx})" class="text-rose-500 hover:text-rose-700 font-bold text-xs flex items-center gap-1 p-1 bg-rose-50 dark:bg-rose-900/30 rounded"><svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg> Delete</button>
+                <button onclick="editComment(${report.id}, ${idx})" class="text-indigo-500 hover:text-indigo-700 font-bold text-xs flex items-center gap-1 p-1 bg-indigo-50 dark:bg-indigo-900/30 rounded"><i data-lucide="edit-2" class="w-3 h-3 shrink-0"></i></button>
+                <button onclick="deleteComment(${report.id}, ${idx})" class="text-rose-500 hover:text-rose-700 font-bold text-xs flex items-center gap-1 p-1 bg-rose-50 dark:bg-rose-900/30 rounded"><i data-lucide="trash-2" class="w-3 h-3 shrink-0"></i></button>
             </div>` : '';
-        cList.innerHTML += `<div class="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl text-sm flex justify-between items-start border border-slate-100 dark:border-slate-700 gap-4 mb-2"><p class="text-slate-800 dark:text-slate-200 break-words">${c.text}</p>${actionBtns}</div>`;
+        cList.innerHTML += `<div class="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg text-sm flex justify-between items-start border border-slate-100 dark:border-slate-700 gap-4 mb-2"><p class="text-slate-800 dark:text-slate-200 break-words">${c.text}</p>${actionBtns}</div>`;
     });
     document.getElementById('report-detail-modal').classList.remove('hidden');
     lucide.createIcons();
@@ -821,7 +820,7 @@ function addCustomTag() {
 function addTag(tag) {
     if(!currentTags.includes(tag) && currentTags.length < 5) {
         currentTags.push(tag);
-        document.getElementById('active-tags-container').innerHTML = currentTags.map(t => `<span class="tag-badge bg-indigo-600 text-white border-indigo-600 dark:text-white dark:bg-indigo-600">${t} <button onclick="removeTag('${t}')" class="hover:text-rose-300 ml-1"><i data-lucide="x" class="w-3 h-3"></i></button></span>`).join('');
+        document.getElementById('active-tags-container').innerHTML = currentTags.map(t => `<span class="tag-badge bg-indigo-600 text-white border-indigo-600 dark:bg-indigo-600 dark:text-white">${t} <button onclick="removeTag('${t}')" class="hover:text-rose-300 ml-1"><i data-lucide="x" class="w-3 h-3"></i></button></span>`).join('');
         lucide.createIcons();
     }
 }
@@ -908,9 +907,43 @@ function clearRoute() {
     map.setView(manilaCenter, 14);
 }
 
-// Ensure Partner Portal logic renders correctly
 function togglePortal() { document.getElementById('partner-portal').classList.toggle('hidden'); }
 function exportData() { showToast("Preparing PDF/CSV Data Package...", "success"); setTimeout(() => { showToast("Export Downloaded Successfully.", "success"); }, 2000); }
-function populatePartnerPortal() { /* Functionally identical to previous version, omitted */ }
+function populatePartnerPortal() {
+    const sumContainer = document.getElementById('city-summary-container');
+    const alertContainer = document.getElementById('high-alert-container');
+    
+    sumContainer.innerHTML = '';
+    alertContainer.innerHTML = '';
+
+    citySummaries.forEach(city => {
+        const color = city.risk > 70 ? 'bg-rose-600' : city.risk > 40 ? 'bg-amber-500' : 'bg-emerald-500';
+        sumContainer.innerHTML += `
+            <div>
+                <div class="flex justify-between text-sm mb-1.5 font-bold">
+                    <span class="dark:text-slate-300">${city.name}</span>
+                    <span class="text-slate-500 dark:text-slate-400 text-xs">${city.risk}/100</span>
+                </div>
+                <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5">
+                    <div class="${color} h-2.5 rounded-full" style="width: ${city.risk}%"></div>
+                </div>
+            </div>`;
+    });
+
+    const highRiskSpots = hotspots.filter(s => s.risk > 65).sort((a,b) => b.risk - a.risk);
+    highRiskSpots.forEach(spot => {
+        alertContainer.innerHTML += `
+            <div class="bg-rose-50 dark:bg-rose-900/10 p-4 rounded-lg border border-rose-100 dark:border-rose-900/50 flex justify-between items-center">
+                <div>
+                    <h4 class="font-bold text-rose-700 dark:text-rose-400 mb-1">${spot.name}</h4>
+                    <p class="text-xs text-rose-600/80 dark:text-rose-300/80">${spot.reports} active incidents.</p>
+                </div>
+                <div class="flex flex-col items-end gap-2">
+                    <span class="text-xs bg-rose-600 text-white px-2 py-0.5 rounded font-bold">Risk: ${spot.risk}</span>
+                    <button class="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline">View Map</button>
+                </div>
+            </div>`;
+    });
+}
 
 window.onload = initMap;
