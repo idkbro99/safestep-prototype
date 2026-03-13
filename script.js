@@ -46,14 +46,19 @@ hotspots.forEach(spot => {
     for(let i=0; i<spot.reports; i++) {
         const types = ['Harassment/Aggression', 'Crowd/Atmosphere', 'Environmental/Path Hazards', 'Accessibility/Obstructions'];
         const type = types[Math.floor(Math.random() * types.length)];
+        
+        let issueDesc = `Community report regarding safety at this location. Needs local attention.`;
+        if(type === 'Accessibility/Obstructions') issueDesc = "Damaged sidewalks and blocked PWD ramps reported here. Very difficult for wheelchairs.";
+        if(type === 'Environmental/Path Hazards') issueDesc = "Poor lighting and potential flooding hazards reported. Avoid walking alone at night.";
+        
         mockReports.push({
-            id: idCounter++, type: type, title: `${type.split('/')[0]} near ${spot.name.split(' ')[0]}`, desc: `Community report regarding safety at this location. Needs local attention.`,
+            id: idCounter++, type: type, title: `${type.split('/')[0]} near ${spot.name.split(' ')[0]}`, desc: issueDesc,
             cred: Math.floor(Math.random() * 300) + 10, relevance: spot.risk + Math.random() * 30,
             lat: spot.lat + (Math.random() - 0.5) * spot.spread, lng: spot.lng + (Math.random() - 0.5) * spot.spread,
             address: `${spot.name} Area`, privacy: 'approx',
             tags: ['#' + spot.name.split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '')],
             userVote: 0, timestamp: Date.now() - (Math.random() * 10000000000), 
-            comments: Math.random() > 0.6 ? [{text: "Noted, thank you.", isMine: false}] : [],
+            comments: Math.random() > 0.6 ? [{text: "Noted, thank you for sharing.", isMine: false}] : [],
             isMine: false
         });
     }
@@ -86,15 +91,19 @@ function toggleUserMenu(e) {
 
 function initMap() {
     map = L.map('map', { zoomControl: false }).setView(manilaCenter, 14);
+
     mapTilesLight = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 19 });
     mapTilesDark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 });
-    if(document.documentElement.classList.contains('dark')) mapTilesDark.addTo(map); else mapTilesLight.addTo(map);
+    
+    if(document.documentElement.classList.contains('dark')) mapTilesDark.addTo(map);
+    else mapTilesLight.addTo(map);
 
     populateHeatmap();
     renderReports();
     populatePartnerPortal();
+    
     lucide.createIcons();
-    setTimeout(setupDrag, 500); 
+    setTimeout(setupDrag, 300); 
     updateAuthUI();
 }
 
@@ -116,18 +125,22 @@ async function getAddressFromCoords(lat, lng) {
 
 function populateHeatmap() {
     if(heatmapLayer) map.removeLayer(heatmapLayer);
+    
     let filteredData = mockReports;
     if(isRadiusActive && radiusCenterCoords) {
         filteredData = mockReports.filter(r => getDistance(radiusCenterCoords[0], radiusCenterCoords[1], r.lat, r.lng) <= 1.0);
     }
+
     let heatData = filteredData.map(r => [r.lat, r.lng, r.cred / 80]); 
     filteredData.forEach(r => {
         for(let i=0; i<4; i++) { heatData.push([r.lat + (Math.random()-0.5)*0.0015, r.lng + (Math.random()-0.5)*0.0015, Math.random() * 0.5]); }
     });
+    
     heatmapLayer = L.heatLayer(heatData, {
         radius: 26, blur: 22, maxZoom: 18,
         gradient: {0.4: 'blue', 0.6: 'cyan', 0.7: 'lime', 0.8: 'yellow', 1.0: 'red'}
     });
+    
     if(document.getElementById('heatmap-toggle').checked) {
         heatmapLayer.addTo(map);
         updateOpacity(); 
@@ -149,14 +162,18 @@ function enableRadiusFilter() {
     } else {
         showToast("Click any location on the map to set 1km focus area.", "success");
         document.getElementById('map').style.cursor = 'crosshair';
+        
         map.once('click', async function(e) {
             document.getElementById('map').style.cursor = '';
             radiusCenterCoords = [e.latlng.lat, e.latlng.lng];
             isRadiusActive = true;
+            
             if(radiusCircle) map.removeLayer(radiusCircle);
             radiusCircle = L.circle(radiusCenterCoords, {radius: 1000, color: '#4f46e5', fillOpacity: 0.1, weight: 2}).addTo(map);
+            
             btn.innerHTML = `<i data-lucide="x" class="w-3 h-3 inline"></i> Clear 1km`; 
             btn.classList.replace('bg-indigo-600', 'bg-rose-600');
+
             infoBox.innerHTML = `<i>Fetching location...</i>`;
             infoBox.classList.remove('hidden');
             const address = await getAddressFromCoords(radiusCenterCoords[0], radiusCenterCoords[1]);
@@ -239,10 +256,10 @@ function showLoginForm(type) {
     
     if(type === 'general') {
         title.innerText = "General User Login";
-        container.innerHTML = `<input type="text" id="login-email" placeholder="Username or Email" class="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none dark:text-white" value="user@mail.com"><input type="password" placeholder="Password" class="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none dark:text-white" value="password">`;
+        container.innerHTML = `<input type="text" id="login-email" placeholder="Username or Email" class="input-base" value="user@mail.com"><input type="password" placeholder="Password" class="input-base" value="password">`;
     } else {
         title.innerText = "Partner Agency Login";
-        container.innerHTML = `<input type="text" id="login-email" placeholder="Official Email" class="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none dark:text-white" value="agency@ncr.gov.ph"><input type="text" placeholder="Employee ID" class="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none dark:text-white" value="EMP-4029"><input type="password" placeholder="Password" class="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none dark:text-white" value="password">`;
+        container.innerHTML = `<input type="text" id="login-email" placeholder="Official Email" class="input-base" value="agency@ncr.gov.ph"><input type="text" placeholder="Employee ID" class="input-base" value="EMP-4029"><input type="password" placeholder="Password" class="input-base" value="password">`;
     }
 }
 
@@ -250,14 +267,17 @@ function executeLogin() {
     const email = document.getElementById('login-email').value;
     if(!email) return showToast("Please enter valid credentials", "error");
     currentUser = { type: loginType, email: email };
-    closeLoginOverlay(); updateAuthUI(); showToast(`Logged in successfully.`, "success");
+    closeLoginOverlay();
+    updateAuthUI();
+    showToast(`Logged in successfully.`, "success");
 }
 
 function logoutUser() {
     currentUser = null;
     document.getElementById('user-dropdown').classList.add('hidden');
     document.getElementById('partner-portal').classList.add('hidden');
-    updateAuthUI(); showToast("Successfully logged out.", "success");
+    updateAuthUI();
+    showToast("Successfully logged out.", "success");
 }
 
 function updateAuthUI() {
@@ -272,7 +292,9 @@ function updateAuthUI() {
     } else {
         loginBtn.classList.add('hidden');
         userContainer.classList.remove('hidden');
-        const colorClass = currentUser.type === 'partner' ? 'bg-slate-500 hover:bg-slate-600 border-slate-400' : 'bg-indigo-500 hover:bg-indigo-600 border-indigo-400';
+        
+        // Partner uses slate-500/600 grayish coloring as requested
+        const colorClass = currentUser.type === 'partner' ? 'bg-slate-600 hover:bg-slate-700' : 'bg-indigo-600 hover:bg-indigo-700';
         const iconName = currentUser.type === 'partner' ? 'building' : 'user';
         avatarBtn.className = `w-10 h-10 flex items-center justify-center text-white rounded-full shadow-lg transition border-2 border-white dark:border-slate-700 ${colorClass}`;
         avatarBtn.innerHTML = `<i data-lucide="${iconName}" class="w-5 h-5"></i>`;
@@ -320,6 +342,7 @@ function swapRoute() {
     const tempVal = startInput.value;
     startInput.value = endInput.value;
     endInput.value = tempVal;
+    
     const tempCoords = startCoords;
     startCoords = endCoords;
     endCoords = tempCoords;
@@ -332,6 +355,7 @@ function enableMapPicker() {
     showToast("Click anywhere on the map to drop a pin.", "success");
     document.getElementById('map').style.cursor = 'crosshair';
     isPickingLocation = true;
+    
     map.once('click', async function(e) {
         isPickingLocation = false;
         document.getElementById('map').style.cursor = '';
@@ -340,6 +364,7 @@ function enableMapPicker() {
         customPinMarker = L.marker(customPinCoords).addTo(map);
         openReportModal();
         document.getElementById('loc-privacy').value = 'precise';
+        
         const pinStatus = document.getElementById('pin-status');
         pinStatus.classList.remove('hidden');
         pinStatus.innerHTML = `<i>Fetching precise address...</i>`;
@@ -348,14 +373,14 @@ function enableMapPicker() {
     });
 }
 
+// FIX: Absolute precision drag logic replacing transition-all
 function setupDrag() {
     const dragItem = document.getElementById("route-panel");
     const dragHeader = document.getElementById("route-panel-header");
     const mapContainer = document.getElementById('map-container');
     if(!mapContainer || !dragItem || !dragHeader) return;
     
-    let initialX = 0, initialY = 0, dragOffsetX = 0, dragOffsetY = 0;
-    dragItem.style.transform = 'none';
+    let dragOffsetX = 0, dragOffsetY = 0;
 
     function dragStart(e) {
         if (e.target === dragHeader || dragHeader.contains(e.target)) {
@@ -365,15 +390,19 @@ function setupDrag() {
             dragOffsetY = e.clientY - rect.top;
         }
     }
+
     function dragEnd(e) { isDragging = false; }
+
     function drag(e) {
         if (isDragging) {
             e.preventDefault();
             const mapRect = mapContainer.getBoundingClientRect();
+            
+            // Calculate new absolute pixel positions
             let newLeft = e.clientX - dragOffsetX;
             let newTop = e.clientY - dragOffsetY;
             
-            // Perfect Bounds: Equal 24px padding top and bottom. Prevent going left past screen.
+            // Boundary constraints ensuring perfect 24px padding on all sides of map container
             const minLeft = mapRect.left + 24; 
             const maxLeft = mapRect.right - dragItem.offsetWidth - 24;
             const minTop = mapRect.top + 24; 
@@ -382,14 +411,17 @@ function setupDrag() {
             newLeft = Math.max(minLeft, Math.min(newLeft, maxLeft));
             newTop = Math.max(minTop, Math.min(newTop, maxTop));
             
-            dragItem.style.left = (newLeft - mapRect.left) + 'px';
-            dragItem.style.top = (newTop - mapRect.top) + 'px';
-            dragItem.style.right = 'auto'; 
+            // Apply absolute position within viewport
+            dragItem.style.position = 'fixed';
+            dragItem.style.left = newLeft + 'px';
+            dragItem.style.top = newTop + 'px';
         }
     }
+    
     dragHeader.removeEventListener("mousedown", dragStart);
     document.removeEventListener("mouseup", dragEnd);
     document.removeEventListener("mousemove", drag);
+    
     dragHeader.addEventListener("mousedown", dragStart, false);
     document.addEventListener("mouseup", dragEnd, false);
     document.addEventListener("mousemove", drag, false);
@@ -404,11 +436,12 @@ function showToast(msg, type = 'error') {
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
     const colorClass = type === 'error' ? 'bg-rose-500' : 'bg-emerald-500';
-    // Raw SVG to ensure it always appears instantly
+    // Raw SVGs bypass Lucide rendering delays for instant toasts
     const icon = type === 'error' 
         ? `<svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>` 
         : `<svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
-    toast.className = `${colorClass} text-white px-6 py-4 rounded-xl shadow-2xl font-bold text-sm transform transition-all duration-300 translate-y-[-20px] opacity-0 flex items-start gap-3 pointer-events-auto max-w-xs sm:max-w-sm`;
+    
+    toast.className = `${colorClass} text-white px-6 py-4 rounded-xl shadow-2xl font-bold text-sm transform transition-all duration-300 translate-y-[-20px] opacity-0 flex items-start gap-3 max-w-sm pointer-events-auto`;
     toast.innerHTML = `${icon} <span class="break-words w-full leading-snug">${msg}</span>`;
     container.appendChild(toast);
     setTimeout(() => { toast.classList.remove('translate-y-[-20px]', 'opacity-0'); }, 10);
@@ -417,13 +450,18 @@ function showToast(msg, type = 'error') {
 
 function toggleDarkMode() {
     const html = document.documentElement;
-    const icon = document.getElementById('theme-icon');
+    document.querySelectorAll('.theme-icon').forEach(icon => {
+        if(html.classList.contains('dark')) {
+            icon.innerHTML = `<i data-lucide="moon" class="w-5 h-5"></i>`;
+        } else {
+            icon.innerHTML = `<i data-lucide="sun" class="w-5 h-5"></i>`;
+        }
+    });
+    
     if(html.classList.contains('dark')) {
         html.classList.remove('dark'); map.removeLayer(mapTilesDark); mapTilesLight.addTo(map);
-        icon.innerHTML = `<i data-lucide="moon" class="w-5 h-5"></i>`;
     } else {
         html.classList.add('dark'); map.removeLayer(mapTilesLight); mapTilesDark.addTo(map);
-        icon.innerHTML = `<i data-lucide="sun" class="w-5 h-5"></i>`;
     }
     lucide.createIcons();
     setTimeout(updateOpacity, 100);
@@ -503,13 +541,13 @@ function renderReports(reportsToRender = null) {
             </div>`;
         return;
     }
-    
-    // SVG Icons for buttons to ensure rendering
+
+    // Raw SVGs for dynamic reports ensures flawless generation
+    const linkIcon = `<svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>`;
     const editIcon = `<svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>`;
     const delIcon = `<svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>`;
-    const linkIcon = `<svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>`;
     const flagIcon = `<svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"></path></svg>`;
-
+    
     reportsToRender.forEach(report => {
         let typeColor = 'text-indigo-600 bg-indigo-50 border-indigo-100 dark:bg-indigo-900/30 dark:border-indigo-800 dark:text-indigo-400';
         if(report.type.includes('Harassment')) typeColor = 'text-rose-600 bg-rose-50 border-rose-100 dark:bg-rose-900/30 dark:border-rose-800 dark:text-rose-400';
@@ -520,46 +558,46 @@ function renderReports(reportsToRender = null) {
         if(report.isMine) {
             menuItems += `
                 <button onclick="event.stopPropagation(); editReportDesc(event, ${report.id})" class="flex items-center gap-2 w-full px-4 py-2.5 text-xs text-indigo-600 dark:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold whitespace-nowrap">${editIcon} Edit</button>
-                <button onclick="event.stopPropagation(); deleteReport(${report.id})" class="flex items-center gap-2 w-full px-4 py-2.5 text-xs text-rose-600 dark:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold whitespace-nowrap">${delIcon} Delete</button>
+                <button onclick="event.stopPropagation(); deleteReport(${report.id})" class="flex items-center gap-2 w-full px-4 py-2.5 text-xs text-rose-600 dark:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold whitespace-nowrap rounded-b-md">${delIcon} Delete</button>
             `;
         } else {
-            menuItems += `<button onclick="event.stopPropagation(); openFlagModal(${report.id})" class="flex items-center gap-2 w-full px-4 py-2.5 text-xs text-rose-600 dark:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold whitespace-nowrap">${flagIcon} Report</button>`;
+            menuItems += `<button onclick="event.stopPropagation(); openFlagModal(${report.id})" class="flex items-center gap-2 w-full px-4 py-2.5 text-xs text-rose-600 dark:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold whitespace-nowrap rounded-b-md">${flagIcon} Report</button>`;
         }
 
         const actionBtn = `
             <div class="absolute top-3 right-3 z-20">
                 <div class="relative inline-block text-left" onclick="event.stopPropagation()">
-                    <button onclick="toggleReportMenu(event, ${report.id})" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-full transition-colors flex items-center justify-center w-8 h-8">
+                    <button onclick="toggleReportMenu(event, ${report.id})" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-full transition-colors flex items-center justify-center w-8 h-8 hover:bg-slate-100 dark:hover:bg-slate-800">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
                     </button>
                     <div id="menu-${report.id}" class="hidden absolute right-0 mt-1 w-32 glass-panel rounded-md shadow-lg z-50 overflow-hidden"><div class="py-1">${menuItems}</div></div>
                 </div>
             </div>`;
 
-        const tagHTML = report.tags.map(t => `<span class="badge bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700">${t}</span>`).join('');
+        const tagHTML = report.tags.map(t => `<span class="tag-badge">${t}</span>`).join('');
         const upBtnStyle = report.userVote === 1 ? "text-emerald-500 scale-110" : "text-slate-400 hover:text-emerald-500";
         const downBtnStyle = report.userVote === -1 ? "text-rose-500 scale-110" : "text-slate-400 hover:text-rose-500";
         const privStyle = report.privacy === 'precise' ? 'text-rose-500' : 'text-indigo-500';
 
         list.innerHTML += `
-            <div onclick="openDetailModal(${report.id})" class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 hover:border-indigo-400 cursor-pointer relative group transition-all min-w-0">
+            <div onclick="openDetailModal(${report.id})" class="report-card cursor-pointer min-w-0">
                 ${actionBtn}
                 <div class="mb-3 flex items-center gap-2 pr-8 min-w-0">
-                    <span class="badge border ${typeColor} shrink-0">${report.type.split('/')[0]}</span>
+                    <span class="badge ${typeColor} shrink-0">${report.type.split('/')[0]}</span>
                     <span class="text-[10px] text-slate-400 font-medium truncate">${formatDate(report.timestamp)}</span>
                 </div>
                 <h3 class="font-bold text-slate-800 dark:text-white text-sm mb-2 pr-8 truncate" title="${report.title}">${report.title}</h3>
-                <div class="mb-3 p-2 bg-slate-50 dark:bg-slate-900 rounded border border-slate-100 dark:border-slate-700 text-[10px] text-slate-500 dark:text-slate-400 min-w-0">
+                <div class="mb-3 p-2.5 bg-slate-50 dark:bg-slate-900 rounded border border-slate-100 dark:border-slate-700 text-[10px] text-slate-500 dark:text-slate-400 min-w-0">
                     <p class="font-bold flex items-center justify-between mb-1 min-w-0 border-b border-slate-200 dark:border-slate-700 pb-1">
-                        <span class="truncate mr-2 text-slate-700 dark:text-slate-300 flex items-center gap-1 shrink">📍 <span class="truncate">${report.address}</span></span>
+                        <span class="truncate mr-2 text-slate-700 dark:text-slate-300 flex items-center gap-1 shrink"><svg class="w-3 h-3 text-indigo-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg> <span class="truncate">${report.address}</span></span>
                         <span class="uppercase tracking-wider whitespace-nowrap shrink-0 ${privStyle}">${report.privacy === 'precise' ? 'Precise Pin' : 'Area Report'}</span>
                     </p>
-                    <p class="mt-0.5 ml-4 truncate">Coords: ${report.lat.toFixed(5)}, ${report.lng.toFixed(5)}</p>
+                    <p class="mt-1 truncate opacity-75 ml-4">Coords: ${report.lat.toFixed(5)}, ${report.lng.toFixed(5)}</p>
                 </div>
                 <p class="text-xs text-slate-600 dark:text-slate-300 mb-3 line-clamp-2 leading-relaxed">${report.desc}</p>
                 <div class="flex flex-wrap gap-1.5 mb-3">${tagHTML}</div>
                 <div class="flex justify-between items-center border-t border-slate-100 dark:border-slate-700 pt-3">
-                    <span class="text-xs font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">💬 ${report.comments.length} Comments</span>
+                    <span class="text-xs font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg> ${report.comments.length}</span>
                     <div class="flex items-center gap-3 bg-slate-50 dark:bg-slate-900 px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700" onclick="event.stopPropagation()">
                         <button onclick="voteReport(${report.id}, 1)" class="transition-transform ${upBtnStyle}"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg></button>
                         <span class="font-bold text-sm text-slate-700 dark:text-slate-200 w-6 text-center">${report.cred}</span>
@@ -650,13 +688,13 @@ function openDetailModal(id) {
 
     document.getElementById('detail-content').innerHTML = `
         <div class="flex justify-between items-start mb-4 pr-10 min-w-0">
-            <span class="badge bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">${report.type}</span>
+            <span class="badge border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">${report.type}</span>
             <span class="text-xs text-slate-400 font-medium truncate ml-2">${formatDate(report.timestamp)}</span>
         </div>
         <h2 class="text-2xl font-bold text-slate-800 dark:text-white mb-4 pr-4 break-words">${report.title}</h2>
         <div class="mb-4 p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-400 leading-relaxed min-w-0">
             <p class="font-bold flex items-center justify-between mb-2 border-b border-slate-200 dark:border-slate-700 pb-2 min-w-0">
-                <span class="text-slate-800 dark:text-slate-200 flex items-center gap-1.5 truncate mr-2">📍 <span class="truncate whitespace-normal">${report.address}</span></span>
+                <span class="text-slate-800 dark:text-slate-200 flex items-center gap-1.5 truncate mr-2"><i data-lucide="map-pin" class="w-4 h-4 text-indigo-500 shrink-0"></i> <span class="truncate whitespace-normal">${report.address}</span></span>
                 <span class="uppercase tracking-wider whitespace-nowrap shrink-0 ${privStyle}">${report.privacy === 'precise' ? 'Precise Pin' : 'Area Report'}</span>
             </p>
             <p class="ml-5 truncate opacity-80">Coordinates: ${report.lat.toFixed(5)}, ${report.lng.toFixed(5)}</p>
@@ -669,8 +707,8 @@ function openDetailModal(id) {
     report.comments.forEach((c, idx) => {
         const actionBtns = c.isMine ? `
             <div class="flex gap-2 shrink-0">
-                <button onclick="editComment(${report.id}, ${idx})" class="text-indigo-500 hover:text-indigo-700 font-bold text-xs p-1">Edit</button>
-                <button onclick="deleteComment(${report.id}, ${idx})" class="text-rose-500 hover:text-rose-700 font-bold text-xs p-1">Delete</button>
+                <button onclick="editComment(${report.id}, ${idx})" class="text-indigo-500 hover:text-indigo-700 font-bold text-xs flex items-center gap-1 p-1 bg-indigo-50 dark:bg-indigo-900/30 rounded"><i data-lucide="edit-2" class="w-3 h-3 shrink-0"></i> Edit</button>
+                <button onclick="deleteComment(${report.id}, ${idx})" class="text-rose-500 hover:text-rose-700 font-bold text-xs flex items-center gap-1 p-1 bg-rose-50 dark:bg-rose-900/30 rounded"><i data-lucide="trash-2" class="w-3 h-3 shrink-0"></i> Delete</button>
             </div>` : '';
         cList.innerHTML += `<div class="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg text-sm flex justify-between items-start border border-slate-100 dark:border-slate-700 gap-4 mb-2"><p class="text-slate-800 dark:text-slate-200 break-words">${c.text}</p>${actionBtns}</div>`;
     });
@@ -752,7 +790,8 @@ function suggestTags() {
 
     if(suggested.length === 0) { aiTags.classList.add('hidden'); return; }
     aiTags.classList.remove('hidden');
-    container.innerHTML = suggested.map(tag => `<span class="badge bg-white text-indigo-600 border border-indigo-200 cursor-pointer hover:bg-indigo-50" onclick="addTag('${tag}')">${tag} +</span>`).join('');
+    container.innerHTML = suggested.map(tag => `<span class="tag-badge cursor-pointer hover:bg-slate-200" onclick="addTag('${tag}')">${tag} <i data-lucide="plus" class="w-3 h-3 inline"></i></span>`).join('');
+    lucide.createIcons();
 }
 
 function handleTagKeypress(e) { if (e.key === 'Enter') { e.preventDefault(); addCustomTag(); } }
@@ -763,7 +802,8 @@ function addCustomTag() {
 function addTag(tag) {
     if(!currentTags.includes(tag) && currentTags.length < 5) {
         currentTags.push(tag);
-        document.getElementById('active-tags-container').innerHTML = currentTags.map(t => `<span class="badge bg-indigo-600 text-white">${t} <button onclick="removeTag('${t}')" class="hover:text-rose-300 ml-1">✕</button></span>`).join('');
+        document.getElementById('active-tags-container').innerHTML = currentTags.map(t => `<span class="tag-badge bg-indigo-600 text-white border-indigo-600">${t} <button onclick="removeTag('${t}')" class="hover:text-rose-300 ml-1"><i data-lucide="x" class="w-3 h-3"></i></button></span>`).join('');
+        lucide.createIcons();
     }
 }
 function removeTag(tag) { currentTags = currentTags.filter(t => t !== tag); addTag('hack'); currentTags.pop(); }
@@ -782,7 +822,7 @@ function handleSearch(inputEl, resultsId, target) {
             data.forEach(item => {
                 const li = document.createElement('li');
                 li.className = "p-3 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer border-b border-slate-100 dark:border-slate-700 dark:text-slate-200 text-slate-700 flex items-center gap-2 truncate min-w-0";
-                li.innerHTML = `📍 <span class="truncate">${item.display_name}</span>`;
+                li.innerHTML = `<i data-lucide="map-pin" class="w-4 h-4 text-slate-400 shrink-0"></i> <span class="truncate">${item.display_name}</span>`;
                 li.onclick = () => {
                     inputEl.value = item.display_name.split(',')[0];
                     resultsUl.classList.add('hidden');
@@ -792,6 +832,7 @@ function handleSearch(inputEl, resultsId, target) {
                 resultsUl.appendChild(li);
             });
             resultsUl.classList.remove('hidden');
+            lucide.createIcons();
         } catch(e) {}
     }, 500); 
 }
@@ -800,7 +841,8 @@ async function calculateRealRoute() {
     const btn = document.getElementById('route-btn');
     if(!startCoords || !endCoords) return showToast("Select Start and Destination from suggestions.", "error");
 
-    btn.innerHTML = `Finding paths...`; btn.disabled = true;
+    btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin inline shrink-0"></i> Finding paths...`; 
+    btn.disabled = true; lucide.createIcons();
 
     try {
         const osrmUrl = `https://router.project-osrm.org/route/v1/foot/${startCoords[1]},${startCoords[0]};${endCoords[1]},${endCoords[0]}?overview=full&geometries=geojson&steps=true`;
@@ -822,18 +864,19 @@ async function calculateRealRoute() {
         let lastStreet = "";
         steps.forEach(step => {
             if(step.name && step.name !== lastStreet) {
-                streetList.innerHTML += `<li class="flex items-center gap-2">▪ ${step.name}</li>`;
+                streetList.innerHTML += `<li class="flex items-center gap-2"><i data-lucide="arrow-right-circle" class="w-3 h-3 text-indigo-400 shrink-0"></i> ${step.name}</li>`;
                 lastStreet = step.name;
             }
         });
 
         document.getElementById('route-details').classList.remove('hidden');
         document.getElementById('clear-route-btn').classList.remove('hidden');
-        document.getElementById('route-dist').innerHTML = `🚶 ${distKm} km`;
-        document.getElementById('route-time').innerHTML = `⏱ ${timeMin} mins`;
+        document.getElementById('route-dist').innerHTML = `<i data-lucide="footprints" class="w-4 h-4 shrink-0"></i> ${distKm} km`;
+        document.getElementById('route-time').innerHTML = `<i data-lucide="clock" class="w-4 h-4 shrink-0"></i> ${timeMin} mins`;
         setTimeout(setupDrag, 100);
     } catch (e) { showToast("Error calculating route.", "error"); }
-    btn.innerHTML = `Calculate Route`; btn.disabled = false;
+    btn.innerHTML = `<i data-lucide="route" class="w-4 h-4 shrink-0"></i> Calculate Route`; 
+    btn.disabled = false; lucide.createIcons();
 }
 
 function clearRoute() {
@@ -848,6 +891,41 @@ function clearRoute() {
 
 function togglePortal() { document.getElementById('partner-portal').classList.toggle('hidden'); }
 function exportData() { showToast("Preparing PDF/CSV Data Package...", "success"); setTimeout(() => { showToast("Export Downloaded Successfully.", "success"); }, 2000); }
-function populatePartnerPortal() { /* Left exactly as previous */ }
+function populatePartnerPortal() {
+    const sumContainer = document.getElementById('city-summary-container');
+    const alertContainer = document.getElementById('high-alert-container');
+    
+    sumContainer.innerHTML = '';
+    alertContainer.innerHTML = '';
+
+    citySummaries.forEach(city => {
+        const color = city.risk > 70 ? 'bg-rose-600' : city.risk > 40 ? 'bg-amber-500' : 'bg-emerald-500';
+        sumContainer.innerHTML += `
+            <div>
+                <div class="flex justify-between text-sm mb-1.5 font-bold">
+                    <span class="dark:text-slate-300">${city.name}</span>
+                    <span class="text-slate-500 dark:text-slate-400 text-xs">${city.risk}/100</span>
+                </div>
+                <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5">
+                    <div class="${color} h-2.5 rounded-full" style="width: ${city.risk}%"></div>
+                </div>
+            </div>`;
+    });
+
+    const highRiskSpots = hotspots.filter(s => s.risk > 65).sort((a,b) => b.risk - a.risk);
+    highRiskSpots.forEach(spot => {
+        alertContainer.innerHTML += `
+            <div class="bg-rose-50 dark:bg-rose-900/10 p-4 rounded-lg border border-rose-100 dark:border-rose-900/50 flex justify-between items-center">
+                <div>
+                    <h4 class="font-bold text-rose-700 dark:text-rose-400 mb-1">${spot.name}</h4>
+                    <p class="text-xs text-rose-600/80 dark:text-rose-300/80">${spot.reports} active incidents.</p>
+                </div>
+                <div class="flex flex-col items-end gap-2">
+                    <span class="text-xs bg-rose-600 text-white px-2 py-0.5 rounded font-bold">Risk: ${spot.risk}</span>
+                    <button class="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline">View Map</button>
+                </div>
+            </div>`;
+    });
+}
 
 window.onload = initMap;
