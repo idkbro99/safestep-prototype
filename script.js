@@ -49,7 +49,7 @@ hotspots.forEach(spot => {
         
         let issueDesc = `Community report regarding safety at this location. Needs local attention.`;
         if(type === 'Accessibility/Obstructions') issueDesc = "Damaged sidewalks and blocked PWD ramps reported here. Very difficult for wheelchairs.";
-        if(type === 'Hazards') issueDesc = "Poor lighting and potential flooding hazards reported. Avoid walking alone at night.";
+        if(type === 'Hazards') issueDesc = "Poor lighting and potential hazards reported. Avoid walking alone at night.";
         
         mockReports.push({
             id: idCounter++, type: type, title: `${type.split('/')[0]} near ${spot.name.split(' ')[0]}`, desc: issueDesc,
@@ -58,13 +58,12 @@ hotspots.forEach(spot => {
             address: `${spot.name} Area`, 
             tags: ['#' + spot.name.split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '')],
             userVote: 0, timestamp: Date.now() - (Math.random() * 10000000000), 
-            comments: Math.random() > 0.6 ? [{text: "Noted, thank you.", isMine: false}] : [],
+            comments: Math.random() > 0.6 ? [{text: "Noted, thank you for sharing.", isMine: false}] : [],
             isMine: false
         });
     }
 });
 
-// Close menus globally
 document.addEventListener('click', (e) => {
     if(openMenuId) {
         const menu = document.getElementById(`menu-${openMenuId}`);
@@ -155,10 +154,11 @@ function enableRadiusFilter() {
     if(isRadiusActive) {
         isRadiusActive = false;
         if(radiusCircle) map.removeLayer(radiusCircle);
-        btn.innerHTML = `<i data-lucide="crosshair" class="w-3 h-3 inline"></i> Focus 1km Area`;
+        btn.innerHTML = `<i data-lucide="crosshair" class="w-3.5 h-3.5 inline"></i> Focus 1km Area`;
+        btn.classList.replace('bg-rose-600', 'bg-indigo-600');
         infoBox.classList.add('hidden');
         populateHeatmap();
-        filterReports(); // Update list
+        filterReports();
         lucide.createIcons();
     } else {
         showToast("Click any location on the map to set 1km focus area.", "success");
@@ -172,15 +172,16 @@ function enableRadiusFilter() {
             if(radiusCircle) map.removeLayer(radiusCircle);
             radiusCircle = L.circle(radiusCenterCoords, {radius: 1000, color: '#4f46e5', fillOpacity: 0.1, weight: 2}).addTo(map);
             
-            btn.innerHTML = `<i data-lucide="x" class="w-3 h-3 inline"></i> Clear 1km Focus`; 
-            
+            btn.innerHTML = `<i data-lucide="x" class="w-3.5 h-3.5 inline"></i> Clear 1km Focus`; 
+            btn.classList.replace('bg-indigo-600', 'bg-rose-600');
+
             infoBox.innerHTML = `<i>Fetching location...</i>`;
             infoBox.classList.remove('hidden');
             const address = await getAddressFromCoords(radiusCenterCoords[0], radiusCenterCoords[1]);
-            infoBox.innerHTML = `<b>1km Radius Focus</b><br><span class="opacity-80 leading-snug block mt-1">${address}</span>`;
-            
+            infoBox.innerHTML = `<b>1km Radius Focus</b><br><span class="opacity-80 leading-snug block mt-1 text-slate-500 line-clamp-2">${address}</span>`;
+
             populateHeatmap();
-            filterReports(); // Update list
+            filterReports();
             lucide.createIcons();
         });
     }
@@ -188,9 +189,7 @@ function enableRadiusFilter() {
 
 function updateOpacity() {
     const val = document.getElementById('heatmap-opacity').value;
-    if(heatmapLayer && heatmapLayer._canvas) {
-        heatmapLayer._canvas.style.opacity = val;
-    }
+    if(heatmapLayer && heatmapLayer._canvas) { heatmapLayer._canvas.style.opacity = val; }
 }
 
 function aiContentCheck(text) {
@@ -212,7 +211,7 @@ function toggleSidebar() {
 
     if(sidebarCollapsed) {
         sidebar.classList.remove('md:w-[460px]', 'sm:w-[380px]', 'w-11/12');
-        sidebar.classList.add('w-16');
+        sidebar.classList.add('w-20');
         expanded.classList.replace('opacity-100', 'opacity-0');
         setTimeout(() => {
             expanded.classList.add('hidden');
@@ -223,7 +222,7 @@ function toggleSidebar() {
             setupDrag();
         }, 300);
     } else {
-        sidebar.classList.remove('w-16');
+        sidebar.classList.remove('w-20');
         sidebar.classList.add('md:w-[460px]', 'sm:w-[380px]', 'w-11/12');
         collapsed.classList.replace('opacity-100', 'opacity-0');
         setTimeout(() => {
@@ -268,32 +267,21 @@ function showLoginForm(type) {
     loginType = type;
     document.getElementById('login-step-1').classList.add('hidden');
     document.getElementById('login-step-2').classList.remove('hidden');
-    
     const container = document.getElementById('login-fields-container');
     const title = document.getElementById('login-form-title');
     
-    const inputStyle = "w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-white transition-all";
-    
     if(type === 'general') {
         title.innerText = "General User Login";
-        container.innerHTML = `
-            <input type="text" id="login-email" placeholder="Username or Email" class="${inputStyle}" value="user@mail.com">
-            <input type="password" placeholder="Password" class="${inputStyle}" value="password">
-        `;
+        container.innerHTML = `<input type="text" id="login-email" placeholder="Username or Email" class="input-base" value="user@mail.com"><input type="password" placeholder="Password" class="input-base" value="password">`;
     } else {
         title.innerText = "Partner Agency Login";
-        container.innerHTML = `
-            <input type="text" id="login-email" placeholder="Official Email" class="${inputStyle}" value="agency@ncr.gov.ph">
-            <input type="text" placeholder="Employee ID" class="${inputStyle}" value="EMP-4029">
-            <input type="password" placeholder="Password" class="${inputStyle}" value="password">
-        `;
+        container.innerHTML = `<input type="text" id="login-email" placeholder="Official Email" class="input-base" value="agency@ncr.gov.ph"><input type="text" placeholder="Employee ID" class="input-base" value="EMP-4029"><input type="password" placeholder="Password" class="input-base" value="password">`;
     }
 }
 
 function executeLogin() {
     const email = document.getElementById('login-email').value;
     if(!email) return showToast("Please enter valid credentials", "error");
-    
     currentUser = { type: loginType, email: email };
     closeLoginOverlay();
     updateAuthUI();
@@ -303,7 +291,6 @@ function executeLogin() {
 function logoutUser() {
     currentUser = null;
     document.getElementById('user-dropdown').classList.add('hidden');
-    document.getElementById('partner-portal').classList.add('hidden');
     updateAuthUI();
     showToast("Successfully logged out.", "success");
 }
@@ -321,15 +308,14 @@ function updateAuthUI() {
         loginBtn.classList.add('hidden');
         userContainer.classList.remove('hidden');
         
-        const colorClass = currentUser.type === 'partner' ? 'bg-slate-600 hover:bg-slate-700' : 'bg-indigo-600 hover:bg-indigo-700';
+        const colorClass = currentUser.type === 'partner' ? 'bg-slate-600 hover:bg-slate-700 border-slate-500' : 'bg-indigo-600 hover:bg-indigo-700 border-indigo-500';
         const iconName = currentUser.type === 'partner' ? 'building' : 'user';
-        avatarBtn.className = `w-10 h-10 flex items-center justify-center text-white rounded-full shadow-md transition ${colorClass}`;
+        avatarBtn.className = `w-10 h-10 flex items-center justify-center text-white rounded-full shadow-lg transition border ${colorClass}`;
         avatarBtn.innerHTML = `<i data-lucide="${iconName}" class="w-5 h-5"></i>`;
         
         const typeLabelColor = currentUser.type === 'partner' ? 'text-slate-500 dark:text-slate-400' : 'text-indigo-600 dark:text-indigo-400';
         const typeLabelText = currentUser.type === 'partner' ? 'Partner Agency' : 'General Account';
-        
-        let extraLinks = currentUser.type === 'partner' ? `<button onclick="togglePortal()" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold border-b border-slate-100 dark:border-slate-700/50 whitespace-nowrap"><i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard Access</button>` : '';
+        let extraLinks = currentUser.type === 'partner' ? `<button onclick="togglePortal()" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-bold border-b border-slate-100 dark:border-slate-700/50 whitespace-nowrap"><i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard Access</button>` : '';
         
         dropdown.innerHTML = `
             <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-700/50 min-w-0">
@@ -338,8 +324,8 @@ function updateAuthUI() {
                 <p class="text-[10px] uppercase tracking-wider font-bold ${typeLabelColor} mt-1 truncate">${typeLabelText}</p>
             </div>
             ${extraLinks}
-            <button onclick="showToast('Account settings opening...', 'success')" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold border-b border-slate-100 dark:border-slate-700/50 whitespace-nowrap"><i data-lucide="settings" class="w-4 h-4"></i> Account Settings</button>
-            <button onclick="logoutUser()" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-rose-600 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold rounded-b-xl whitespace-nowrap"><i data-lucide="log-out" class="w-4 h-4"></i> Logout</button>
+            <button onclick="showToast('Account settings opening...', 'success')" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-bold border-b border-slate-100 dark:border-slate-700/50 whitespace-nowrap"><i data-lucide="settings" class="w-4 h-4"></i> Account Settings</button>
+            <button onclick="logoutUser()" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-rose-600 hover:bg-slate-50 dark:hover:bg-slate-800 font-bold rounded-b-xl whitespace-nowrap"><i data-lucide="log-out" class="w-4 h-4"></i> Logout</button>
         `;
         lucide.createIcons();
     }
@@ -360,17 +346,13 @@ function submitFeedback() {
     const text = document.getElementById('feedback-text').value;
     if(feedbackRating === 0) return showToast("Please select a star rating.", "error");
     if(!text.trim()) return showToast("Feedback cannot be empty.", "error");
-    
-    document.getElementById('feedback-text').value = '';
-    feedbackRating = 0; resetRating();
-    closeFeedbackModal();
-    showToast("Feedback sent! Thank you.", "success");
+    document.getElementById('feedback-text').value = ''; feedbackRating = 0; resetRating();
+    closeFeedbackModal(); showToast("Feedback sent! Thank you.", "success");
 }
 
 function swapRoute() {
     const startInput = document.getElementById('route-start');
     const endInput = document.getElementById('route-end');
-    
     const tempVal = startInput.value;
     startInput.value = endInput.value;
     endInput.value = tempVal;
@@ -378,7 +360,6 @@ function swapRoute() {
     const tempCoords = startCoords;
     startCoords = endCoords;
     endCoords = tempCoords;
-    
     if(startCoords && endCoords) calculateRealRoute();
 }
 
@@ -393,16 +374,13 @@ function enableMapPicker() {
         isPickingLocation = false;
         document.getElementById('map').style.cursor = '';
         customPinCoords = [e.latlng.lat, e.latlng.lng];
-        
         if(customPinMarker) map.removeLayer(customPinMarker);
         customPinMarker = L.marker(customPinCoords).addTo(map);
-        
         openReportModal();
         
         const pinStatus = document.getElementById('pin-status');
         pinStatus.classList.remove('hidden');
         pinStatus.innerHTML = `<i>Fetching precise address...</i>`;
-        
         const address = await getAddressFromCoords(customPinCoords[0], customPinCoords[1]);
         pinStatus.innerHTML = `<b>Pinned Location:</b><br><span class="text-[10px] text-slate-500 font-normal leading-snug block mt-1">${address}</span><span class="text-[10px] text-slate-400 font-normal mt-1 block">Lat: ${customPinCoords[0].toFixed(5)}, Lng: ${customPinCoords[1].toFixed(5)}</span>`;
     });
@@ -410,12 +388,14 @@ function enableMapPicker() {
 
 function focusOnLocation(lat, lng) {
     map.setView([lat, lng], 18);
-    // Briefly drop a pin for visual feedback
-    const tempMarker = L.marker([lat, lng]).addTo(map);
-    setTimeout(() => { map.removeLayer(tempMarker); }, 3000);
+    if(customPinMarker) map.removeLayer(customPinMarker);
+    customPinMarker = L.marker([lat, lng]).addTo(map);
+    setTimeout(() => { 
+        if(customPinMarker && !isPickingLocation) { map.removeLayer(customPinMarker); customPinMarker = null; }
+    }, 4000);
 }
 
-// FIX: Absolute coordinate dragging perfectly bounding top and bottom
+// DRAG BOUNDS FIX
 function setupDrag() {
     const dragItem = document.getElementById("route-panel");
     const dragHeader = document.getElementById("route-panel-header");
@@ -444,7 +424,6 @@ function setupDrag() {
             let newLeft = e.clientX - dragOffsetX;
             let newTop = e.clientY - dragOffsetY;
             
-            // Boundary constraints ensuring perfect 24px padding on all sides of map container
             const minLeft = mapRect.left + 24; 
             const maxLeft = mapRect.right - dragItem.offsetWidth - 24;
             const minTop = mapRect.top + 24; 
@@ -478,14 +457,14 @@ function showToast(msg, type = 'error') {
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
     const colorClass = type === 'error' ? 'bg-rose-500' : 'bg-emerald-500';
+    // Raw SVGs force rendering instantly
     const icon = type === 'error' 
         ? `<svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>` 
         : `<svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
     
-    toast.className = `${colorClass} text-white px-6 py-4 rounded-xl shadow-2xl font-bold text-sm transform transition-all duration-300 translate-y-[-20px] opacity-0 flex items-center justify-center gap-3 pointer-events-auto max-w-sm`;
-    toast.innerHTML = `${icon} <span class="break-words w-full leading-snug">${msg}</span>`;
+    toast.className = `${colorClass} text-white px-6 py-4 rounded-xl shadow-2xl font-bold text-sm transform transition-all duration-300 translate-y-[-20px] opacity-0 flex items-center justify-center gap-3 pointer-events-auto max-w-sm w-full`;
+    toast.innerHTML = `${icon} <span class="break-words w-full text-center leading-snug">${msg}</span>`;
     container.appendChild(toast);
-    lucide.createIcons();
     setTimeout(() => { toast.classList.remove('translate-y-[-20px]', 'opacity-0'); }, 10);
     setTimeout(() => { toast.classList.add('opacity-0'); setTimeout(() => toast.remove(), 300); }, 4000);
 }
@@ -512,10 +491,10 @@ function toggleHeatmap() {
 function setCategoryFilter(cat) {
     activeFilter = cat;
     document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.classList.remove('bg-slate-600', 'text-white');
+        btn.classList.remove('bg-indigo-600', 'text-white');
         btn.classList.add('bg-slate-50', 'dark:bg-slate-800', 'text-slate-600', 'dark:text-slate-300');
     });
-    event.target.classList.add('bg-slate-600', 'text-white');
+    event.target.classList.add('bg-indigo-600', 'text-white');
     event.target.classList.remove('bg-slate-50', 'dark:bg-slate-800', 'text-slate-600', 'dark:text-slate-300');
     filterReports();
 }
@@ -523,11 +502,11 @@ function setCategoryFilter(cat) {
 function setSortFilter(sortType) {
     activeSort = sortType;
     document.querySelectorAll('.sort-btn').forEach(btn => {
-        btn.classList.remove('text-slate-800', 'dark:text-white', 'underline');
+        btn.classList.remove('text-indigo-600', 'dark:text-indigo-400', 'underline');
         btn.classList.add('text-slate-500', 'dark:text-slate-400');
     });
-    event.target.classList.add('text-slate-800', 'dark:text-white', 'underline');
-    event.target.classList.remove('text-slate-500', 'dark:text-slate-400');
+    event.target.classList.add('text-indigo-600', 'dark:text-indigo-400', 'underline');
+    event.target.classList.remove('text-slate-500');
     filterReports();
 }
 
@@ -552,14 +531,12 @@ function filterReports() {
     const search = document.getElementById('search-bar').value.toLowerCase();
     let filtered = mockReports.filter(report => {
         const matchCat = activeFilter === 'all' || report.type === activeFilter;
-        
         let matchSearch = false;
         if(search.startsWith('#')) {
             matchSearch = report.tags.some(t => t.toLowerCase() === search || t.toLowerCase().startsWith(search));
         } else {
             matchSearch = report.title.toLowerCase().includes(search) || report.desc.toLowerCase().includes(search) || report.tags.some(t => t.toLowerCase().includes(search));
         }
-
         const matchRadius = (!isRadiusActive || !radiusCenterCoords) ? true : (getDistance(radiusCenterCoords[0], radiusCenterCoords[1], report.lat, report.lng) <= 1.0); 
         return matchCat && matchSearch && matchRadius;
     });
@@ -580,7 +557,7 @@ function renderReports(reportsToRender = null) {
     if(reportsToRender.length === 0) {
         list.innerHTML = `
             <div class="flex flex-col items-center justify-center py-12 text-center opacity-80 text-slate-500">
-                <svg class="w-12 h-12 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+                <svg class="w-12 h-12 mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
                 <p class="text-sm font-bold">No matching reports found.</p>
                 <p class="text-xs mt-1">Try adjusting your search or filters.</p>
             </div>`;
@@ -593,49 +570,48 @@ function renderReports(reportsToRender = null) {
     const flagIcon = `<svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"></path></svg>`;
     
     reportsToRender.forEach(report => {
-        let typeColor = 'text-slate-600 bg-slate-100 border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300';
+        let typeColor = 'text-indigo-600 bg-indigo-50 border-indigo-200 dark:bg-indigo-900/30 dark:border-indigo-800 dark:text-indigo-400';
         if(report.type.includes('Harassment')) typeColor = 'text-rose-600 bg-rose-50 border-rose-200 dark:bg-rose-900/30 dark:border-rose-800 dark:text-rose-400';
         if(report.type.includes('Hazards')) typeColor = 'text-amber-600 bg-amber-50 border-amber-200 dark:bg-amber-900/30 dark:border-amber-800 dark:text-amber-400';
 
-        let menuItems = `<button onclick="event.stopPropagation(); shareReport(${report.id})" class="flex items-center gap-2 w-full px-4 py-3 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold whitespace-nowrap">${linkIcon} Share</button>`;
+        let menuItems = `<button onclick="event.stopPropagation(); shareReport(${report.id})" class="flex items-center gap-2 w-full px-4 py-3 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-bold whitespace-nowrap">${linkIcon} Share</button>`;
         if(report.isMine) {
             menuItems += `
-                <button onclick="event.stopPropagation(); editReportDesc(event, ${report.id})" class="flex items-center gap-2 w-full px-4 py-3 text-xs text-indigo-600 dark:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold whitespace-nowrap">${editIcon} Edit</button>
-                <button onclick="event.stopPropagation(); deleteReport(${report.id})" class="flex items-center gap-2 w-full px-4 py-3 text-xs text-rose-600 dark:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold whitespace-nowrap rounded-b-md">${delIcon} Delete</button>
+                <button onclick="event.stopPropagation(); editReportDesc(event, ${report.id})" class="flex items-center gap-2 w-full px-4 py-3 text-xs text-indigo-600 dark:text-indigo-400 hover:bg-slate-50 dark:hover:bg-slate-800 font-bold whitespace-nowrap">${editIcon} Edit</button>
+                <button onclick="event.stopPropagation(); deleteReport(${report.id})" class="flex items-center gap-2 w-full px-4 py-3 text-xs text-rose-600 dark:text-rose-400 hover:bg-slate-50 dark:hover:bg-slate-800 font-bold whitespace-nowrap rounded-b-md">${delIcon} Delete</button>
             `;
         } else {
-            menuItems += `<button onclick="event.stopPropagation(); openFlagModal(${report.id})" class="flex items-center gap-2 w-full px-4 py-3 text-xs text-rose-600 dark:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold whitespace-nowrap rounded-b-md">${flagIcon} Report</button>`;
+            menuItems += `<button onclick="event.stopPropagation(); openFlagModal(${report.id})" class="flex items-center gap-2 w-full px-4 py-3 text-xs text-rose-600 dark:text-rose-400 hover:bg-slate-50 dark:hover:bg-slate-800 font-bold whitespace-nowrap rounded-b-md">${flagIcon} Report</button>`;
         }
 
         const actionBtn = `
-            <div class="absolute top-4 right-4 z-40">
+            <div class="absolute top-4 right-4 z-[50]">
                 <div class="relative inline-block text-left" onclick="event.stopPropagation()">
-                    <button onclick="toggleReportMenu(event, ${report.id})" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                    <button onclick="toggleReportMenu(event, ${report.id})" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-full hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
                     </button>
-                    <div id="menu-${report.id}" class="hidden absolute right-0 mt-1 w-36 bg-white dark:bg-slate-800 rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 z-50 overflow-hidden"><div class="py-1">${menuItems}</div></div>
+                    <div id="menu-${report.id}" class="hidden absolute right-0 mt-1 w-36 solid-panel rounded-lg z-50 overflow-hidden"><div class="py-1">${menuItems}</div></div>
                 </div>
             </div>`;
 
-        const tagHTML = report.tags.map(t => `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border border-slate-200 bg-slate-100 text-slate-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300">${t}</span>`).join('');
+        const tagHTML = report.tags.map(t => `<span class="tag-badge">${t}</span>`).join('');
         const upBtnStyle = report.userVote === 1 ? "text-emerald-500 scale-110" : "text-slate-400 hover:text-emerald-500";
         const downBtnStyle = report.userVote === -1 ? "text-rose-500 scale-110" : "text-slate-400 hover:text-rose-500";
 
         list.innerHTML += `
-            <div onclick="openDetailModal(${report.id})" class="bg-white dark:bg-slate-800/90 p-5 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 hover:border-slate-400 cursor-pointer relative group transition-all min-w-0">
+            <div onclick="openDetailModal(${report.id})" class="report-card cursor-pointer min-w-0">
                 ${actionBtn}
                 <div class="mb-3 flex items-center gap-3 pr-10 min-w-0">
-                    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border shrink-0 ${typeColor}">${report.type.split('/')[0]}</span>
+                    <span class="badge ${typeColor} shrink-0">${report.type.split('/')[0]}</span>
                     <span class="text-[10px] text-slate-400 font-bold truncate">${formatDate(report.timestamp)}</span>
                 </div>
                 <h3 class="font-bold text-slate-800 dark:text-white text-base mb-3 pr-10 truncate" title="${report.title}">${report.title}</h3>
                 
-                <div class="mb-4 p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-100 dark:border-slate-700/50 text-xs text-slate-500 dark:text-slate-400 min-w-0 cursor-pointer hover:text-indigo-500 transition-colors" onclick="event.stopPropagation(); focusOnLocation(${report.lat}, ${report.lng})">
+                <div class="mb-4 p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-100 dark:border-slate-700/50 text-[10px] text-slate-500 dark:text-slate-400 min-w-0 hover:text-indigo-500 transition-colors" onclick="event.stopPropagation(); focusOnLocation(${report.lat}, ${report.lng})">
                     <p class="font-bold flex items-center justify-between mb-1.5 min-w-0 border-b border-slate-200 dark:border-slate-700 pb-1.5">
-                        <span class="truncate mr-2 flex items-center gap-1.5 shrink"><svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg> <span class="truncate">${report.address}</span></span>
-                        <span class="text-[9px] uppercase font-black tracking-wider whitespace-nowrap shrink-0 text-slate-400">Pinned Location</span>
+                        <span class="truncate mr-2 flex items-center gap-1.5 shrink text-slate-700 dark:text-slate-300"><svg class="w-3.5 h-3.5 text-indigo-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg> <span class="truncate">${report.address}</span></span>
                     </p>
-                    <p class="truncate ml-5 opacity-70 text-[10px]">Click to view on map</p>
+                    <p class="mt-1 truncate opacity-70">Click to view on map</p>
                 </div>
 
                 <p class="text-sm text-slate-600 dark:text-slate-300 mb-4 line-clamp-2 leading-relaxed">${report.desc}</p>
@@ -650,12 +626,6 @@ function renderReports(reportsToRender = null) {
                 </div>
             </div>`;
     });
-}
-
-function focusOnLocation(lat, lng) {
-    map.setView([lat, lng], 18);
-    if(customPinMarker) map.removeLayer(customPinMarker);
-    customPinMarker = L.marker([lat, lng]).addTo(map);
 }
 
 function openFlagModal(id) {
@@ -735,20 +705,19 @@ function openDetailModal(id) {
     activeDetailId = id;
     const report = mockReports.find(r => r.id === id);
     
-    let typeColor = 'text-slate-600 bg-slate-100 border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300';
+    let typeColor = 'text-indigo-600 bg-indigo-50 border-indigo-200 dark:bg-indigo-900/30 dark:border-indigo-800 dark:text-indigo-400';
     if(report.type.includes('Harassment')) typeColor = 'text-rose-600 bg-rose-50 border-rose-200 dark:bg-rose-900/30 dark:border-rose-800 dark:text-rose-400';
     if(report.type.includes('Hazards')) typeColor = 'text-amber-600 bg-amber-50 border-amber-200 dark:bg-amber-900/30 dark:border-amber-800 dark:text-amber-400';
 
     document.getElementById('detail-content').innerHTML = `
         <div class="flex justify-between items-start mb-5 pr-10 min-w-0">
-            <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border shrink-0 ${typeColor}">${report.type}</span>
+            <span class="badge ${typeColor}">${report.type}</span>
             <span class="text-xs text-slate-400 font-bold truncate ml-2">${formatDate(report.timestamp)}</span>
         </div>
         <h2 class="text-2xl font-bold text-slate-800 dark:text-white mb-5 pr-4 break-words">${report.title}</h2>
-        <div class="mb-5 p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 text-sm text-slate-600 dark:text-slate-400 leading-relaxed min-w-0 cursor-pointer hover:text-indigo-500 transition-colors" onclick="focusOnLocation(${report.lat}, ${report.lng})">
+        <div class="mb-5 p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 text-sm text-slate-600 dark:text-slate-400 leading-relaxed min-w-0">
             <p class="font-bold flex items-center justify-between mb-2 border-b border-slate-200 dark:border-slate-700 pb-2 min-w-0">
-                <span class="text-slate-800 dark:text-slate-200 flex items-center gap-2 truncate mr-2"><svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg> <span class="truncate whitespace-normal">${report.address}</span></span>
-                <span class="text-[10px] uppercase font-black tracking-wider whitespace-nowrap shrink-0 text-slate-400">Pinned Location</span>
+                <span class="text-slate-800 dark:text-slate-200 flex items-center gap-2 truncate mr-2"><svg class="w-4 h-4 text-indigo-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg> <span class="truncate whitespace-normal">${report.address}</span></span>
             </p>
             <p class="ml-6 truncate opacity-80 text-xs">Coordinates: ${report.lat.toFixed(5)}, ${report.lng.toFixed(5)}</p>
         </div>
@@ -760,7 +729,7 @@ function openDetailModal(id) {
     report.comments.forEach((c, idx) => {
         const actionBtns = c.isMine ? `
             <div class="flex gap-2 shrink-0">
-                <button onclick="editComment(${report.id}, ${idx})" class="text-slate-500 hover:text-slate-700 font-bold text-xs flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-700 rounded"><svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg> Edit</button>
+                <button onclick="editComment(${report.id}, ${idx})" class="text-indigo-500 hover:text-indigo-700 font-bold text-xs flex items-center gap-1 p-1 bg-indigo-50 dark:bg-indigo-900/30 rounded"><svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg> Edit</button>
                 <button onclick="deleteComment(${report.id}, ${idx})" class="text-rose-500 hover:text-rose-700 font-bold text-xs flex items-center gap-1 p-1 bg-rose-50 dark:bg-rose-900/30 rounded"><svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg> Delete</button>
             </div>` : '';
         cList.innerHTML += `<div class="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl text-sm flex justify-between items-start border border-slate-100 dark:border-slate-700 gap-4 mb-2"><p class="text-slate-800 dark:text-slate-200 break-words">${c.text}</p>${actionBtns}</div>`;
@@ -791,6 +760,7 @@ function openReportModal() {
 
 function closeReportModal() { 
     document.getElementById('report-modal').classList.add('hidden'); 
+    document.getElementById('pin-status').classList.add('hidden');
     if(customPinMarker) { map.removeLayer(customPinMarker); customPinMarker = null; customPinCoords = null; }
 }
 
@@ -807,7 +777,6 @@ async function submitReport() {
     if(!title || !cat) return showToast("Please fill all required fields.", "error");
     if(desc.length < 15) return showToast("Description must be at least 15 characters.", "error");
 
-    // Pass all user strings through AI check
     const aiError = aiContentCheck(desc) || aiContentCheck(title) || currentTags.map(t => aiContentCheck(t)).find(e => e !== null);
     if(aiError) return showToast(`AI Flag: ${aiError}`, "error");
 
@@ -843,8 +812,7 @@ function suggestTags() {
 
     if(suggested.length === 0) { aiTags.classList.add('hidden'); return; }
     aiTags.classList.remove('hidden');
-    container.innerHTML = suggested.map(tag => `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border border-slate-200 bg-white text-slate-600 cursor-pointer hover:bg-slate-100 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300" onclick="addTag('${tag}')">${tag} <i data-lucide="plus" class="w-3 h-3 inline ml-1"></i></span>`).join('');
-    lucide.createIcons();
+    container.innerHTML = suggested.map(tag => `<span class="tag-badge cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700" onclick="addTag('${tag}')">${tag} <svg class="w-3 h-3 inline ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg></span>`).join('');
 }
 
 function handleTagKeypress(e) { if (e.key === 'Enter') { e.preventDefault(); addCustomTag(); } }
@@ -855,8 +823,7 @@ function addCustomTag() {
 function addTag(tag) {
     if(!currentTags.includes(tag) && currentTags.length < 5) {
         currentTags.push(tag);
-        document.getElementById('active-tags-container').innerHTML = currentTags.map(t => `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border border-slate-600 bg-slate-600 text-white">${t} <button onclick="removeTag('${t}')" class="hover:text-rose-300 ml-1"><i data-lucide="x" class="w-3 h-3"></i></button></span>`).join('');
-        lucide.createIcons();
+        document.getElementById('active-tags-container').innerHTML = currentTags.map(t => `<span class="tag-badge bg-indigo-600 text-white border-indigo-600 dark:text-white dark:bg-indigo-600">${t} <button onclick="removeTag('${t}')" class="hover:text-rose-300 ml-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button></span>`).join('');
     }
 }
 function removeTag(tag) { currentTags = currentTags.filter(t => t !== tag); addTag('hack'); currentTags.pop(); }
@@ -875,7 +842,7 @@ function handleSearch(inputEl, resultsId, target) {
             data.forEach(item => {
                 const li = document.createElement('li');
                 li.className = "p-3 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer border-b border-slate-100 dark:border-slate-700 dark:text-slate-200 text-slate-700 flex items-center gap-2 truncate min-w-0 transition-colors text-xs";
-                li.innerHTML = `<i data-lucide="map-pin" class="w-4 h-4 text-slate-400 shrink-0"></i> <span class="truncate">${item.display_name}</span>`;
+                li.innerHTML = `<svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg> <span class="truncate">${item.display_name}</span>`;
                 li.onclick = () => {
                     inputEl.value = item.display_name.split(',')[0];
                     resultsUl.classList.add('hidden');
@@ -885,7 +852,6 @@ function handleSearch(inputEl, resultsId, target) {
                 resultsUl.appendChild(li);
             });
             resultsUl.classList.remove('hidden');
-            lucide.createIcons();
         } catch(e) {}
     }, 500); 
 }
@@ -894,8 +860,8 @@ async function calculateRealRoute() {
     const btn = document.getElementById('route-btn');
     if(!startCoords || !endCoords) return showToast("Select Start and Destination from suggestions.", "error");
 
-    btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin inline shrink-0"></i> Finding paths...`; 
-    btn.disabled = true; lucide.createIcons();
+    btn.innerHTML = `<svg class="w-4 h-4 animate-spin shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> Finding paths...`; 
+    btn.disabled = true;
 
     try {
         const osrmUrl = `https://router.project-osrm.org/route/v1/foot/${startCoords[1]},${startCoords[0]};${endCoords[1]},${endCoords[0]}?overview=full&geometries=geojson&steps=true`;
@@ -917,19 +883,19 @@ async function calculateRealRoute() {
         let lastStreet = "";
         steps.forEach(step => {
             if(step.name && step.name !== lastStreet) {
-                streetList.innerHTML += `<li class="flex items-center gap-2"><i data-lucide="arrow-right-circle" class="w-3 h-3 text-indigo-400 shrink-0"></i> ${step.name}</li>`;
+                streetList.innerHTML += `<li class="flex items-center gap-2"><svg class="w-3 h-3 text-indigo-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> ${step.name}</li>`;
                 lastStreet = step.name;
             }
         });
 
         document.getElementById('route-details').classList.remove('hidden');
         document.getElementById('clear-route-btn').classList.remove('hidden');
-        document.getElementById('route-dist').innerHTML = `<i data-lucide="footprints" class="w-4 h-4 shrink-0"></i> ${distKm} km`;
-        document.getElementById('route-time').innerHTML = `<i data-lucide="clock" class="w-4 h-4 shrink-0"></i> ${timeMin} mins`;
+        document.getElementById('route-dist').innerHTML = `<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path></svg> ${distKm} km`;
+        document.getElementById('route-time').innerHTML = `<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> ${timeMin} mins`;
         setTimeout(setupDrag, 100);
     } catch (e) { showToast("Error calculating route.", "error"); }
-    btn.innerHTML = `<i data-lucide="route" class="w-4 h-4 shrink-0"></i> Calculate Route`; 
-    btn.disabled = false; lucide.createIcons();
+    btn.innerHTML = `<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg> Calculate Route`; 
+    btn.disabled = false;
 }
 
 function clearRoute() {
@@ -948,7 +914,6 @@ function populatePartnerPortal() {
     const sumContainer = document.getElementById('city-summary-container');
     const alertContainer = document.getElementById('high-alert-container');
     sumContainer.innerHTML = ''; alertContainer.innerHTML = '';
-
     citySummaries.forEach(city => {
         const color = city.risk > 70 ? 'bg-rose-600' : city.risk > 40 ? 'bg-amber-500' : 'bg-emerald-500';
         sumContainer.innerHTML += `
@@ -957,7 +922,6 @@ function populatePartnerPortal() {
                 <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5"><div class="${color} h-2.5 rounded-full" style="width: ${city.risk}%"></div></div>
             </div>`;
     });
-
     const highRiskSpots = hotspots.filter(s => s.risk > 65).sort((a,b) => b.risk - a.risk);
     highRiskSpots.forEach(spot => {
         alertContainer.innerHTML += `
@@ -967,5 +931,4 @@ function populatePartnerPortal() {
             </div>`;
     });
 }
-
 window.onload = initMap;
