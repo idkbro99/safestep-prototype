@@ -329,7 +329,11 @@ function updateAuthUI() {
         const typeLabelColor = currentUser.type === 'partner' ? 'text-slate-500 dark:text-slate-400' : 'text-indigo-600 dark:text-indigo-400';
         const typeLabelText = currentUser.type === 'partner' ? 'Partner Agency' : 'General Account';
         
+        // FIX: Re-added the link to Partner Dashboard
         let extraLinks = '';
+        if (currentUser.type === 'partner') {
+            extraLinks = `<button onclick="togglePortal()" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-indigo-600 dark:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 font-bold border-b border-slate-100 dark:border-slate-700/50 whitespace-nowrap transition-colors"><i data-lucide="layout-dashboard" class="w-4 h-4"></i> Partner Dashboard</button>`;
+        }
         
         dropdown.innerHTML = `
             <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-700/50 min-w-0">
@@ -338,8 +342,8 @@ function updateAuthUI() {
                 <p class="text-[10px] uppercase tracking-wider font-bold ${typeLabelColor} mt-1 truncate">${typeLabelText}</p>
             </div>
             ${extraLinks}
-            <button onclick="showToast('Account settings opening...', 'success')" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-bold border-b border-slate-100 dark:border-slate-700/50 whitespace-nowrap"><i data-lucide="settings" class="w-4 h-4"></i> Account Settings</button>
-            <button onclick="logoutUser()" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-rose-600 hover:bg-slate-100 dark:hover:bg-slate-800 font-bold rounded-b-xl whitespace-nowrap"><i data-lucide="log-out" class="w-4 h-4"></i> Logout</button>
+            <button onclick="showToast('Account settings opening...', 'success')" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-bold border-b border-slate-100 dark:border-slate-700/50 whitespace-nowrap transition-colors"><i data-lucide="settings" class="w-4 h-4"></i> Account Settings</button>
+            <button onclick="logoutUser()" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-rose-600 hover:bg-slate-100 dark:hover:bg-slate-800 font-bold rounded-b-xl whitespace-nowrap transition-colors"><i data-lucide="log-out" class="w-4 h-4"></i> Logout</button>
         `;
         lucide.createIcons();
     }
@@ -405,16 +409,19 @@ function enableMapPicker() {
     });
 }
 
+// FIX: Auto-remove pinned location marker after 5 seconds of viewing from a card
 function focusOnLocation(lat, lng) {
     map.setView([lat, lng], 18);
     if(customPinMarker) map.removeLayer(customPinMarker);
     customPinMarker = L.marker([lat, lng]).addTo(map);
     setTimeout(() => { 
-        if(customPinMarker && !isPickingLocation) { map.removeLayer(customPinMarker); customPinMarker = null; }
-    }, 4000);
+        if(customPinMarker && !isPickingLocation) { 
+            map.removeLayer(customPinMarker); 
+            customPinMarker = null; 
+        }
+    }, 5000);
 }
 
-// FIX: Absolute coordinate dragging with perfectly balanced top/bottom padding
 function setupDrag() {
     const dragItem = document.getElementById("route-panel");
     const dragHeader = document.getElementById("route-panel-header");
@@ -567,6 +574,10 @@ function filterReports() {
     else if(activeSort === 'oldest') filtered.sort((a,b) => a.timestamp - b.timestamp);
 
     renderReports(filtered);
+
+    // FIX: Auto scroll up when sort, filters, or radius focus are executed
+    const list = document.getElementById('reports-list');
+    if (list) list.scrollTop = 0;
 }
 
 function renderReports(reportsToRender = null) {
@@ -595,35 +606,38 @@ function renderReports(reportsToRender = null) {
         if(report.type.includes('Hazards')) typeColor = 'text-amber-700 bg-amber-100 border-amber-200 dark:bg-amber-900/50 dark:text-amber-300 dark:border-amber-700';
         if(report.type.includes('Accessibility')) typeColor = 'text-purple-700 bg-purple-100 border-purple-200 dark:bg-purple-900/50 dark:text-purple-300 dark:border-purple-800';
 
-        let menuItems = `<button onclick="event.stopPropagation(); shareReport(${report.id})" class="flex items-center gap-2 w-full px-4 py-3 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold whitespace-nowrap">${linkIcon} Share</button>`;
+        let menuItems = `<button onclick="event.stopPropagation(); shareReport(${report.id})" class="flex items-center gap-2 w-full px-4 py-3 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold whitespace-nowrap transition-colors">${linkIcon} Share</button>`;
         if(report.isMine) {
             menuItems += `
-                <button onclick="event.stopPropagation(); editReportDesc(event, ${report.id})" class="flex items-center gap-2 w-full px-4 py-3 text-xs text-indigo-600 dark:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold whitespace-nowrap">${editIcon} Edit</button>
-                <button onclick="event.stopPropagation(); deleteReport(${report.id})" class="flex items-center gap-2 w-full px-4 py-3 text-xs text-rose-600 dark:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold whitespace-nowrap rounded-b-md">${delIcon} Delete</button>
+                <button onclick="event.stopPropagation(); editReportDesc(event, ${report.id})" class="flex items-center gap-2 w-full px-4 py-3 text-xs text-indigo-600 dark:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold whitespace-nowrap transition-colors">${editIcon} Edit</button>
+                <button onclick="event.stopPropagation(); deleteReport(${report.id})" class="flex items-center gap-2 w-full px-4 py-3 text-xs text-rose-600 dark:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold whitespace-nowrap rounded-b-md transition-colors">${delIcon} Delete</button>
             `;
         } else {
-            menuItems += `<button onclick="event.stopPropagation(); openFlagModal(${report.id})" class="flex items-center gap-2 w-full px-4 py-3 text-xs text-rose-600 dark:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold whitespace-nowrap rounded-b-md">${flagIcon} Report</button>`;
+            menuItems += `<button onclick="event.stopPropagation(); openFlagModal(${report.id})" class="flex items-center gap-2 w-full px-4 py-3 text-xs text-rose-600 dark:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold whitespace-nowrap rounded-b-md transition-colors">${flagIcon} Report</button>`;
         }
 
+        // FIX: The action button now functions correctly since the card itself is 'relative'
         const actionBtn = `
-            <div class="absolute top-4 right-4 z-40">
+            <div class="absolute top-3 right-3 z-40">
                 <div class="relative inline-block text-left" onclick="event.stopPropagation()">
-                    <button onclick="toggleReportMenu(event, ${report.id})" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                    <button onclick="toggleReportMenu(event, ${report.id})" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
                     </button>
                     <div id="menu-${report.id}" class="hidden absolute right-0 mt-1 w-36 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl z-50 overflow-hidden"><div class="py-1">${menuItems}</div></div>
                 </div>
             </div>`;
 
-        const tagHTML = report.tags.map(t => `<span class="tag-badge">${t}</span>`).join('');
+        // FIX: Changed raw unstyled classes into polished Tailwind pill classes
+        const tagHTML = report.tags.map(t => `<span class="text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded-md border border-slate-200 dark:border-slate-600">${t}</span>`).join('');
         const upBtnStyle = report.userVote === 1 ? "text-emerald-500 scale-110" : "text-slate-400 hover:text-emerald-500";
         const downBtnStyle = report.userVote === -1 ? "text-rose-500 scale-110" : "text-slate-400 hover:text-rose-500";
 
+        // FIX: Replaced fake report-card CSS class with complete styled tailwind components ensuring it is 'relative' 
         list.innerHTML += `
-            <div onclick="openDetailModal(${report.id})" class="report-card cursor-pointer min-w-0">
+            <div onclick="openDetailModal(${report.id})" class="relative bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 hover:border-indigo-400 dark:hover:border-indigo-500 cursor-pointer min-w-0 transition-colors group">
                 ${actionBtn}
                 <div class="mb-3 flex items-center gap-3 pr-10 min-w-0">
-                    <span class="badge ${typeColor}">${report.type}</span>
+                    <span class="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border ${typeColor}">${report.type}</span>
                     <span class="text-[10px] text-slate-400 font-bold truncate">${formatDate(report.timestamp)}</span>
                 </div>
                 <h3 class="font-bold text-slate-800 dark:text-white text-base mb-3 pr-10 truncate" title="${report.title}">${report.title}</h3>
@@ -648,12 +662,6 @@ function renderReports(reportsToRender = null) {
                 </div>
             </div>`;
     });
-}
-
-function focusOnLocation(lat, lng) {
-    map.setView([lat, lng], 18);
-    if(customPinMarker) map.removeLayer(customPinMarker);
-    customPinMarker = L.marker([lat, lng]).addTo(map);
 }
 
 function openFlagModal(id) {
@@ -737,9 +745,10 @@ function openDetailModal(id) {
     if(report.type.includes('Harassment')) typeColor = 'text-rose-700 bg-rose-100 border-rose-200 dark:bg-rose-900/50 dark:text-rose-300 dark:border-rose-700';
     if(report.type.includes('Hazards')) typeColor = 'text-amber-700 bg-amber-100 border-amber-200 dark:bg-amber-900/50 dark:text-amber-300 dark:border-amber-700';
 
+    // FIX: Badge styling matches Area Reports exactly
     document.getElementById('detail-content').innerHTML = `
         <div class="flex justify-between items-start mb-5 pr-10 min-w-0">
-            <span class="badge ${typeColor}">${report.type}</span>
+            <span class="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border ${typeColor}">${report.type}</span>
             <span class="text-xs text-slate-400 font-bold truncate ml-2">${formatDate(report.timestamp)}</span>
         </div>
         <h2 class="text-2xl font-bold text-slate-800 dark:text-white mb-5 pr-4 break-words">${report.title}</h2>
@@ -758,8 +767,8 @@ function openDetailModal(id) {
     report.comments.forEach((c, idx) => {
         const actionBtns = c.isMine ? `
             <div class="flex gap-2 shrink-0">
-                <button onclick="editComment(${report.id}, ${idx})" class="text-indigo-500 hover:text-indigo-700 font-bold text-xs flex items-center gap-1 p-1 bg-indigo-50 dark:bg-indigo-900/30 rounded"><svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg> Edit</button>
-                <button onclick="deleteComment(${report.id}, ${idx})" class="text-rose-500 hover:text-rose-700 font-bold text-xs flex items-center gap-1 p-1 bg-rose-50 dark:bg-rose-900/30 rounded"><svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg> Delete</button>
+                <button onclick="editComment(${report.id}, ${idx})" class="text-indigo-500 hover:text-indigo-700 font-bold text-xs flex items-center gap-1 p-1 bg-indigo-50 dark:bg-indigo-900/30 rounded transition-colors"><svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg> Edit</button>
+                <button onclick="deleteComment(${report.id}, ${idx})" class="text-rose-500 hover:text-rose-700 font-bold text-xs flex items-center gap-1 p-1 bg-rose-50 dark:bg-rose-900/30 rounded transition-colors"><svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg> Delete</button>
             </div>` : '';
         cList.innerHTML += `<div class="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl text-sm flex justify-between items-start border border-slate-100 dark:border-slate-700 gap-4 mb-2"><p class="text-slate-800 dark:text-slate-200 break-words">${c.text}</p>${actionBtns}</div>`;
     });
@@ -846,7 +855,8 @@ function suggestTags() {
 
     if(suggested.length === 0) { aiTags.classList.add('hidden'); return; }
     aiTags.classList.remove('hidden');
-    container.innerHTML = suggested.map(tag => `<span class="tag-badge cursor-pointer" onclick="addTag('${tag}')">${tag} <svg class="w-3 h-3 inline ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg></span>`).join('');
+    // FIX: Replaced raw tag-badge string with unified styled tailwind pills
+    container.innerHTML = suggested.map(tag => `<span class="text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-2 py-1 rounded-md cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors inline-flex items-center" onclick="addTag('${tag}')">${tag} <svg class="w-3 h-3 inline ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg></span>`).join('');
 }
 
 function handleTagKeypress(e) { if (e.key === 'Enter') { e.preventDefault(); addCustomTag(); } }
@@ -857,7 +867,8 @@ function addCustomTag() {
 function addTag(tag) {
     if(!currentTags.includes(tag) && currentTags.length < 5) {
         currentTags.push(tag);
-        document.getElementById('active-tags-container').innerHTML = currentTags.map(t => `<span class="tag-badge !bg-indigo-600 !text-white !border-indigo-600">${t} <button onclick="removeTag('${t}')" class="hover:text-rose-300 ml-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button></span>`).join('');
+        // FIX: Replaced raw tag-badge string with unified styled tailwind pills
+        document.getElementById('active-tags-container').innerHTML = currentTags.map(t => `<span class="text-[10px] font-bold text-white bg-indigo-600 border border-indigo-600 px-2 py-1 rounded-md inline-flex items-center">${t} <button onclick="removeTag('${t}')" class="hover:text-rose-300 ml-1 transition-colors"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button></span>`).join('');
     }
 }
 function removeTag(tag) { currentTags = currentTags.filter(t => t !== tag); addTag('hack'); currentTags.pop(); }
