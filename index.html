@@ -38,11 +38,12 @@
                     </div>
                     
                     <div class="flex flex-wrap gap-2 mb-4" id="category-filters">
-                        <button onclick="setCategoryFilter('all')" class="filter-btn active inline-flex items-center px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-indigo-600 text-white transition-colors">All</button>
-                        <button onclick="setCategoryFilter('Harassment/Aggression')" class="filter-btn inline-flex items-center px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">Harassment</button>
-                        <button onclick="setCategoryFilter('Crowd/Atmosphere')" class="filter-btn inline-flex items-center px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">Crowds</button>
-                        <button onclick="setCategoryFilter('Hazards')" class="filter-btn inline-flex items-center px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">Hazards</button>
-                        <button onclick="setCategoryFilter('Accessibility/Obstructions')" class="filter-btn inline-flex items-center px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">Accessibility</button>
+                        <!-- FIX: Added data-cat attributes for JS logic mapping -->
+                        <button onclick="setCategoryFilter('all')" data-cat="all" class="filter-btn active inline-flex items-center px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-indigo-600 text-white transition-colors">All</button>
+                        <button onclick="setCategoryFilter('Harassment/Aggression')" data-cat="Harassment/Aggression" class="filter-btn inline-flex items-center px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">Harassment</button>
+                        <button onclick="setCategoryFilter('Crowd/Atmosphere')" data-cat="Crowd/Atmosphere" class="filter-btn inline-flex items-center px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">Crowds</button>
+                        <button onclick="setCategoryFilter('Hazards')" data-cat="Hazards" class="filter-btn inline-flex items-center px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">Hazards</button>
+                        <button onclick="setCategoryFilter('Accessibility/Obstructions')" data-cat="Accessibility/Obstructions" class="filter-btn inline-flex items-center px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">Accessibility</button>
                     </div>
 
                     <div class="flex gap-4 items-center overflow-x-auto no-scrollbar pb-1" id="sort-filters">
@@ -54,11 +55,9 @@
                     </div>
                 </div>
                 
-                <!-- FIX: Adjusted to sit above the fixed button container properly -->
                 <div id="reports-list" class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/50 dark:bg-slate-900/50 min-w-0 relative z-10">
                     </div>
                 
-                <!-- FIX: Changed from absolute bottom-0 to shrink-0 so scrollbar works properly -->
                 <div class="w-full p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0 z-[100]">
                     <button onclick="openReportModal()" class="w-full bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold py-3.5 rounded-lg shadow-md transition-colors flex items-center justify-center gap-2">
                         <i data-lucide="plus-circle" class="w-5 h-5"></i> Report an Incident
