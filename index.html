@@ -38,11 +38,10 @@
                     </div>
                     
                     <div class="flex flex-wrap gap-2 mb-4" id="category-filters">
-                        <!-- FIX: Added data-cat attributes for JS logic mapping -->
                         <button onclick="setCategoryFilter('all')" data-cat="all" class="filter-btn active inline-flex items-center px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-indigo-600 text-white transition-colors">All</button>
                         <button onclick="setCategoryFilter('Harassment/Aggression')" data-cat="Harassment/Aggression" class="filter-btn inline-flex items-center px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">Harassment</button>
                         <button onclick="setCategoryFilter('Crowd/Atmosphere')" data-cat="Crowd/Atmosphere" class="filter-btn inline-flex items-center px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">Crowds</button>
-                        <button onclick="setCategoryFilter('Hazards')" data-cat="Hazards" class="filter-btn inline-flex items-center px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">Hazards</button>
+                        <button onclick="setCategoryFilter('Environmental/Hazards')" data-cat="Environmental/Hazards" class="filter-btn inline-flex items-center px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">Environmental/Hazards</button>
                         <button onclick="setCategoryFilter('Accessibility/Obstructions')" data-cat="Accessibility/Obstructions" class="filter-btn inline-flex items-center px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">Accessibility</button>
                     </div>
 
@@ -60,7 +59,7 @@
                 
                 <div class="w-full p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0 z-[100]">
                     <button onclick="openReportModal()" class="w-full bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold py-3.5 rounded-lg shadow-md transition-colors flex items-center justify-center gap-2">
-                        <i data-lucide="plus-circle" class="w-5 h-5"></i> Report an Incident
+                        <i data-lucide="plus-circle" class="w-5 h-5"></i> Report a Pedestrian Issue
                     </button>
                 </div>
             </div>
@@ -75,8 +74,10 @@
         <div id="map-container" class="flex-1 relative bg-slate-200 dark:bg-slate-800 h-full w-full overflow-hidden">
             <div id="map" class="w-full h-full z-[10]"></div>
             
-            <div class="absolute bottom-6 left-6 z-[1000] text-indigo-900 dark:text-white text-xl font-black tracking-tight drop-shadow-md pointer-events-none opacity-90 flex items-center gap-1.5">
-                <i data-lucide="shield" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i> SafeStep
+            <div class="absolute bottom-6 left-6 z-[1000] drop-shadow-md pointer-events-none opacity-90 flex items-center">
+                <!-- Swapped the old Lucide text logo with the provided image logos handling light/dark modes -->
+                <img src="logo_lightmode.png" alt="SafeStep Logo" class="h-10 w-auto block dark:hidden">
+                <img src="logo_darkmode.png" alt="SafeStep Logo" class="h-10 w-auto hidden dark:block">
             </div>
 
             <div class="absolute top-6 left-1/2 transform -translate-x-1/2 z-[2000] flex gap-2 pointer-events-none drop-shadow-sm whitespace-nowrap">
@@ -133,18 +134,18 @@
                         <div class="flex-1 space-y-2 min-w-0">
                             <div class="relative">
                                 <i data-lucide="map-pin" class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400"></i>
-                                <input type="text" id="route-start" oninput="handleSearch(this, 'start-results', 'start')" placeholder="Start Location" class="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-slate-800 dark:text-white transition-all">
+                                <input type="text" id="route-start" oninput="handleSearch(this, 'start-results', 'start')" placeholder="Choose a starting point..." class="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-slate-800 dark:text-white transition-all">
                                 <ul id="start-results" class="absolute w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg mt-1 hidden max-h-48 overflow-y-auto shadow-xl z-50 text-sm"></ul>
                             </div>
                             <div class="relative">
                                 <i data-lucide="flag" class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400"></i>
-                                <input type="text" id="route-end" oninput="handleSearch(this, 'end-results', 'end')" placeholder="Destination" class="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-slate-800 dark:text-white transition-all">
+                                <input type="text" id="route-end" oninput="handleSearch(this, 'end-results', 'end')" placeholder="Choose a destination..." class="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-slate-800 dark:text-white transition-all">
                                 <ul id="end-results" class="absolute w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg mt-1 hidden max-h-48 overflow-y-auto shadow-xl z-50 text-sm"></ul>
                             </div>
                         </div>
-                        <button onclick="swapRoute()" class="bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 p-2.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors shadow-sm text-slate-600 dark:text-slate-300 shrink-0" title="Swap locations"><i data-lucide="arrow-up-down" class="w-4 h-4"></i></button>
+                        <button onclick="swapRoute()" class="bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 p-2.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors shadow-sm text-slate-600 dark:text-slate-300 shrink-0" title="Reverse Starting Point and Destination"><i data-lucide="arrow-up-down" class="w-4 h-4"></i></button>
                     </div>
-                    <button onclick="calculateRealRoute()" id="route-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-lg text-sm font-bold shadow-md transition-colors flex justify-center items-center gap-2 mt-2"><i data-lucide="route" class="w-4 h-4"></i> Calculate Route</button>
+                    <button onclick="calculateRealRoute()" id="route-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-lg text-sm font-bold shadow-md transition-colors flex justify-center items-center gap-2 mt-2"><i data-lucide="route" class="w-4 h-4"></i> Get Directions</button>
                 </div>
                 <div id="route-details" class="hidden px-4 pb-4">
                     <div class="flex justify-between text-sm font-bold text-indigo-600 dark:text-indigo-400 mb-3 pt-3 border-t border-slate-200 dark:border-slate-700">
@@ -174,7 +175,7 @@
                     <span class="text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-widest flex items-center gap-1.5"><i data-lucide="droplet" class="w-3.5 h-3.5 text-slate-500"></i> Opacity</span>
                     <div class="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400">
                         <span>0%</span>
-                        <input type="range" id="heatmap-opacity" min="0.1" max="1" step="0.1" value="1" class="w-24 outline-none" oninput="updateOpacity()">
+                        <input type="range" id="heatmap-opacity" min="0.1" max="1" step="0.1" value="1" class="w-24 outline-none accent-gray-600 dark:accent-gray-400" oninput="updateOpacity()">
                         <span>100%</span>
                     </div>
                 </div>
@@ -274,7 +275,7 @@
                     <div class="min-w-0">
                         <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Category <span class="text-rose-500">*</span></label>
                         <select id="report-category" onchange="suggestTags()" class="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-white transition-all">
-                            <option value="">Select an option...</option><option value="Harassment/Aggression">Harassment/Aggression</option><option value="Crowd/Atmosphere">Crowd/Atmosphere</option><option value="Hazards">Hazards</option><option value="Accessibility/Obstructions">Accessibility/Obstructions</option>
+                            <option value="">Select an option...</option><option value="Harassment/Aggression">Harassment/Aggression</option><option value="Crowd/Atmosphere">Crowd/Atmosphere</option><option value="Environmental/Hazards">Environmental/Hazards</option><option value="Accessibility/Obstructions">Accessibility/Obstructions</option>
                         </select>
                     </div>
                 </div>
