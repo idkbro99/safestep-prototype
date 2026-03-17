@@ -18,7 +18,7 @@ input[type=range]::-webkit-slider-thumb {
     height: 16px; 
     width: 16px; 
     border-radius: 50%; 
-    background: #64748b; 
+    background: #4b5563; /* Changed to dark grey */
     cursor: pointer; 
     margin-top: -5px;
 }
